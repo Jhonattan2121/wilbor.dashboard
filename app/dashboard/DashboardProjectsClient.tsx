@@ -1,7 +1,7 @@
 "use client";
 
 import PhotoGridPage from '@/photo/PhotoGridPage';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CreatePostButton from './CreatePostButton';
 import HiveLogin from './HiveLogin';
 
@@ -11,6 +11,22 @@ export default function DashboardProjectsClient({ posts, photosCount, cameras, s
   const [loginUser, setLoginUser] = useState<string | null>(null);
   const [postingKey, setPostingKey] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('hiveLogin');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setLoggedIn(true);
+          setLoginUser(parsed.username);
+          if (parsed.keyType === 'private' && parsed.key) {
+            setPostingKey(parsed.key);
+          }
+        } catch {}
+      }
+    }
+  }, []);
+
   function handleLogin(username: string, keyType: 'keychain' | 'private', key?: string) {
     setLoggedIn(true);
     setLoginUser(username);
@@ -19,6 +35,16 @@ export default function DashboardProjectsClient({ posts, photosCount, cameras, s
     }
     // Keychain não precisa armazenar chave, pois usa o plugin do navegador
   }
+
+  function handleLogout() {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('hiveLogin');
+    }
+    setLoggedIn(false);
+    setLoginUser(null);
+    setPostingKey(null);
+  }
+
 
   if (!loggedIn) {
     return <HiveLogin onLogin={handleLogin} />;
@@ -37,6 +63,7 @@ export default function DashboardProjectsClient({ posts, photosCount, cameras, s
         </div>
         <span className="text-sm text-gray-400">
           Logado como <b>{loginUser}</b>
+          <button onClick={handleLogout} className="ml-4 px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs">Logout</button>
         </span>
       </div>
       <div className="flex items-center gap-2 px-4 pb-2">

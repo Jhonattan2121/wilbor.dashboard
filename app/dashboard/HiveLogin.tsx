@@ -1,11 +1,26 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function HiveLogin({ onLogin }: { onLogin: (username: string, keyType: 'keychain' | 'private', key?: string) => void }) {
   const [username, setUsername] = useState('wilbor.art');
   const [privateKey, setPrivateKey] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loggedIn, setLoggedIn] = useState<null | { username: string; keyType: 'keychain' | 'private'; key?: string }>(null);
+
+  // Checa se já está logado ao montar
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('hiveLogin');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setLoggedIn(parsed);
+          onLogin(parsed.username, parsed.keyType, parsed.key);
+        } catch {}
+      }
+    }
+  }, [onLogin]);
 
   // Login via Hive Keychain
   const handleKeychainLogin = async () => {
@@ -19,6 +34,9 @@ export default function HiveLogin({ onLogin }: { onLogin: (username: string, key
         (res: any) => {
           setLoading(false);
           if (res.success) {
+            const loginData = { username, keyType: 'keychain' as const };
+            localStorage.setItem('hiveLogin', JSON.stringify(loginData));
+            setLoggedIn(loginData);
             onLogin(username, 'keychain');
           } else {
             setError('Falha ao autenticar com Hive Keychain.');
@@ -39,9 +57,38 @@ export default function HiveLogin({ onLogin }: { onLogin: (username: string, key
       return;
     }
     // Aqui você pode validar a chave se quiser
+    const loginData = { username, keyType: 'private' as const, key: privateKey };
+    localStorage.setItem('hiveLogin', JSON.stringify(loginData));
+    setLoggedIn(loginData);
     onLogin(username, 'private', privateKey);
   };
 
+  // Logout
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('hiveLogin');
+    }
+    setLoggedIn(null);
+    setPrivateKey('');
+    setUsername('wilbor.art');
+  };
+
+  if (loggedIn) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm" />
+        <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-8 w-full max-w-sm flex flex-col gap-6 items-center border border-gray-700">
+          <div className="text-white text-lg w-full text-center">Logado como <b>{loggedIn.username}</b></div>
+          <button
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded w-full"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Fundo escuro/transparente */}
