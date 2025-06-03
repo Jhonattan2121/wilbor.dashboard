@@ -4,12 +4,27 @@ import { uploadFileToIPFS } from '@/utils/ipfs';
 import { Client, PrivateKey } from '@hiveio/dhive';
 import { useEffect, useState } from 'react';
 
-interface CreatePostButtonProps {
+interface EditPostButtonProps {
     username: string;
     postingKey?: string;
+    permlink: string;
+    author: string;
+    initialTitle: string;
+    initialContent: string;
+    initialTags: string[];
+    initialImages: string[];
 }
 
-export default function CreatePostButton({ username, postingKey }: CreatePostButtonProps) {
+export default function EditPostButton({
+    username,
+    postingKey,
+    permlink,
+    author,
+    initialTitle,
+    initialContent,
+    initialTags,
+    initialImages
+}: EditPostButtonProps) {
     const [showForm, setShowForm] = useState(false);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -20,8 +35,21 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number[]>([]);
+    const [loadingPost, setLoadingPost] = useState(false);
+    
     // Token de Gateway do Pinata
     const PINATA_GATEWAY_TOKEN = 'Z787oWC-YVuVKNuRKECMTklkNYMENXXPYROAr7NUSDnVREVJKbMbQQEenpu3KTam';
+
+    useEffect(() => {
+        if (initialTitle) setTitle(initialTitle);
+        if (initialContent) setContent(initialContent);
+        if (initialTags?.length) setTags(initialTags.join(', '));
+        if (initialImages?.length) {
+            const newPreviews = initialImages.map(url => url);
+            setPreviews(newPreviews);
+            setUploadProgress(Array(newPreviews.length).fill(100));
+        }
+    }, [initialTitle, initialContent, initialTags, initialImages]);
 
     useEffect(() => {
         if (!loading && error && error.includes('cancelada')) {
@@ -33,71 +61,56 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
         }
     }, [loading, error]);
 
+    // Função para buscar post do Hive por autor e permlink
+    const fetchPostFromHive = async (author: string, permlink: string): Promise<any> => {
+        setLoadingPost(true);
+        try {
+            const response = await fetch('https://api.hive.blog', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'condenser_api.get_content',
+                    params: [author, permlink],
+                    id: 1
+                })
+            });
+            const data = await response.json();
+            if (data && data.result) {
+                return data.result;
+            }
+            return null;
+        } catch (error) {
+            console.error("Erro ao buscar dados do post:", error);
+            return null;
+        } finally {
+            setLoadingPost(false);
+        }
+    };
+
     const getIpfsGatewayUrl = (hash: string, fileName?: string): string => {
+        // URL do Pinata com o token de gateway incluído
         return `https://lime-useful-snake-714.mypinata.cloud/ipfs/${hash}?pinataGatewayToken=${PINATA_GATEWAY_TOKEN}`;
     };
 
-    const getIpfsPublicUrl = (hash: string, fileName?: string): string => {
-        return `https://ipfs.io/ipfs/${hash}`;
-    };
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Manipular a seleção de arquivos
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = Array.from(e.target.files || []);
-        if (selectedFiles.length === 0) return;
+        setFiles(prevFiles => [...prevFiles, ...selectedFiles]);
 
+        // Criar URLs de visualização para as imagens selecionadas
         const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
         setPreviews(prevPreviews => [...prevPreviews, ...newPreviews]);
-        setFiles(prevFiles => [...prevFiles, ...selectedFiles]);
         setUploadProgress(prev => [...prev, ...selectedFiles.map(() => 0)]);
-
-        function getFileExtension(file: File): string {
-            const name = file.name;
-            if (name && name.includes('.')) {
-                return name.split('.').pop() || '';
-            }
-            if (file.type && file.type.includes('/')) {
-                return file.type.split('/')[1];
-            }
-            return '';
-        }
-
-        for (let i = 0; i < selectedFiles.length; i++) {
-            const file = selectedFiles[i];
-            try {
-                setLoading(true);
-                const result = await uploadFileToIPFS(file);
-                const ext = getFileExtension(file);
-                let fileName = '';
-                if (file.name && ext) {
-                    fileName = file.name;
-                } else if (ext) {
-                    fileName = `image-${i + 1}.${ext}`;
-                } else {
-                    fileName = `image-${i + 1}`;
-                }
-                const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
-                setContent(prev => {
-                    let texto = prev.trim();
-                    if (texto.length > 0) {
-                        texto += `\n\n![image](${ipfsUrl})\n`;
-                    } else {
-                        texto = `![image](${ipfsUrl})\n`;
-                    }
-                    return texto;
-                });
-            } catch (err) {
-                setError('Erro ao enviar imagem para o IPFS.');
-            } finally {
-                setLoading(false);
-            }
-        }
     };
 
+    // Remover uma imagem da lista
     const removeFile = (index: number) => {
         const newFiles = [...files];
         const newPreviews = [...previews];
         const newProgress = [...uploadProgress];
 
+        // Revogar URL de objeto para evitar vazamento de memória
         URL.revokeObjectURL(newPreviews[index]);
 
         newFiles.splice(index, 1);
@@ -109,6 +122,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
         setUploadProgress(newProgress);
     };
 
+    // Processar o envio do formulário de edição
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -117,7 +131,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
             return;
         }
 
-        if (files.length === 0) {
+        if (previews.length === 0) {
             setError('Por favor, selecione pelo menos uma imagem');
             return;
         }
@@ -126,6 +140,12 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
             setError(
                 'Chave de postagem não fornecida ou Hive Keychain não instalado'
             );
+            return;
+        }
+        
+        // Verificar se o usuário é o autor
+        if (username.toLowerCase() !== author.toLowerCase()) {
+            setError('Você não tem permissão para editar este post');
             return;
         }
 
@@ -140,16 +160,19 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
             setShowForm(false);
         }, 15000);
 
-
         try {
             const ipfsResults = [];
-            for (let i = 0; i < files.length; i++) {
+            const existingImagesCount = initialImages?.length || 0;
+            const newFiles = files.slice(0); 
+            
+            for (let i = 0; i < newFiles.length; i++) {
                 try {
-                    const result = await uploadFileToIPFS(files[i]);
+                    const result = await uploadFileToIPFS(newFiles[i]);
                     ipfsResults.push(result);
 
+                    // Atualizar o progresso
                     const newProgress = [...uploadProgress];
-                    newProgress[i] = 100;
+                    newProgress[existingImagesCount + i] = 100;
                     setUploadProgress(newProgress);
                 } catch (error) {
                     console.error(
@@ -165,53 +188,36 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                 }
             }
 
-            function getFileExtension(file: File): string {
-                const name = file.name;
-                if (name && name.includes('.')) {
-                    return name.split('.').pop() || '';
+            let postBody = content + '\n\n';
+            
+            // Adicionar imagens existentes
+            initialImages.forEach((url, index) => {
+                const isInPreviews = previews.includes(url);
+                if (isInPreviews) {
+                    postBody += `![image](${url})\n\n`;
                 }
-                if (file.type && file.type.includes('/')) {
-                    return file.type.split('/')[1];
-                }
-                return '';
-            }
+            });
 
-
-            let imagesMarkdown = '';
+            // Adicionar novas imagens do IPFS
             ipfsResults.forEach((result, index) => {
-                const file = files[index];
-                const ext = getFileExtension(file);
-                let fileName = '';
-                if (file.name && ext) {
-                    fileName = file.name;
-                } else if (ext) {
-                    fileName = `image-${index + 1}.${ext}`;
-                } else {
-                    fileName = `image-${index + 1}`;
+                let fileName = newFiles[index]?.name || '';
+
+                if (!fileName && newFiles[index]?.type) {
+                    const fileType = newFiles[index]?.type?.split('/')[1] || 'jpg';
+                    fileName = `image-${index + 1}.${fileType}`;
                 }
-                const ipfsUrl = getIpfsPublicUrl(result.IpfsHash, fileName);
-                imagesMarkdown += `![image](${ipfsUrl})\n\n`;
+
+                const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
+                postBody += `![image](${ipfsUrl})\n\n`;
             });
 
-            let newContent = content.trim();
-            newContent = newContent.replace(/https:\/\/lime-useful-snake-714\.mypinata\.cloud\/ipfs\/([a-zA-Z0-9]+)[^\)]*/g, (match, hash) => {
-                return `https://ipfs.io/ipfs/${hash}`;
-            });
-            if (imagesMarkdown.trim().length > 0) {
-                if (newContent.length > 0) {
-                    newContent += '\n\n' + imagesMarkdown;
-                } else {
-                    newContent = imagesMarkdown;
-                }
-            }
-
-            const postBody = newContent;
-
+            // Preparar as tags
             const tagArray = tags
                 .split(',')
                 .map(tag => tag.trim().toLowerCase())
                 .filter(tag => tag !== '');
 
+            // Incluir tags padrão se necessário
             if (!tagArray.includes('wilbor')) {
                 tagArray.push('wilbor');
             }
@@ -219,45 +225,43 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                 tagArray.push('art');
             }
 
-
+            // Preparar os metadados
             const jsonMetadata = {
                 tags: tagArray,
-                image: ipfsResults.map((result, index) => {
-                    const file = files[index];
-                    const ext = getFileExtension(file);
-                    let fileName = '';
-                    if (file.name && ext) {
-                        fileName = file.name;
-                    } else if (ext) {
-                        fileName = `image-${index + 1}.${ext}`;
-                    } else {
-                        fileName = `image-${index + 1}`;
-                    }
-                    return getIpfsPublicUrl(result.IpfsHash, fileName);
-                }),
+                image: [...initialImages.filter(url => previews.includes(url)), 
+                       ...ipfsResults.map((result, index) => {
+                           const fileName = newFiles[index]?.name || '';
+                           return getIpfsGatewayUrl(result.IpfsHash, fileName);
+                       })],
                 app: 'wilbor.art/dashboard',
             };
 
-            let postSuccess = false;
+            // Atualizar o post no Hive
+            let updateSuccess = false;
             if (postingKey) {
-                postSuccess = await postToHiveWithKey(
+                // Postar com chave privada
+                updateSuccess = await updateHivePostWithKey(
                     username,
                     title,
                     postBody,
+                    permlink,
                     tagArray,
                     jsonMetadata,
                     postingKey
                 );
             } else {
+                // Postar com Keychain
                 try {
-                    postSuccess = await postToHiveWithKeychain(
+                    updateSuccess = await updateHivePostWithKeychain(
                         username,
                         title,
                         postBody,
+                        permlink,
                         tagArray,
                         jsonMetadata
                     );
                 } catch (keychainError: any) {
+                    // Verificar se é um cancelamento do usuário
                     if (keychainError.isCancelled === true) {
                         console.log('Operação cancelada pelo usuário detectada');
                         setError('Operação cancelada pelo usuário');
@@ -271,38 +275,34 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                 }
             }
 
-            if (!postSuccess) {
+            // Se chegou aqui e updateSuccess é false, algo deu errado
+            if (!updateSuccess) {
                 clearTimeout(keychainTimeout);
-                throw new Error('Falha ao publicar o post');
+                throw new Error('Falha ao atualizar o post');
             }
 
             clearTimeout(keychainTimeout);
             setSuccess(true);
             setTimeout(() => {
                 setShowForm(false);
-                setTitle('');
-                setContent('');
-                setTags('');
-                setFiles([]);
-                setPreviews([]);
-                setUploadProgress([]);
-                setSuccess(false);
+                window.location.reload();
             }, 2000);
         } catch (error: any) {
             clearTimeout(keychainTimeout);
-            console.error('Erro ao criar post:', error);
+            console.error('Erro ao atualizar post:', error);
             setError(
-                'Falha ao criar o post: ' + (error.message || 'Erro desconhecido')
+                'Falha ao atualizar o post: ' + (error.message || 'Erro desconhecido')
             );
         } finally {
             setLoading(false);
         }
     };
 
-    const postToHiveWithKey = async (
+    const updateHivePostWithKey = async (
         author: string,
         title: string,
         body: string,
+        permlink: string,
         tags: string[],
         jsonMetadata: any,
         privateKey: string,
@@ -311,8 +311,6 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
 
         try {
             const key = PrivateKey.fromString(privateKey);
-
-            const permlink = createPermlink(title);
 
             await client.broadcast.comment({
                 parent_author: '',
@@ -326,15 +324,16 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
 
             return true;
         } catch (error) {
-            console.error('Erro ao postar no Hive:', error);
-            throw new Error('Falha ao publicar no Hive');
+            console.error('Erro ao atualizar post no Hive:', error);
+            throw new Error('Falha ao atualizar no Hive');
         }
     };
 
-    const postToHiveWithKeychain = (
+    const updateHivePostWithKeychain = (
         author: string,
         title: string,
         body: string,
+        permlink: string,
         tags: string[],
         jsonMetadata: any,
     ): Promise<boolean> => {
@@ -344,19 +343,18 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                 return;
             }
 
-            const permlink = createPermlink(title);
-
             (window as any).hive_keychain.requestPost(
                 author,
                 title,
                 body,
-                tags[0],
-                '',
-                permlink,
+                tags[0], 
+                '',      
+                permlink, 
                 JSON.stringify(jsonMetadata),
+                '',      
                 'Posting',
                 (response: any) => {
-                    console.log('Resposta do Hive Keychain:', response);
+                    console.log('Resposta do Hive Keychain (edição):', response);
 
                     if (response.success) {
                         resolve(true);
@@ -373,7 +371,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                             (cancelError as any).isCancelled = true;
                             reject(cancelError);
                         } else {
-                            reject(new Error(response.message || 'Erro ao postar com Keychain'));
+                            reject(new Error(response.message || 'Erro ao atualizar com Keychain'));
                         }
                     }
                 },
@@ -381,40 +379,25 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
         });
     };
 
-    const createPermlink = (title: string): string => {
-        const date = new Date();
-        const dateString = date.toISOString().replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-
-        let permlink = title
-            .toLowerCase()
-            .replace(/[^\w\s]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .substring(0, 40);
-
-        permlink = `${permlink}-${dateString}`;
-
-        return permlink;
-    };
-
     return (
         <>
             <button
-                onClick={() => setShowForm(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowForm(true);
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg flex items-center text-sm"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                        fillRule="evenodd"
-                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                        clipRule="evenodd"
-                    />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                 </svg>
-                Criar post com Pinata IPFS
+                Editar
             </button>
 
             {showForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    {/* Fundo escuro/transparente */}
                     <div
                         className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm"
                         onClick={() => {
@@ -428,18 +411,21 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                         }}
                     />
 
+                    {/* Modal do formulário de edição */}
                     <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-700">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">
-                                Criar Post com IPFS
+                                Editar Post
                             </h2>
                             <button
                                 className="text-gray-400 hover:text-white"
                                 onClick={() => {
+                                    // Se não estiver carregando, fecha o formulário normalmente
                                     if (!loading) {
                                         setShowForm(false);
                                         return;
                                     }
+                                    // Se estiver carregando, pergunta se deseja cancelar
                                     if (confirm("Deseja cancelar a operação em andamento?")) {
                                         setLoading(false);
                                         setError('');
@@ -455,10 +441,16 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
 
                         {success ? (
                             <div className="bg-green-800 bg-opacity-30 border border-green-600 text-green-400 p-4 rounded mb-4">
-                                Post criado com sucesso! Redirecionando...
+                                Post atualizado com sucesso! Recarregando a página...
+                            </div>
+                        ) : loadingPost ? (
+                            <div className="flex justify-center items-center py-8">
+                                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                                <p className="ml-3 text-gray-400">Carregando post...</p>
                             </div>
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-4">
+                                {/* Título */}
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Título do Post</label>
                                     <input
@@ -470,8 +462,9 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                                     />
                                 </div>
 
+                                {/* Conteúdo */}
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Conteúdo (opcional)</label>
+                                    <label className="block text-sm font-medium mb-1">Conteúdo</label>
                                     <textarea
                                         value={content}
                                         onChange={(e) => setContent(e.target.value)}
@@ -480,6 +473,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                                     />
                                 </div>
 
+                                {/* Tags */}
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Tags (separadas por vírgula)</label>
                                     <input
@@ -494,6 +488,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                                     </p>
                                 </div>
 
+                                {/* Informação sobre Gateway IPFS */}
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Gateway IPFS</label>
                                     <p className="text-xs text-gray-400 mt-1">
@@ -501,6 +496,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                                     </p>
                                 </div>
 
+                                {/* Imagens existentes e upload de novas */}
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Imagens</label>
                                     <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors">
@@ -518,13 +514,14 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                 </svg>
                                                 <p className="text-sm text-gray-400">
-                                                    Selecionar imagens para o IPFS
+                                                    Adicionar mais imagens
                                                 </p>
                                             </div>
                                         </label>
                                     </div>
                                 </div>
 
+                                {/* Preview das imagens */}
                                 {previews.length > 0 && (
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                         {previews.map((preview, index) => (
@@ -558,6 +555,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                                     </div>
                                 )}
 
+                                {/* Mensagem de erro */}
                                 {error && (
                                     <div className="bg-red-800 bg-opacity-30 border border-red-600 text-red-400 p-4 rounded">
                                         {error}
@@ -578,10 +576,10 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                                     </button>
                                     <button
                                         type="submit"
-                                        className={`px-4 py-2 rounded text-white ${loading ? 'bg-blue-800' : 'bg-blue-600 hover:bg-blue-700'}`}
+                                        className={`px-4 py-2 rounded text-white ${loading ? 'bg-green-800' : 'bg-green-600 hover:bg-green-700'}`}
                                         disabled={loading}
                                     >
-                                        {loading ? 'Publicando...' : 'Publicar no Hive'}
+                                        {loading ? 'Atualizando...' : 'Atualizar Post'}
                                     </button>
                                 </div>
                             </form>

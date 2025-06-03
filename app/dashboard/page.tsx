@@ -69,7 +69,6 @@ async function getHivePosts(username: string) {
         } as Photo;
       });
     });
-    // Remove duplicados
     const uniquePosts = formattedPosts.reduce((acc, post) => {
       const key = `${post.author}-${post.permlink}-${post.src}`;
       if (!acc.find(p => `${p.author}-${p.permlink}-${p.src}` === key)) acc.push(post);
