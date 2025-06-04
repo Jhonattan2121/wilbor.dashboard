@@ -1,7 +1,7 @@
 'use client';
 
 import { uploadFileToIPFS } from '@/utils/ipfs';
-import { Client, PrivateKey } from '@hiveio/dhive';
+import { Client, PrivateKey, type Operation } from '@hiveio/dhive';
 import { useEffect, useState } from 'react';
 
 interface CreatePostButtonProps {
@@ -11,11 +11,11 @@ interface CreatePostButtonProps {
     onPostSuccess?: () => void;
 }
 
-export default function CreatePostButton({ 
-    username, 
-    postingKey, 
-    initialCommunity, 
-    onPostSuccess 
+export default function CreatePostButton({
+    username,
+    postingKey,
+    initialCommunity,
+    onPostSuccess
 }: CreatePostButtonProps) {
     const [showForm, setShowForm] = useState(false);
     const [title, setTitle] = useState('');
@@ -144,9 +144,7 @@ export default function CreatePostButton({
         }
 
         if (!postingKey && !(window as any).hive_keychain) {
-            setError(
-                'Chave de postagem não fornecida ou Hive Keychain não instalado'
-            );
+            setError('Chave de postagem não fornecida ou Hive Keychain não instalado');
             return;
         }
 
@@ -155,12 +153,8 @@ export default function CreatePostButton({
 
         const keychainTimeout = setTimeout(() => {
             setLoading(false);
-            setError(
-                'Operação expirada ou não confirmada no Keychain. Tente novamente.'
-            );
-            setShowForm(false);
+            setError('Operação expirada ou não confirmada no Keychain. Tente novamente.');
         }, 15000);
-
 
         try {
             const ipfsResults = [];
@@ -173,13 +167,8 @@ export default function CreatePostButton({
                     newProgress[i] = 100;
                     setUploadProgress(newProgress);
                 } catch (error) {
-                    console.error(
-                        `Erro ao fazer upload do arquivo ${i}:`,
-                        error
-                    );
-                    setError(
-                        `Falha ao fazer upload da imagem ${i + 1}`
-                    );
+                    console.error(`Erro ao fazer upload do arquivo ${i}:`, error);
+                    setError(`Falha ao fazer upload da imagem ${i + 1}`);
                     setLoading(false);
                     clearTimeout(keychainTimeout);
                     return;
@@ -196,7 +185,6 @@ export default function CreatePostButton({
                 }
                 return '';
             }
-
 
             let imagesMarkdown = '';
             ipfsResults.forEach((result, index) => {
@@ -227,14 +215,7 @@ export default function CreatePostButton({
             }
 
             const postBody = newContent;
-
-        const tagArray = tags
-            .map(tag => tag.trim().toLowerCase())
-            .filter(tag => tag !== '');
-        if (!tagArray.includes('wilbor')) tagArray.push('wilbor');
-        if (!tagArray.includes('art')) tagArray.push('art');
-
-
+            const tagArray = tags.map(tag => tag.trim().toLowerCase()).filter(tag => tag !== '');
             const jsonMetadata = {
                 tags: tagArray,
                 image: ipfsResults.map((result, index) => {
@@ -253,28 +234,30 @@ export default function CreatePostButton({
                 app: 'wilbor.art/dashboard',
             };
 
-            let postSuccess = false;
+            // Geração do permlink e operações fora das funções de broadcast
             const parentPermlink = initialCommunity || tagArray[0];
+            const permlink = createPermlink(title);
+            const operations: Operation[] = [
+                [
+                    'comment',
+                    {
+                        parent_author: '',
+                        parent_permlink: parentPermlink,
+                        author: username,
+                        permlink,
+                        title,
+                        body: postBody,
+                        json_metadata: JSON.stringify(jsonMetadata),
+                    }
+                ]
+            ];
+
+            let postSuccess = false;
             if (postingKey) {
-                postSuccess = await postToHiveWithKey(
-                    username,
-                    title,
-                    postBody,
-                    tagArray,
-                    jsonMetadata,
-                    postingKey,
-                    parentPermlink
-                );
+                postSuccess = await postToHiveWithKey(operations, postingKey);
             } else {
                 try {
-                    postSuccess = await postToHiveWithKeychain(
-                        username,
-                        title,
-                        postBody,
-                        tagArray,
-                        jsonMetadata,
-                        parentPermlink
-                    );
+                    postSuccess = await postToHiveWithKeychain(operations, username);
                 } catch (keychainError: any) {
                     if (keychainError.isCancelled === true) {
                         console.log('Operação cancelada pelo usuário detectada');
@@ -305,40 +288,21 @@ export default function CreatePostButton({
         } catch (error: any) {
             clearTimeout(keychainTimeout);
             console.error('Erro ao criar post:', error);
-            setError(
-                'Falha ao criar o post: ' + (error.message || 'Erro desconhecido')
-            );
+            setError('Falha ao criar o post: ' + (error.message || 'Erro desconhecido'));
         } finally {
             setLoading(false);
         }
     };
 
+    // Recebe Operation[] já montado
     const postToHiveWithKey = async (
-        author: string,
-        title: string,
-        body: string,
-        tags: string[],
-        jsonMetadata: any,
-        privateKey: string,
-        parentPermlink: string
+        operations: Operation[],
+        privateKey: string
     ) => {
         const client = new Client(['https://api.hive.blog']);
-
         try {
             const key = PrivateKey.fromString(privateKey);
-
-            const permlink = createPermlink(title);
-
-            await client.broadcast.comment({
-                parent_author: '',
-                parent_permlink: parentPermlink,
-                author,
-                permlink,
-                title,
-                body,
-                json_metadata: JSON.stringify(jsonMetadata),
-            }, key);
-
+            await client.broadcast.sendOperations(operations, key);
             return true;
         } catch (error) {
             console.error('Erro ao postar no Hive:', error);
@@ -346,34 +310,22 @@ export default function CreatePostButton({
         }
     };
 
+    // Recebe Operation[] já montado
     const postToHiveWithKeychain = (
-        author: string,
-        title: string,
-        body: string,
-        tags: string[],
-        jsonMetadata: any,
-        parentPermlink: string
+        operations: Operation[],
+        username: string
     ): Promise<boolean> => {
         return new Promise((resolve, reject) => {
             if (typeof window === 'undefined' || !(window as any).hive_keychain) {
                 reject(new Error('Hive Keychain não está instalado'));
                 return;
             }
-
-            const permlink = createPermlink(title);
-
-            (window as any).hive_keychain.requestPost(
-                author,
-                title,
-                body,
-                parentPermlink,
-                '',
-                permlink,
-                JSON.stringify(jsonMetadata),
+            (window as any).hive_keychain.requestBroadcast(
+                username,
+                operations,
                 'Posting',
                 (response: any) => {
                     console.log('Resposta do Hive Keychain:', response);
-
                     if (response.success) {
                         resolve(true);
                     } else {

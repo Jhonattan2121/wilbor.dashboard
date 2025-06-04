@@ -21,7 +21,9 @@ export default function PhotoGridContainer({
   selectedTag: string | null;
   setSelectedTag: (tag: string | null) => void;
 }) {
-  const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
+  const [selectedCommunity, setSelectedCommunity] = useState<string | null>(
+    null,
+  );
   const [expandedPermlinks, setExpandedPermlinks] = useState<string[]>([]);
   const [hasLargeContentMap, setHasLargeContentMap] = 
     useState<Record<string, boolean>>({});
@@ -38,7 +40,16 @@ export default function PhotoGridContainer({
       mainItem: group[0],
     }));
   
+  useEffect(() => {
+    console.log('Expanded permlinks updated:', expandedPermlinks);
+  }, [expandedPermlinks]);
+
+  useEffect(() => {
+    console.log('Has large content map updated:', hasLargeContentMap);
+  }, [hasLargeContentMap]);
+
   const handleTagClick = (tag: string) => {
+    console.log('Tag clicked:', tag);
     setSelectedTag(selectedTag === tag ? null : tag);
     setExpandedPermlinks([]);
 
@@ -52,8 +63,12 @@ export default function PhotoGridContainer({
       window.history.pushState({}, '', url.toString());
     }
   };
-  
+
   const handleContentSizeChange = (permlink: string, isLarge: boolean) => {
+    console.log(
+      'Content size changed for permlink:', permlink,
+      'Is large:', isLarge
+    );
     setHasLargeContentMap(prev => ({ ...prev, [permlink]: isLarge }));
   };
   
