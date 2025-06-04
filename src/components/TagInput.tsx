@@ -161,7 +161,7 @@ export default function TagInput({
       case 'ArrowUp':
         setSelectedOptionIndex(i => {
           if (
-            document.activeElement === inputRef.current &&
+            typeof document !== 'undefined' && document.activeElement === inputRef.current &&
             optionsFiltered.length > 0
           ) {
             return optionsFiltered.length - 1;

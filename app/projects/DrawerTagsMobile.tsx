@@ -21,14 +21,17 @@ export default function DrawerTagsMobile({ tags, selectedTag, setSelectedTag }: 
     }, [searchParams, tags, selectedTag, setSelectedTag]);
 
     useEffect(() => {
-        if (showMobileTags) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
+        if (typeof document !== 'undefined') {
+            if (showMobileTags) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+            return () => {
+                document.body.style.overflow = '';
+            };
         }
-        return () => {
-            document.body.style.overflow = '';
-        };
+        return undefined;
     }, [showMobileTags]);
 
     const handleTagSelection = (tag: string | null) => {

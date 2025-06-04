@@ -29,6 +29,7 @@ export function HiveCommunitiesSelector({
     selectedCommunity,
     setSelectedCommunity,
 }: HiveCommunitiesSelectorProps) {
+    useTextShadowStyle();
     const [userCommunities, setUserCommunities] = useState<HiveCommunity[]>([]);
     const [loading, setLoading] = useState(false);
     const [debugData, setDebugData] = useState<any>(null);
@@ -349,8 +350,14 @@ export function HiveCommunitiesSelector({
     );
 }
 
-// Adiciona estilo global para text-shadow
-const style = document.createElement('style');
-style.textContent =
-    '.text-shadow { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }';
-if (typeof document !== 'undefined') document.head.appendChild(style);
+// Adiciona estilo global para text-shadow apenas no cliente
+function useTextShadowStyle() {
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = '.text-shadow { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }';
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+}

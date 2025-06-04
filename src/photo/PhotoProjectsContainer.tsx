@@ -42,13 +42,15 @@ export default function PhotoGridContainer({
     setSelectedTag(selectedTag === tag ? null : tag);
     setExpandedPermlinks([]);
 
-    const url = new URL(window.location.href);
-    if (selectedTag !== tag) {
-      url.searchParams.set('tag', tag);
-    } else {
-      url.searchParams.delete('tag');
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (selectedTag !== tag) {
+        url.searchParams.set('tag', tag);
+      } else {
+        url.searchParams.delete('tag');
+      }
+      window.history.pushState({}, '', url.toString());
     }
-    window.history.pushState({}, '', url);
   };
   
   const handleContentSizeChange = (permlink: string, isLarge: boolean) => {

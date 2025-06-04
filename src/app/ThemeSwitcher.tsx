@@ -8,7 +8,7 @@ import { BiDesktop, BiMoon, BiSun } from 'react-icons/bi';
 
 export default function ThemeSwitcher () {
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme, forcedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   // useEffect only runs on the client, so now we can safely show the UI
   useEffect(() => {
@@ -16,33 +16,38 @@ export default function ThemeSwitcher () {
 
     // Apply custom styles when dark theme is selected
     const applyCustomDarkTheme = () => {
-      if (theme === 'dark') {
-        document.documentElement.style.setProperty('--tw-bg-opacity', '1');
-        document.documentElement.style.backgroundColor = '#222222';
-        
-        // Apply to body too for full coverage
-        document.body.style.backgroundColor = '#222222';
-      } else {
-        document.documentElement.style.removeProperty('--tw-bg-opacity');
-        document.documentElement.style.backgroundColor = '';
-        document.body.style.backgroundColor = '';
+      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+        if (theme === 'dark') {
+          document.documentElement.style.setProperty('--tw-bg-opacity', '1');
+          document.documentElement.style.backgroundColor = '#222222';
+          // Apply to body too for full coverage
+          document.body.style.backgroundColor = '#222222';
+        } else {
+          document.documentElement.style.removeProperty('--tw-bg-opacity');
+          document.documentElement.style.backgroundColor = '';
+          document.body.style.backgroundColor = '';
+        }
       }
     };
 
     applyCustomDarkTheme();
 
     // Observer theme changes
-    const observer = new MutationObserver(() => {
-      applyCustomDarkTheme();
-    });
-    
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
+    let observer: MutationObserver | null = null;
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      observer = new MutationObserver(() => {
+        applyCustomDarkTheme();
+      });
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class'],
+      });
+    }
 
     return () => {
-      observer.disconnect();
+      if (observer) {
+        observer.disconnect();
+      }
     };
   }, [theme]);
 

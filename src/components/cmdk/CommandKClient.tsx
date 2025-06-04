@@ -167,8 +167,11 @@ export default function CommandKClient({
         setIsOpen?.((open) => !open);
       }
     };
-    document.addEventListener(LISTENER_KEYDOWN, down);
-    return () => document.removeEventListener(LISTENER_KEYDOWN, down);
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      document.addEventListener(LISTENER_KEYDOWN, down);
+      return () => document.removeEventListener(LISTENER_KEYDOWN, down);
+    }
+    return undefined;
   }, [setIsOpen]);
 
   useEffect(() => {

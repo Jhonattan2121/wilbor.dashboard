@@ -1,9 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function useSupportsHover() {
-  const [supportsHover, setSupportsHover] = useState(true);
+  const [supportsHover, setSupportsHover] = useState(() => {
+    const isClient = typeof window !== 'undefined';
+    const hasMatchMedia = isClient && typeof window.matchMedia === 'function';
+    if (hasMatchMedia) {
+      return window.matchMedia('(hover: hover)').matches;
+    }
+    return false;
+  });
 
   useEffect(() => {
+    const isClient = typeof window !== 'undefined';
+    const hasMatchMedia = isClient && typeof window.matchMedia === 'function';
+    if (!hasMatchMedia) {
+      return;
+    }
     const mql = window.matchMedia('(hover: hover)');
     setSupportsHover(mql.matches);
 
@@ -16,4 +28,4 @@ export default function useSupportsHover() {
   }, []);
 
   return supportsHover;
-};
+}

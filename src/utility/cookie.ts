@@ -5,11 +5,14 @@ export const storeCookie = (
   maxAge = 63158400,
   sameSite = 'Lax',
 ) => {
-  document.cookie =
-  `${name}=${value};Path=${path};Max-Age=${maxAge};SameSite=${sameSite}`;
+  if (typeof document !== 'undefined') {
+    document.cookie =
+      `${name}=${value};Path=${path};Max-Age=${maxAge};SameSite=${sameSite}`;
+  }
 };
 
 export const getCookie = (name: string) => {
+  if (typeof document === 'undefined') return undefined;
   const cookie: Record<string, string> = {};
   document.cookie.split(';').forEach(function(el) {
     const split = el.split('=');
@@ -19,5 +22,7 @@ export const getCookie = (name: string) => {
 };
 
 export const deleteCookie = (name: string) => {
-  document.cookie = `${name}=;Max-Age=0`;
+  if (typeof document !== 'undefined') {
+    document.cookie = `${name}=;Max-Age=0`;
+  }
 };

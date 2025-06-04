@@ -4,7 +4,7 @@ export function IconX({ size = 40, className = "" }: { size?: number; className?
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       setIsDark(document.documentElement.classList.contains('dark'));
     }
   }, []);

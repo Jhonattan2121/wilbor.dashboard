@@ -29,7 +29,9 @@ export const downloadFileFromBrowser = async (
   link.href = downloadUrl;
   link.download = fileName;
   document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(downloadUrl);
+  if (typeof document !== 'undefined' && typeof window !== 'undefined') {
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  }
 };

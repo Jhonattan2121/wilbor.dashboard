@@ -39,7 +39,7 @@ const useClickInsideOutside = ({
   }, [onClick, onClickInside, onClickOutside, htmlElements]);
 
   useEffect(() => {
-    if (shouldListenToClicks) {
+    if (shouldListenToClicks && typeof document !== 'undefined') {
       document.addEventListener(MOUSE_DOWN, handleClick);
       return () => { document.removeEventListener(MOUSE_DOWN, handleClick); };
     }
