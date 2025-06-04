@@ -28,7 +28,8 @@ export default function EditPostButton({
     const [showForm, setShowForm] = useState(false);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [tags, setTags] = useState('');
+    const [tags, setTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState('');
     const [files, setFiles] = useState<File[]>([]);
     const [previews, setPreviews] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
@@ -40,10 +41,24 @@ export default function EditPostButton({
     // Token de Gateway do Pinata
     const PINATA_GATEWAY_TOKEN = 'Z787oWC-YVuVKNuRKECMTklkNYMENXXPYROAr7NUSDnVREVJKbMbQQEenpu3KTam';
 
+
+    // Função para resetar o formulário para os valores iniciais
+    const resetForm = () => {
+        setTitle(initialTitle || '');
+        setContent(initialContent || '');
+        setTags(initialTags || []);
+        setTagInput('');
+        setFiles([]);
+        setPreviews(initialImages?.length ? initialImages.map(url => url) : []);
+        setUploadProgress(initialImages?.length ? Array(initialImages.length).fill(100) : []);
+        setError('');
+        setSuccess(false);
+    };
+
     useEffect(() => {
         if (initialTitle) setTitle(initialTitle);
         if (initialContent) setContent(initialContent);
-        if (initialTags?.length) setTags(initialTags.join(', '));
+        if (initialTags?.length) setTags(initialTags);
         if (initialImages?.length) {
             const newPreviews = initialImages.map(url => url);
             setPreviews(newPreviews);
@@ -149,6 +164,12 @@ export default function EditPostButton({
             return;
         }
 
+        // Verificar se há pelo menos uma tag
+        if (tags.length === 0) {
+            setError('Adicione pelo menos uma tag');
+            return;
+        }
+
         setLoading(true);
         setError('');
 
@@ -213,17 +234,11 @@ export default function EditPostButton({
 
             // Preparar as tags
             const tagArray = tags
-                .split(',')
                 .map(tag => tag.trim().toLowerCase())
                 .filter(tag => tag !== '');
-
             // Incluir tags padrão se necessário
-            if (!tagArray.includes('wilbor')) {
-                tagArray.push('wilbor');
-            }
-            if (!tagArray.includes('art')) {
-                tagArray.push('art');
-            }
+            if (!tagArray.includes('wilbor')) tagArray.push('wilbor');
+            if (!tagArray.includes('art')) tagArray.push('art');
 
             // Preparar os metadados
             const jsonMetadata = {
@@ -401,10 +416,12 @@ export default function EditPostButton({
                         className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm"
                         onClick={() => {
                             if (!loading) {
+                                resetForm();
                                 setShowForm(false);
                             } else if (confirm('Deseja cancelar a operação em andamento?')) {
                                 setLoading(false);
                                 setError('');
+                                resetForm();
                                 setShowForm(false);
                             }
                         }}
@@ -421,6 +438,7 @@ export default function EditPostButton({
                                 onClick={() => {
                                     // Se não estiver carregando, fecha o formulário normalmente
                                     if (!loading) {
+                                        resetForm();
                                         setShowForm(false);
                                         return;
                                     }
@@ -428,6 +446,7 @@ export default function EditPostButton({
                                     if (confirm("Deseja cancelar a operação em andamento?")) {
                                         setLoading(false);
                                         setError('');
+                                        resetForm();
                                         setShowForm(false);
                                     }
                                 }}
@@ -472,18 +491,48 @@ export default function EditPostButton({
                                     />
                                 </div>
 
-                                {/* Tags */}
+                                {/* Tags estilo PeakD */}
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Tags (separadas por vírgula)</label>
+                                    <label className="block text-sm font-medium mb-1">Tags</label>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {tags.map((tag, idx) => (
+                                            <span key={tag + idx} className="flex items-center bg-gray-700 text-white rounded-full px-3 py-1 text-xs">
+                                                #{tag}
+                                                <button
+                                                    type="button"
+                                                    className="ml-2 text-gray-300 hover:text-red-400 focus:outline-none"
+                                                    onClick={() => setTags(tags.filter((t, i) => i !== idx))}
+                                                    aria-label={`Remover tag ${tag}`}
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
                                     <input
                                         type="text"
-                                        value={tags}
-                                        onChange={(e) => setTags(e.target.value)}
+                                        value={tagInput}
+                                        onChange={e => setTagInput(e.target.value)}
+                                        onKeyDown={e => {
+                                            if ((e.key === 'Enter' || e.key === ',' || e.key === ' ') && tagInput.trim()) {
+                                                e.preventDefault();
+                                                const newTag = tagInput.trim().toLowerCase().replace(/[^a-z0-9\-]/g, '');
+                                                if (newTag && !tags.includes(newTag) && tags.length < 10 && newTag.length <= 24) {
+                                                    setTags([...tags, newTag]);
+                                                }
+                                                setTagInput('');
+                                            } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
+                                                setTags(tags.slice(0, -1));
+                                            }
+                                        }}
                                         className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                                        placeholder="arte, fotografia, wilbor, etc."
+                                        placeholder="Digite e pressione Enter para adicionar (máx. 10 tags)"
+                                        maxLength={24}
+                                        disabled={tags.length >= 10}
                                     />
                                     <p className="text-xs text-gray-400 mt-1">
-                                        As tags de marca serão adicionadas automaticamente
+                                        Máximo 10 tags. As tags &quot;wilbor&quot; e
+                                        &quot;art&quot; são adicionadas automaticamente.
                                     </p>
                                 </div>
 
@@ -567,6 +616,7 @@ export default function EditPostButton({
                                         onClick={() => {
                                             setLoading(false);
                                             setError('');
+                                            resetForm();
                                             setShowForm(false);
                                         }}
                                         className="px-4 py-2 rounded text-gray-300 hover:bg-gray-700 mr-2"
