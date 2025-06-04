@@ -40,45 +40,44 @@ export default function HiveLogin({ onLogin }: { onLogin: (username: string, key
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Fundo escuro/transparente */}
-      <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm" />
-      {/* Modal de login */}
-      <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-8 w-full max-w-sm flex flex-col gap-6 items-center border border-gray-700">
-        <div className="flex flex-col gap-2 w-full">
-          <label className="text-sm">Usuário Hive</label>
-          <input
-            className="px-2 py-1 rounded bg-gray-800 text-white border border-gray-600 w-full"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            disabled={loading}
-          />
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+      <div className="relative z-10 bg-neutral-900 rounded-lg p-6 w-full max-w-xs flex flex-col gap-4 items-center">
+        <h2 className="text-lg font-semibold text-white mb-2">Entrar no Dashboard</h2>
+        <input
+          className="px-3 py-2 rounded bg-neutral-800 text-white border border-neutral-700 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          placeholder="Usuário Hive"
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+          disabled={loading}
+        />
         <button
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-60 w-full"
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full font-medium transition disabled:opacity-60"
           onClick={handleKeychainLogin}
           disabled={loading}
         >
           Login com Hive Keychain
         </button>
-        <div className="flex flex-col gap-2 w-full">
-          <label className="text-sm">Ou entre com sua chave privada (posting)</label>
-          <input
-            className="px-2 py-1 rounded bg-gray-800 text-white border border-gray-600 w-full"
-            type="password"
-            value={privateKey}
-            onChange={e => setPrivateKey(e.target.value)}
-            disabled={loading}
-          />
-          <button
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded disabled:opacity-60 w-full"
-            onClick={handlePrivateKeyLogin}
-            disabled={loading}
-          >
-            Login com chave privada
-          </button>
+        <div className="w-full flex items-center gap-2 my-2">
+          <div className="flex-1 h-px bg-neutral-700" />
+          <span className="text-xs text-neutral-400">ou</span>
+          <div className="flex-1 h-px bg-neutral-700" />
         </div>
-        {error && <div className="text-red-500 text-sm mt-2 w-full text-center">{error}</div>}
+        <input
+          className="px-3 py-2 rounded bg-neutral-800 text-white border border-neutral-700 w-full focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+          type="password"
+          placeholder="Chave privada (posting)"
+          value={privateKey}
+          onChange={e => setPrivateKey(e.target.value)}
+          disabled={loading}
+        />
+        <button
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-full font-medium transition disabled:opacity-60"
+          onClick={handlePrivateKeyLogin}
+          disabled={loading}
+        >
+          Login com chave privada
+        </button>
+        {error && <div className="text-red-400 text-xs mt-2 w-full text-center">{error}</div>}
       </div>
     </div>
   );
