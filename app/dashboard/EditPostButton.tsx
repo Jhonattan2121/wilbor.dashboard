@@ -266,7 +266,6 @@ export default function EditPostButton({
                         console.log('Operação cancelada pelo usuário detectada');
                         setError('Operação cancelada pelo usuário');
                         setLoading(false);
-                        setShowForm(false);
                         clearTimeout(keychainTimeout);
                         return;
                     }
