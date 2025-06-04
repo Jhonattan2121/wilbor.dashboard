@@ -78,11 +78,13 @@ export default function PhotoGridContainer({
         'max-w-[2000px] mx-auto px-4 sm:px-6 md:px-8',
         header ? 'mb-5 sm:mb-5' : 'mb-2',
       )}>
-        <HiveCommunitiesSelector
-          username={username ?? null}
-          selectedCommunity={selectedCommunity}
-          setSelectedCommunity={setSelectedCommunity}
-        />
+        {username && (
+          <HiveCommunitiesSelector
+            username={username}
+            selectedCommunity={selectedCommunity}
+            setSelectedCommunity={setSelectedCommunity}
+          />
+        )}
         {header}
 
         <div 

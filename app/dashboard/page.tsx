@@ -1,29 +1,176 @@
 
-"use client";
 
+import { getPostsByAuthor } from '@/lib/hive/hive-client';
+import { MarkdownRenderer } from '@/lib/markdown/MarkdownRenderer';
+import { Photo } from '@/photo/components/types';
 import PhotosEmptyState from '@/photo/PhotosEmptyState';
-import { useEffect, useState } from 'react';
+import { Tags } from '@/tag';
+import { Discussion } from '@hiveio/dhive';
 import DashboardProjectsClient from './DashboardProjectsClient';
 
-export default function DashboardPage() {
-  const [posts, setPosts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const getMediaType = (url: string, mediaType?: string) => {
+  if (url.includes('ipfs.skatehive.app/ipfs/')) {
+    return 'iframe';
+  }
+  const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/);
+  if (isVideo) return 'video';
+  if (url.includes('hackmd.io/_uploads/')) return 'photo';
+  if (url.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/)) return 'photo';
+  if (url.includes('ipfs.skatehive.app/') || url.includes('.blob.vercel-storage.com/') || url.includes('files.peakd.com/')) {
+    return 'photo';
+  }
+  return 'photo';
+};
+
+async function getHivePosts(username: string) {
+  try {
+    const posts = await retryOperation(async () => {
+      return await getPostsByAuthor(username);
+    });
+
+    const formattedPosts = posts.flatMap(post => {
+      // Check if the post has the "hidden" tag
+      try {
+        const metadata = JSON.parse(post.json_metadata || '{}');
+        const postTags = metadata.tags || [];
+        if (postTags.includes('hidden')) {
+          return [];
+        }
+      } catch (e) {}
+
+      const mediaItems = MarkdownRenderer.extractMediaFromHive(post);
+      return mediaItems.map((media) => {
+        let postTags: string[] = [];
+        try {
+          const metadata = JSON.parse(post.json_metadata || '{}');
+          postTags = metadata.tags || [];
+          if (post.category && !postTags.includes(post.category)) {
+            postTags.unshift(post.category);
+          }
+        } catch (e) {
+          postTags = post.category ? [post.category] : [];
+        }
+
+        const extractIpfsHash = (url: string): string => {
+          if (url.includes('ipfs.skatehive.app/ipfs/')) {
+            const match = url.match(/ipfs\/([a-zA-Z0-9]+)/);
+            return match ? match[1] : '';
+          }
+          return '';
+        };
+
+        return {
+          id: `${post.author}/${post.permlink}/${extractIpfsHash(media.url)}`,
+          title: post.title,
+          url: `/p/${post.author}/${post.permlink}/${extractIpfsHash(media.url)}`,
+          type: media.type === 'iframe' || media.url.includes('ipfs.skatehive.app/ipfs/')
+            ? 'iframe'
+            : getMediaType(media.url),
+          src: media.url,
+          iframeHtml: media.url.includes('ipfs.skatehive.app/ipfs/')
+            ? `<iframe src="${media.url}?autoplay=1&controls=0&muted=1&loop=1" className="w-full h-full" style="aspect-ratio: 1/1;" allow="autoplay" frameborder="0"></iframe>`
+            : undefined,
+          videoUrl: getMediaType(media.url, media.type) === 'video' ? media.url : undefined,
+          blurData: '',
+          takenAt: new Date(),
+          takenAtNaive: new Date().toISOString(),
+          takenAtNaiveFormatted: new Date().toLocaleDateString(),
+          updatedAt: new Date(post.last_update),
+          createdAt: new Date(post.created),
+          aspectRatio: 1.5,
+          priority: false,
+          tags: Array.isArray(JSON.parse(post.json_metadata).tags)
+            ? JSON.parse(post.json_metadata).tags
+            : [],
+          cameraKey: 'hive',
+          camera: null,
+          simulation: null,
+          width: 0,
+          height: 0,
+          extension: media.url.split('.').pop() || '',
+          hiveMetadata: {
+            author: post.author,
+            permlink: post.permlink,
+            body: post.body
+          },
+          author: post.author,
+          permlink: post.permlink,
+        } as Photo;
+      });
+    });
+
+    // Remove duplicates using a more specific unique key
+    const uniquePosts = formattedPosts.reduce((acc, post) => {
+      const key = `${post.author}-${post.permlink}-${post.src}`;
+      const existingPost = acc.find(p => `${p.author}-${p.permlink}-${p.src}` === key);
+      if (!existingPost) {
+        acc.push(post);
+      }
+      return acc;
+    }, [] as Photo[]);
+
+    return {
+      formattedPosts: uniquePosts,
+      originalPosts: posts
+    };
+  } catch (error) {
+    return {
+      formattedPosts: [],
+      originalPosts: []
+    };
+  }
+}
+
+async function retryOperation<T>(operation: () => Promise<T>, maxRetries = 3): Promise<T> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('All attempts failed');
+}
+
+function extractAndCountTags(posts: Discussion[], paginatedPosts: Photo[]): Tags {
+  const tagCount = new Map<string, number>();
+  const currentPagePermlinks = new Set(paginatedPosts.map(post => post.permlink));
+  const currentPagePosts = posts.filter(post => currentPagePermlinks.has(post.permlink));
+  currentPagePosts.forEach(post => {
+    try {
+      const metadata = JSON.parse(post.json_metadata || '{}');
+      const postTags = metadata.tags || [];
+      if (Array.isArray(postTags)) {
+        postTags.forEach(tag => {
+          if (typeof tag === 'string') {
+            tagCount.set(tag, (tagCount.get(tag) || 0) + 1);
+          }
+        });
+      }
+    } catch (e) {}
+  });
+  return Array.from(tagCount.entries())
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export default async function DashboardPage() {
   const username = process.env.NEXT_PUBLIC_HIVE_USERNAME;
 
-  useEffect(() => {
-    async function fetchPosts() {
-      if (!username) return;
-      const res = await fetch('/api/hive-posts?username=' + encodeURIComponent(username));
-      if (res.ok) {
-        const data = await res.json();
-        setPosts(data.posts || []);
-      }
-      setLoading(false);
-    }
-    fetchPosts();
-  }, [username]);
-
   if (!username) return <PhotosEmptyState />;
-  if (loading) return <div className="w-full h-screen flex items-center justify-center bg-black/70"><span className="text-white text-sm opacity-60">Carregando...</span></div>;
-  return <DashboardProjectsClient posts={posts} photosCount={posts.length} cameras={[]} simulations={[]} />;
+
+  const { formattedPosts, originalPosts } = await getHivePosts(username);
+  const posts = formattedPosts.map(post => {
+    return {
+      ...post,
+      type: post.src?.includes('ipfs.skatehive.app/ipfs/')
+        ? 'iframe'
+        : post.type
+    } as Photo;
+  });
+  const postTags = extractAndCountTags(originalPosts, posts);
+  const photosCount = formattedPosts.length;
+  return <DashboardProjectsClient posts={posts} photosCount={photosCount} cameras={[]} simulations={[]} />;
 }
