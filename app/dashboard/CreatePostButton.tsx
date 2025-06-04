@@ -7,9 +7,16 @@ import { useEffect, useState } from 'react';
 interface CreatePostButtonProps {
     username: string;
     postingKey?: string;
+    initialCommunity?: string;
+    onPostSuccess?: () => void;
 }
 
-export default function CreatePostButton({ username, postingKey }: CreatePostButtonProps) {
+export default function CreatePostButton({ 
+    username, 
+    postingKey, 
+    initialCommunity, 
+    onPostSuccess 
+}: CreatePostButtonProps) {
     const [showForm, setShowForm] = useState(false);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -239,6 +246,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
             };
 
             let postSuccess = false;
+            const parentPermlink = initialCommunity || tagArray[0];
             if (postingKey) {
                 postSuccess = await postToHiveWithKey(
                     username,
@@ -246,7 +254,8 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                     postBody,
                     tagArray,
                     jsonMetadata,
-                    postingKey
+                    postingKey,
+                    parentPermlink
                 );
             } else {
                 try {
@@ -255,7 +264,8 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                         title,
                         postBody,
                         tagArray,
-                        jsonMetadata
+                        jsonMetadata,
+                        parentPermlink
                     );
                 } catch (keychainError: any) {
                     if (keychainError.isCancelled === true) {
@@ -287,6 +297,9 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                 setPreviews([]);
                 setUploadProgress([]);
                 setSuccess(false);
+                if (onPostSuccess) {
+                    onPostSuccess();
+                }
             }, 2000);
         } catch (error: any) {
             clearTimeout(keychainTimeout);
@@ -306,6 +319,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
         tags: string[],
         jsonMetadata: any,
         privateKey: string,
+        parentPermlink: string
     ) => {
         const client = new Client(['https://api.hive.blog']);
 
@@ -316,7 +330,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
 
             await client.broadcast.comment({
                 parent_author: '',
-                parent_permlink: tags[0],
+                parent_permlink: parentPermlink,
                 author,
                 permlink,
                 title,
@@ -337,6 +351,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
         body: string,
         tags: string[],
         jsonMetadata: any,
+        parentPermlink: string
     ): Promise<boolean> => {
         return new Promise((resolve, reject) => {
             if (typeof window === 'undefined' || !(window as any).hive_keychain) {
@@ -350,7 +365,7 @@ export default function CreatePostButton({ username, postingKey }: CreatePostBut
                 author,
                 title,
                 body,
-                tags[0],
+                parentPermlink,
                 '',
                 permlink,
                 JSON.stringify(jsonMetadata),

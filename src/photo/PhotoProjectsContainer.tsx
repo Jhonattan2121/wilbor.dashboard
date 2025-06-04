@@ -4,6 +4,7 @@ import { groupMediaByPermlink } from '@/components/MediaUtils';
 import '@/styles/slider-custom.css';
 import { clsx } from 'clsx/lite';
 import { useEffect, useRef, useState } from 'react';
+import { HiveCommunitiesSelector } from './components/HiveCommunitiesSelector';
 import { MediaItem } from './components/MediaItem';
 import { PhotoGridContainerProps } from './components/types';
 
@@ -20,6 +21,7 @@ export default function PhotoGridContainer({
   selectedTag: string | null;
   setSelectedTag: (tag: string | null) => void;
 }) {
+  const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
   const [expandedPermlinks, setExpandedPermlinks] = useState<string[]>([]);
   const [hasLargeContentMap, setHasLargeContentMap] = 
     useState<Record<string, boolean>>({});
@@ -70,12 +72,15 @@ export default function PhotoGridContainer({
   
   return (
     <div className="w-full">
-      <div 
-        className={clsx(
-          'max-w-[2000px] mx-auto px-4 sm:px-6 md:px-8',
-          header ? 'mb-5 sm:mb-5' : 'mb-2',
-        )}
-      >
+      <div className={clsx(
+        'max-w-[2000px] mx-auto px-4 sm:px-6 md:px-8',
+        header ? 'mb-5 sm:mb-5' : 'mb-2',
+      )}>
+        <HiveCommunitiesSelector
+          username={username ?? null}
+          selectedCommunity={selectedCommunity}
+          setSelectedCommunity={setSelectedCommunity}
+        />
         {header}
 
         <div 
