@@ -7,10 +7,10 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import EditPostButton from '../../../app/dashboard/EditPostButton';
+import { extractImagesFromMarkdown } from '../utils/markdownUtils';
 import { ImageGallery } from './ImageGallery';
 import { Media } from './types';
 import { VideoWithFullPoster } from './VideoWithFullPoster';
-import { extractImagesFromMarkdown } from '../utils/markdownUtils';
 
 const SKATEHIVE_URL = 'ipfs.skatehive.app/ipfs';
 
@@ -124,17 +124,21 @@ export function MediaItem({
   }, [mainItem.hiveMetadata]);
   
   useEffect(() => {
+    let isLarge = false;
+    
     if (isExpanded && mainItem.hiveMetadata?.body) {
       const imageCount = extractImagesFromMarkdown(mainItem.hiveMetadata.body).length;
       const textLength = mainItem.hiveMetadata.body.length;
-      const hasComplexContent = imageCount > 1 || textLength > 300 || (imageCount > 0 && textLength > 200);
-      onContentSizeChange(hasComplexContent);
+      isLarge = imageCount > 1 || textLength > 300 || (imageCount > 0 && textLength > 200);
     } else if (isExpanded && mainItem.src?.includes(SKATEHIVE_URL)) {
-      onContentSizeChange(true);
-    } else {
-      onContentSizeChange(false);
+      isLarge = true;
     }
-  }, [isExpanded, mainItem.hiveMetadata?.body, mainItem.src, onContentSizeChange]);
+    
+    // Evitar chamadas desnecessárias se o valor não mudar
+    if (hasLargeContent !== isLarge) {
+      onContentSizeChange(isLarge);
+    }
+  }, [isExpanded, mainItem.hiveMetadata?.body, mainItem.src, hasLargeContent]);
   
   useEffect(() => {
     setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640);
