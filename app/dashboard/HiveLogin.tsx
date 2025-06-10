@@ -2,7 +2,7 @@
 import { useState } from 'react';
 
 export default function HiveLogin({ onLogin }: { onLogin: (username: string, keyType: 'keychain' | 'private', key?: string) => void }) {
-  const [username, setUsername] = useState('wilbor.art');
+  const [username, setUsername] = useState('wilbor');
   const [privateKey, setPrivateKey] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -13,7 +13,7 @@ export default function HiveLogin({ onLogin }: { onLogin: (username: string, key
     if (typeof window !== 'undefined' && (window as any).hive_keychain) {
       (window as any).hive_keychain.requestSignBuffer(
         username,
-        'login-wilbor-art',
+        'login-wilbor',
         'Posting',
         (res: any) => {
           setLoading(false);
