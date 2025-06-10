@@ -121,6 +121,17 @@ export default function CreatePostButton({
 
         URL.revokeObjectURL(newPreviews[index]);
 
+        // Remover a imagem do conteúdo do post, procurando a URL dela
+        if (newFiles[index]) {
+            const urlToRemove = previews[index];
+            setContent(prevContent => {
+                const previewUrl = urlToRemove;
+                const ipfsPattern = new RegExp(`!\\[image\\]\\(https://lime-useful-snake-714\\.mypinata\\.cloud/ipfs/[^\\)]*\\)\\n?`, 'g');
+                const blobPattern = new RegExp(`!\\[image\\]\\(${previewUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)\\n?`, 'g');
+                return prevContent.replace(ipfsPattern, '').replace(blobPattern, '').trim();
+            });
+        }
+
         newFiles.splice(index, 1);
         newPreviews.splice(index, 1);
         newProgress.splice(index, 1);
@@ -446,7 +457,48 @@ export default function CreatePostButton({
                                     <label className="block text-sm font-medium mb-1">Conteúdo (opcional)</label>
                                     <textarea
                                         value={content}
-                                        onChange={(e) => setContent(e.target.value)}
+                                        onChange={(e) => {
+                                            const newContent = e.target.value;
+                                            setContent(newContent);
+                                            
+                                            // Se o conteúdo for apagado completamente, limpar todas as imagens
+                                            if (newContent.trim() === '') {
+                                                previews.forEach(preview => {
+                                                    // Apenas revogar as URLs blob, não as URLs do IPFS
+                                                    if (preview.startsWith('blob:')) {
+                                                        URL.revokeObjectURL(preview);
+                                                    }
+                                                });
+                                                setFiles([]);
+                                                setPreviews([]);
+                                                setUploadProgress([]);
+                                            } else {
+                                                // Verificar se houve uma restauração com Ctrl+Z ou cola
+                                                // Extrair todas as URLs de imagens do conteúdo
+                                                const ipfsUrlMatches = newContent.match(/!\[image\]\(https:\/\/lime-useful-snake-714\.mypinata\.cloud\/ipfs\/[^)]*\)/g) || [];
+                                                
+                                                // Se houver URLs no texto, mas poucas ou nenhuma imagem no preview, sincronizar
+                                                if (ipfsUrlMatches.length > 0 && ipfsUrlMatches.length !== previews.length) {
+                                                    console.log('Restaurando imagens do conteúdo', ipfsUrlMatches.length);
+                                                    
+                                                    // Extrair as URLs reais das imagens do texto
+                                                    const extractedUrls = ipfsUrlMatches.map(match => {
+                                                        const urlMatch = match.match(/\(([^)]+)\)/);
+                                                        return urlMatch ? urlMatch[1] : '';
+                                                    }).filter(url => url !== '');
+                                                    
+                                                    // Definir todos como 100% concluídos
+                                                    const placeholderProgress = extractedUrls.map(() => 100);
+                                                    
+                                                    // Criar arquivos vazios como marcadores (não serão enviados)
+                                                    const placeholderFiles = extractedUrls.map(() => new File([], 'placeholder'));
+                                                    
+                                                    setFiles(placeholderFiles);
+                                                    setPreviews(extractedUrls);
+                                                    setUploadProgress(placeholderProgress);
+                                                }
+                                            }
+                                        }}
                                         className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white min-h-[100px]"
                                         placeholder="Digite algum conteúdo para o seu post (suporta markdown)"
                                     />
