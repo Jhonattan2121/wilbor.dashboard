@@ -37,6 +37,7 @@ export default function EditPostButton({
   const [success, setSuccess] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [loadingPost, setLoadingPost] = useState(false);
+  const [thumbnailIndex, setThumbnailIndex] = useState<number>(0);
 
   // Token de Gateway do Pinata
   const PINATA_GATEWAY_TOKEN =
@@ -115,10 +116,12 @@ export default function EditPostButton({
     );
     setError("");
     setSuccess(false);
+    // Sempre reiniciar com a primeira imagem como thumbnail
+    setThumbnailIndex(0);
     
     // Debug para verificar valores iniciais das tags
     console.log("Reset do formulário feito, tags inicializadas:", initialTags || []);
-  }, [initialTitle, initialContent, initialTags, initialImages]);
+  }, [initialTitle, initialContent, initialTags, initialImages, setThumbnailIndex]);
 
   // Garantir que os estados sejam atualizados quando o modal é aberto
   useEffect(() => {
@@ -328,15 +331,28 @@ export default function EditPostButton({
         .filter((tag) => tag !== "");
     
       // Preparar os metadados
+      // Reordenar as imagens para colocar a thumbnail primeiro
+      const allImages = [
+        ...initialImages.filter((url) => previews.includes(url)),
+        ...ipfsResults.map((result, index) => {
+          const fileName = newFiles[index]?.name || "";
+          return getIpfsGatewayUrl(result.IpfsHash, fileName);
+        }),
+      ];
+      
+      // Se o índice da thumbnail for válido, coloca a imagem selecionada como a primeira
+      const orderedImages = [...allImages];
+      if (thumbnailIndex >= 0 && thumbnailIndex < allImages.length) {
+        // Remove a thumbnail da lista original
+        const thumbnail = orderedImages[thumbnailIndex];
+        orderedImages.splice(thumbnailIndex, 1);
+        // Insere a thumbnail no início do array
+        orderedImages.unshift(thumbnail);
+      }
+      
       const jsonMetadata = {
         tags: tagArray,
-        image: [
-          ...initialImages.filter((url) => previews.includes(url)),
-          ...ipfsResults.map((result, index) => {
-            const fileName = newFiles[index]?.name || "";
-            return getIpfsGatewayUrl(result.IpfsHash, fileName);
-          }),
-        ],
+        image: orderedImages,
         app: "wilbor.art/dashboard",
       };
 
@@ -972,47 +988,74 @@ export default function EditPostButton({
 
                 {/* Preview das imagens */}
                 {previews.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {previews.map((preview, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={preview}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg"
-                        />
-                        {uploadProgress[index] > 0 &&
-                          uploadProgress[index] < 100 && (
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                              <div className="h-2 w-3/4 bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-blue-500"
-                                  style={{ width: `${uploadProgress[index]}%` }}
-                                ></div>
-                              </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-gray-300">Imagens do post</label>
+                      <p className="text-xs text-gray-400">Clique na imagem para defini-la como thumbnail</p>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {previews.map((preview, index) => (
+                        <div 
+                          key={index} 
+                          className={`relative group cursor-pointer border-2 ${thumbnailIndex === index ? 'border-green-500' : 'border-transparent'} rounded-lg`}
+                          onClick={() => setThumbnailIndex(index)}
+                        >
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                          {thumbnailIndex === index && (
+                            <div className="absolute top-2 left-2 bg-green-600 text-white rounded-full p-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                              </svg>
                             </div>
                           )}
-                        <button
-                          type="button"
-                          className="absolute top-1 right-1 bg-red-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeFile(index)}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                          {uploadProgress[index] > 0 &&
+                            uploadProgress[index] < 100 && (
+                              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                <div className="h-2 w-3/4 bg-gray-700 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-blue-500"
+                                    style={{ width: `${uploadProgress[index]}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            )}
+                          <button
+                            type="button"
+                            className="absolute top-1 right-1 bg-red-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Evita que o clique para remover também selecione a imagem
+                              removeFile(index);
+                              // Se a thumbnail for removida, redefine para a primeira imagem
+                              if (thumbnailIndex === index) {
+                                setThumbnailIndex(0);
+                              } else if (thumbnailIndex > index) {
+                                // Ajusta o índice se uma imagem anterior for removida
+                                setThumbnailIndex(thumbnailIndex - 1);
+                              }
+                            }}
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 

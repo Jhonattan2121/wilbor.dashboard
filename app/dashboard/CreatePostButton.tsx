@@ -28,6 +28,7 @@ export default function CreatePostButton({
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number[]>([]);
+    const [thumbnailIndex, setThumbnailIndex] = useState<number>(0);
     // Token de Gateway do Pinata
     const PINATA_GATEWAY_TOKEN = 'Z787oWC-YVuVKNuRKECMTklkNYMENXXPYROAr7NUSDnVREVJKbMbQQEenpu3KTam';
 
@@ -43,6 +44,7 @@ export default function CreatePostButton({
         setUploadProgress([]);
         setError('');
         setSuccess(false);
+        setThumbnailIndex(0); // Redefinir o índice do thumbnail
     };
 
     useEffect(() => {
@@ -227,21 +229,34 @@ export default function CreatePostButton({
 
             const postBody = newContent;
             const tagArray = tags.map(tag => tag.trim().toLowerCase()).filter(tag => tag !== '');
+            // Mapear todas as imagens para URLs
+            const allImages = ipfsResults.map((result, index) => {
+                const file = files[index];
+                const ext = getFileExtension(file);
+                let fileName = '';
+                if (file.name && ext) {
+                    fileName = file.name;
+                } else if (ext) {
+                    fileName = `image-${index + 1}.${ext}`;
+                } else {
+                    fileName = `image-${index + 1}`;
+                }
+                return getIpfsPublicUrl(result.IpfsHash, fileName);
+            });
+            
+            // Reordenar as imagens para colocar a thumbnail selecionada primeiro
+            const orderedImages = [...allImages];
+            if (thumbnailIndex >= 0 && thumbnailIndex < allImages.length) {
+                // Remove a thumbnail da posição original
+                const thumbnail = orderedImages[thumbnailIndex];
+                orderedImages.splice(thumbnailIndex, 1);
+                // Insere a thumbnail no início do array
+                orderedImages.unshift(thumbnail);
+            }
+            
             const jsonMetadata = {
                 tags: tagArray,
-                image: ipfsResults.map((result, index) => {
-                    const file = files[index];
-                    const ext = getFileExtension(file);
-                    let fileName = '';
-                    if (file.name && ext) {
-                        fileName = file.name;
-                    } else if (ext) {
-                        fileName = `image-${index + 1}.${ext}`;
-                    } else {
-                        fileName = `image-${index + 1}`;
-                    }
-                    return getIpfsPublicUrl(result.IpfsHash, fileName);
-                }),
+                image: orderedImages,
                 app: 'wilbor.art/dashboard',
             };
 
@@ -455,7 +470,7 @@ export default function CreatePostButton({
 
                                 <div>
                                     <div className="flex justify-between items-center">
-                                        <label className="block text-sm font-medium mb-1">Conteúdo (opcional)</label>
+                                        <label className="block text-sm font-medium mb-1">Conteúdo</label>
                                         <label htmlFor="image-upload-btn" className="flex items-center text-xs text-blue-500 hover:text-blue-400 cursor-pointer">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -555,7 +570,7 @@ export default function CreatePostButton({
                                             }
                                         }}
                                         className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                                        placeholder="Digite e pressione Enter para adicionar (máx. 10 tags)"
+                                        placeholder="Digite e pressione Enter para adicionar"
                                         maxLength={24}
                                         disabled={tags.length >= 10}
                                     />
@@ -563,35 +578,62 @@ export default function CreatePostButton({
                                 </div>
 
                                 {previews.length > 0 && (
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        {previews.map((preview, index) => (
-                                            <div key={index} className="relative group">
-                                                <img
-                                                    src={preview}
-                                                    alt={`Preview ${index + 1}`}
-                                                    className="w-full h-32 object-cover rounded-lg"
-                                                />
-                                                {uploadProgress[index] > 0 && uploadProgress[index] < 100 && (
-                                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                                        <div className="h-2 w-3/4 bg-gray-700 rounded-full overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-blue-500"
-                                                                style={{ width: `${uploadProgress[index]}%` }}
-                                                            ></div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    className="absolute top-1 right-1 bg-red-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    onClick={() => removeFile(index)}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="text-sm font-medium text-gray-300">Imagens do post</label>
+                                            <p className="text-xs text-gray-400">Clique na imagem para defini-la como thumbnail</p>
+                                        </div>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                            {previews.map((preview, index) => (
+                                                <div 
+                                                    key={index} 
+                                                    className={`relative group cursor-pointer border-2 ${thumbnailIndex === index ? 'border-green-500' : 'border-transparent'} rounded-lg`}
+                                                    onClick={() => setThumbnailIndex(index)}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        ))}
+                                                    <img
+                                                        src={preview}
+                                                        alt={`Preview ${index + 1}`}
+                                                        className="w-full h-32 object-cover rounded-lg"
+                                                    />
+                                                    {thumbnailIndex === index && (
+                                                        <div className="absolute top-2 left-2 bg-green-600 text-white rounded-full p-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                    {uploadProgress[index] > 0 && uploadProgress[index] < 100 && (
+                                                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                                            <div className="h-2 w-3/4 bg-gray-700 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-blue-500"
+                                                                    style={{ width: `${uploadProgress[index]}%` }}
+                                                                ></div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        className="absolute top-1 right-1 bg-red-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // Evita que o clique para remover também selecione a imagem
+                                                            removeFile(index);
+                                                            // Se a thumbnail for removida, redefine para a primeira imagem
+                                                            if (thumbnailIndex === index) {
+                                                                setThumbnailIndex(0);
+                                                            } else if (thumbnailIndex > index) {
+                                                                // Ajusta o índice se uma imagem anterior for removida
+                                                                setThumbnailIndex(thumbnailIndex - 1);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
