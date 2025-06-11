@@ -188,8 +188,44 @@ export default function EditPostButton({
     const newFiles = [...files];
     const newPreviews = [...previews];
     const newProgress = [...uploadProgress];
+    
     // Revogar URL de objeto para evitar vazamento de memória
     URL.revokeObjectURL(newPreviews[index]);
+
+    // Remover a imagem do conteúdo do post, procurando a URL dela
+    if (newPreviews[index]) {
+      const urlToRemove = newPreviews[index];
+      setContent(prevContent => {
+        // Regex para encontrar links de imagem no formato Markdown
+        const ipfsPattern = new RegExp(`!\\[image\\]\\(https://lime-useful-snake-714\\.mypinata\\.cloud/ipfs/[^\\)]*\\)\\n?`, 'g');
+        const ipfsPublicPattern = new RegExp(`!\\[image\\]\\(https://ipfs\\.io/ipfs/[^\\)]*\\)\\n?`, 'g');
+        const blobPattern = urlToRemove.startsWith('blob:') 
+          ? new RegExp(`!\\[image\\]\\(${urlToRemove.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)\\n?`, 'g')
+          : null;
+        
+        // Para URLs do IPFS, tentamos extrair o hash e procurar por ele
+        let ipfsHash = '';
+        if (urlToRemove.includes('/ipfs/')) {
+          const parts = urlToRemove.split('/ipfs/');
+          if (parts.length > 1) {
+            ipfsHash = parts[1].split('?')[0].split('/')[0];
+            if (ipfsHash) {
+              const specificIpfsPattern = new RegExp(`!\\[image\\]\\(.*${ipfsHash}[^\\)]*\\)\\n?`, 'g');
+              return prevContent.replace(specificIpfsPattern, '').trim();
+            }
+          }
+        }
+        
+        // Tenta remover usando os padrões gerais
+        let cleanedContent = prevContent;
+        if (blobPattern) {
+          cleanedContent = cleanedContent.replace(blobPattern, '');
+        }
+        
+        return cleanedContent.replace(ipfsPattern, '').replace(ipfsPublicPattern, '').trim();
+      });
+    }
+
     newFiles.splice(index, 1);
     newPreviews.splice(index, 1);
     newProgress.splice(index, 1);
@@ -661,12 +697,212 @@ export default function EditPostButton({
 
                 {/* Conteúdo */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Conteúdo
-                  </label>
+                  <div className="flex justify-between items-center">
+                    <label className="block text-sm font-medium mb-1">
+                      Conteúdo
+                    </label>
+                    <label htmlFor="image-upload-btn" className="flex items-center text-xs text-blue-500 hover:text-blue-400 cursor-pointer">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Adicionar imagens
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="image-upload-btn"
+                    />
+                  </div>
                   <textarea
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    onChange={(e) => {
+                      const newContent = e.target.value;
+                      setContent(newContent);
+                      
+                      // Se o conteúdo for apagado completamente, limpar todas as imagens
+                      if (newContent.trim() === '') {
+                        previews.forEach(preview => {
+                          // Apenas revogar as URLs blob, não as URLs do IPFS
+                          if (preview.startsWith('blob:')) {
+                            URL.revokeObjectURL(preview);
+                          }
+                        });
+                        setFiles([]);
+                        setPreviews([]);
+                        setUploadProgress([]);
+                      } else {
+                        // Verificar se imagens foram deletadas manualmente do conteúdo
+                        const currentImagePatterns = [
+                          /!\[image\]\(https:\/\/lime-useful-snake-714\.mypinata\.cloud\/ipfs\/([^)]*)\)/g,
+                          /!\[image\]\(https:\/\/ipfs\.io\/ipfs\/([^)]*)\)/g,
+                          /!\[(.*?)\]\(https:\/\/files\.peakd\.com\/file\/([^)]*)\)/g,
+                          /!\[.*?\]\(https:\/\/files\.peakd\.com\/file\/peakd-hive\/([^)]*)\)/g
+                        ];
+                        
+                        // Encontrar todas as referências de imagens no texto
+                        let allMatches: RegExpMatchArray[] = [];
+                        let allHashes: string[] = [];
+                        
+                        currentImagePatterns.forEach(pattern => {
+                          const matches = Array.from(newContent.matchAll(pattern));
+                          allMatches = [...allMatches, ...matches];
+                          
+                          // Extrair os hashes dos links IPFS
+                          const hashes = matches.map(match => {
+                            const url = match[0];
+                            const hashMatch = url.match(/ipfs\/([a-zA-Z0-9]+)/);
+                            return hashMatch ? hashMatch[1] : '';
+                          }).filter(Boolean) as string[];
+                          
+                          allHashes = [...allHashes, ...hashes];
+                        });
+                        
+                        // Adicionar também URLs blob do conteúdo
+                        const blobMatches = newContent.match(/!\[image\]\(blob:[^)]*\)/g) || [];
+                        const blobUrls = blobMatches.map(match => {
+                          const urlMatch = match.match(/\((blob:[^)]+)\)/);
+                          return urlMatch ? urlMatch[1] : '';
+                        }).filter(Boolean);
+                        
+                        // Verificar se alguma imagem nos previews não está mais no conteúdo
+                        if (previews.length > 0) {
+                          const newPreviews = [...previews];
+                          const newFiles = [...files];
+                          const newProgress = [...uploadProgress];
+                          let changed = false;
+                          
+                          // Para cada preview, verificar se ainda está referenciado no conteúdo
+                          for (let i = newPreviews.length - 1; i >= 0; i--) {
+                            const preview = newPreviews[i];
+                            
+                            // Se for uma URL blob, verificar se ainda está no conteúdo
+                            if (preview.startsWith('blob:')) {
+                              if (!blobUrls.includes(preview)) {
+                                // Remover a pré-visualização que não está mais no texto
+                                URL.revokeObjectURL(preview);
+                                newPreviews.splice(i, 1);
+                                newFiles.splice(i, 1);
+                                newProgress.splice(i, 1);
+                                changed = true;
+                              }
+                            } 
+                            // Se for um link IPFS, verificar pelo hash
+                            else if (preview.includes('/ipfs/')) {
+                              const parts = preview.split('/ipfs/');
+                              if (parts.length > 1) {
+                                const hash = parts[1].split('?')[0].split('/')[0];
+                                if (hash && !allHashes.includes(hash)) {
+                                  // Hash não encontrado no conteúdo, remover
+                                  newPreviews.splice(i, 1);
+                                  newFiles.splice(i, 1);
+                                  newProgress.splice(i, 1);
+                                  changed = true;
+                                }
+                              }
+                            }
+                            // Se for um link do PeakD, verificar se ainda está no conteúdo
+                            else if (preview.includes('files.peakd.com')) {
+                              // Extrai tanto o nome do arquivo quanto os outros componentes da URL
+                              const urlParts = preview.split('/');
+                              const fileName = urlParts[urlParts.length - 1].split('?')[0];
+                              
+                              // Também verifica se há alguma parte identificadora da URL no conteúdo
+                              let isReferenced = false;
+                              
+                              // Verifica se o nome do arquivo ainda está no conteúdo
+                              if (newContent.includes(fileName)) {
+                                isReferenced = true;
+                              }
+                              
+                              // Se for um URL da PeakD, verifica por padrões específicos
+                              if (preview.includes('peakd-hive')) {
+                                // Extrair o autor e o identificador das URLs do peakd-hive 
+                                const peakdMatch = preview.match(/\/file\/peakd-hive\/([^\/]+)\/([^\/\?]+)/);
+                                if (peakdMatch && peakdMatch.length > 2) {
+                                  const author = peakdMatch[1];
+                                  const id = peakdMatch[2];
+                                  
+                                  // Se qualquer uma dessas partes importantes estiver no conteúdo, consideramos referenciada
+                                  if (newContent.includes(author) && newContent.includes(id)) {
+                                    isReferenced = true;
+                                  }
+                                }
+                              }
+                              
+                              if (!isReferenced) {
+                                // Imagem não está mais referenciada no conteúdo
+                                newPreviews.splice(i, 1);
+                                newFiles.splice(i, 1);
+                                newProgress.splice(i, 1);
+                                changed = true;
+                                console.log('Removida imagem PeakD:', fileName);
+                              }
+                            }
+                            // Se for um link do PeakD, verificar se ainda está no conteúdo
+                            else if (preview.includes('files.peakd.com')) {
+                              // Extrair o identificador único da URL do PeakD
+                              const peakdUrlMatch = preview.match(/\/file\/([^\/]+)\/([^\/\?]+)/);
+                              if (peakdUrlMatch) {
+                                const peakdId = peakdUrlMatch[2];
+                                // Verificar se este ID ainda está presente no conteúdo
+                                const stillExists = newContent.includes(peakdId);
+                                if (!stillExists) {
+                                  // ID não encontrado no conteúdo, remover
+                                  newPreviews.splice(i, 1);
+                                  newFiles.splice(i, 1);
+                                  newProgress.splice(i, 1);
+                                  changed = true;
+                                }
+                              } else {
+                                // Se não conseguir extrair o ID, verificar a URL completa
+                                const stillExists = newContent.includes(preview);
+                                if (!stillExists) {
+                                  newPreviews.splice(i, 1);
+                                  newFiles.splice(i, 1);
+                                  newProgress.splice(i, 1);
+                                  changed = true;
+                                }
+                              }
+                            }
+                          }
+                          
+                          // Atualizar os estados se houver mudanças
+                          if (changed) {
+                            setFiles(newFiles);
+                            setPreviews(newPreviews);
+                            setUploadProgress(newProgress);
+                            console.log('Imagens removidas do preview pois foram excluídas do conteúdo');
+                          }
+                        }
+                        
+                        // Verificar se houve uma restauração com Ctrl+Z ou cola
+                        const ipfsUrlMatches: string[] = allMatches.map(match => match[0]);
+                        
+                        // Se houver URLs no texto, mas poucas ou nenhuma imagem no preview, sincronizar
+                        if (ipfsUrlMatches.length > 0 && ipfsUrlMatches.length !== previews.length) {
+                          console.log('Restaurando imagens do conteúdo', ipfsUrlMatches.length);
+                          
+                          // Extrair as URLs reais das imagens do texto
+                          const extractedUrls = ipfsUrlMatches.map(match => {
+                            const urlMatch = match.match(/\(([^)]+)\)/);
+                            return urlMatch ? urlMatch[1] : '';
+                          }).filter(url => url !== '');
+                          
+                          // Definir todos como 100% concluídos
+                          const placeholderProgress = extractedUrls.map(() => 100);
+                          
+                          // Criar arquivos vazios como marcadores (não serão enviados)
+                          const placeholderFiles = extractedUrls.map(() => new File([], 'placeholder'));
+                          
+                          setFiles(placeholderFiles);
+                          setPreviews(extractedUrls);
+                          setUploadProgress(placeholderProgress);
+                        }
+                      }
+                    }}
                     className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white min-h-[100px]"
                     placeholder="Digite algum conteúdo para o seu post (suporta markdown)"
                   />
@@ -727,66 +963,11 @@ export default function EditPostButton({
                       }
                     }}
                     className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    placeholder="Digite e pressione Enter para adicionar (máx. 10 tags)"
+                    placeholder="Digite e pressione Enter para adicionar"
                     maxLength={24}
                     disabled={tags.length >= 10}
                   />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Máximo 10 tags. As tags &quot;wilbor&quot; e &quot;art&quot;
-                    são adicionadas automaticamente.
-                  </p>
-                </div>
-
-                {/* Informação sobre Gateway IPFS */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Gateway IPFS
-                  </label>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Usando lime-useful-snake-714.mypinata.cloud com token de
-                    acesso
-                  </p>
-                </div>
-
-                {/* Imagens existentes e upload de novas */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Imagens
-                  </label>
-                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleFileChange}
-                      className="hidden"
-                      id="image-upload-btn"
-                    />
-                    <label
-                      htmlFor="image-upload-btn"
-                      className="cursor-pointer"
-                    >
-                      <div className="flex flex-col items-center justify-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-8 w-8 text-gray-400 mb-2"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                          />
-                        </svg>
-                        <p className="text-sm text-gray-400">
-                          Adicionar mais imagens
-                        </p>
-                      </div>
-                    </label>
-                  </div>
+                 
                 </div>
 
                 {/* Preview das imagens */}

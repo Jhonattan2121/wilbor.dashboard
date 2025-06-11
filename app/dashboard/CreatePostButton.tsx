@@ -454,7 +454,23 @@ export default function CreatePostButton({
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Conteúdo (opcional)</label>
+                                    <div className="flex justify-between items-center">
+                                        <label className="block text-sm font-medium mb-1">Conteúdo (opcional)</label>
+                                        <label htmlFor="image-upload-btn" className="flex items-center text-xs text-blue-500 hover:text-blue-400 cursor-pointer">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            Adicionar imagens
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                            id="image-upload-btn"
+                                        />
+                                    </div>
                                     <textarea
                                         value={content}
                                         onChange={(e) => {
@@ -543,41 +559,7 @@ export default function CreatePostButton({
                                         maxLength={24}
                                         disabled={tags.length >= 10}
                                     />
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        Máximo 10 tags. As tags &quot;wilbor&quot; e
-                                        &quot;art&quot; são adicionadas automaticamente.
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Gateway IPFS</label>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        Usando lime-useful-snake-714.mypinata.cloud com token de acesso
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Imagens</label>
-                                    <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            onChange={handleFileChange}
-                                            className="hidden"
-                                            id="image-upload-btn"
-                                        />
-                                        <label htmlFor="image-upload-btn" className="cursor-pointer">
-                                            <div className="flex flex-col items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                </svg>
-                                                <p className="text-sm text-gray-400">
-                                                    Selecionar imagens para o IPFS
-                                                </p>
-                                            </div>
-                                        </label>
-                                    </div>
+                                  
                                 </div>
 
                                 {previews.length > 0 && (
