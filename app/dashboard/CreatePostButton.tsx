@@ -515,7 +515,7 @@ export default function CreatePostButton({
                                                 }
                                             }
                                         }}
-                                        className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white min-h-[100px]"
+                                        className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white min-h-[500px] resize-y"
                                         placeholder="Digite algum conteúdo para o seu post (suporta markdown)"
                                     />
                                 </div>
