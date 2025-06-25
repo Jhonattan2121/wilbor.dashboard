@@ -3,6 +3,7 @@
 import { uploadFileToIPFS } from '@/utils/ipfs';
 import { Client, PrivateKey, type Operation } from '@hiveio/dhive';
 import { useEffect, useState } from 'react';
+import { sendHiveOperation } from '../../lib/hive/server-functions';
 
 interface CreatePostButtonProps {
     username: string;
@@ -323,12 +324,11 @@ export default function CreatePostButton({
     // Recebe Operation[] já montado
     const postToHiveWithKey = async (
         operations: Operation[],
-        privateKey: string
+        encryptedPrivateKey: string
     ) => {
-        const client = new Client(['https://api.hive.blog']);
         try {
-            const key = PrivateKey.fromString(privateKey);
-            await client.broadcast.sendOperations(operations, key);
+            // Usar a função do servidor que descriptografa e envia a operação
+            await sendHiveOperation(encryptedPrivateKey, operations);
             return true;
         } catch (error) {
             console.error('Erro ao postar no Hive:', error);

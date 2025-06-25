@@ -1,8 +1,9 @@
 "use client";
 
-import { uploadFileToIPFS } from "@/utils/ipfs";
-import { Client, PrivateKey, type Operation } from "@hiveio/dhive";
+import { uploadFileToIPFS } from '@/utils/ipfs';
+import { Client, PrivateKey, type Operation } from '@hiveio/dhive';
 import { useCallback, useEffect, useState } from 'react';
+import { sendHiveOperation } from '../../lib/hive/server-functions';
 
 interface EditPostButtonProps {
   username: string;
@@ -378,8 +379,8 @@ export default function EditPostButton({
         console.warn('Não foi possível buscar informações do post original, usando tag:', tagArray[0]);
       }
       if (postingKey) {
-        // Postar com chave privada
-        updateSuccess = await updateHivePostWithKey(
+        // Postar com chave privada criptografada
+        updateSuccess = await updateHivePostWithEncryptedKey(
           username,
           title,
           postBody,
@@ -436,99 +437,7 @@ export default function EditPostButton({
     }
   };
 
-  const updateHivePostWithKey = async (
-    author: string,
-    title: string,
-    body: string,
-    permlink: string,
-    parentPermlink: string,
-    jsonMetadata: any,
-    privateKey: string,
-  ) => {
-    const client = new Client(["https://api.hive.blog"]);
-    try {
-      // Remove espaços extras
-      const trimmedKey = (privateKey || "").trim();
-      // Aceita chaves a partir de 44 caracteres (WIF pode ser 51, mas algumas podem ser menores)
-      if (
-        !trimmedKey ||
-        typeof trimmedKey !== "string" ||
-        (!trimmedKey.startsWith("5") && !trimmedKey.startsWith("PVT_")) ||
-        trimmedKey.length < 44
-      ) {
-        throw new Error(
-          "Chave privada de postagem inválida. Certifique-se de colar a chave correta (começando com 5 ou PVT_).",
-        );
-      }
-      // Garantir que o permlink nunca seja alterado e está dentro do limite
-      if (!permlink || typeof permlink !== "string") {
-        throw new Error("Permlink inválido.");
-      }
-      if (permlink.length > 255) {
-        console.error(
-          "Permlink muito longo ao tentar editar:",
-          permlink,
-          "Tamanho:",
-          permlink.length,
-        );
-        throw new Error(
-          `Permlink do post excede o limite de 255 caracteres (${permlink.length}). Não é possível editar.`,
-        );
-      }
-      
-      // Log para depuração
-      console.log(
-        "Permlink enviado para blockchain:",
-        permlink,
-        "Tamanho:",
-        permlink.length,
-      );
-      
-      // O permlink já foi truncado no handleSubmit, mas vamos garantir novamente como precaução extra
-      // Limite de 255 caracteres na blockchain, truncando para 250 para ter margem de segurança
-      const safePermlink = permlink && permlink.length > 250 
-        ? permlink.substring(0, 250) 
-        : permlink;
-      
-      console.log('Usando permlink seguro no updateHivePostWithKey:', safePermlink, 'Tamanho:', 
-        safePermlink?.length);
-        
-      const key = PrivateKey.fromString(trimmedKey);
-      
-      // Criar a operação para o formato usado pelo PeakD (formato baseado em operations)
-      const operations: Operation[] = [
-        [
-          'comment',
-          {
-            parent_author: '',
-            parent_permlink: parentPermlink,
-            author,
-            permlink: safePermlink, // Usar o permlink seguro
-            title,
-            body,
-            json_metadata: JSON.stringify(jsonMetadata),
-          }
-        ]
-      ];
-      // Usando o formato baseado em operations para transmitir para a blockchain
-      console.log("Tentando editar post no Hive usando o formato de operations:", operations);
-      const result = await client.broadcast.sendOperations(operations, key);
-      console.log("Resposta da blockchain Hive:", result);
-      return true;
-    } catch (error) {
-      console.error("Erro ao atualizar post no Hive (detalhado):", error);
-      if (error && (error as Error).message) {
-        const errorMsg = (error as Error).message;
-        // Verificar se o erro é relacionado ao tamanho do permlink
-        if (errorMsg.toLowerCase().includes('permlink is too long') || 
-            errorMsg.toLowerCase().includes('permlink muito longo')) {
-          throw new Error(`Erro: Permlink muito longo. Por favor, tente novamente com um título mais curto ou entre em contato com o suporte.`);
-        }
-        throw new Error("Falha ao atualizar no Hive: " + errorMsg);
-      }
-      throw new Error("Falha ao atualizar no Hive");
-    }
-  };
+
 
   const updateHivePostWithKeychain = (
     author: string,
@@ -605,6 +514,44 @@ export default function EditPostButton({
         },
       );
     });
+  };
+
+  // Nova função simplificada que usa sendHiveOperation do servidor
+  const updateHivePostWithEncryptedKey = async (
+    author: string,
+    title: string,
+    body: string,
+    permlink: string,
+    parentPermlink: string,
+    jsonMetadata: any,
+    encryptedPrivateKey: string,
+  ) => {
+    try {
+      const safePermlink = permlink && permlink.length > 250 
+        ? permlink.substring(0, 250) 
+        : permlink;
+        
+      const operations: Operation[] = [
+        [
+          'comment',
+          {
+            parent_author: '',
+            parent_permlink: parentPermlink,
+            author,
+            permlink: safePermlink,
+            title,
+            body,
+            json_metadata: JSON.stringify(jsonMetadata),
+          }
+        ]
+      ];
+      
+      await sendHiveOperation(encryptedPrivateKey, operations);
+      return true;
+    } catch (error) {
+      console.error("Erro ao atualizar post:", error);
+      throw error;
+    }
   };
 
   return (
