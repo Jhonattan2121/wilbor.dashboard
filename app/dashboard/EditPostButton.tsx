@@ -247,11 +247,6 @@ export default function EditPostButton({
       return;
     }
 
-    if (previews.length === 0) {
-      setError("Por favor, selecione pelo menos uma imagem");
-      return;
-    }
-
     if (!postingKey && !(window as any).hive_keychain) {
       setError(
         "Chave de postagem não fornecida ou Hive Keychain não instalado",
@@ -262,12 +257,6 @@ export default function EditPostButton({
     // Verificar se o usuário é o autor
     if (username.toLowerCase() !== author.toLowerCase()) {
       setError("Você não tem permissão para editar este post");
-      return;
-    }
-
-    // Verificar se há pelo menos uma tag
-    if (tags.length === 0) {
-      setError("Adicione pelo menos uma tag");
       return;
     }
 
@@ -360,7 +349,7 @@ export default function EditPostButton({
       // Atualizar o post no Hive
       let updateSuccess = false;
       // Buscar o parent_permlink correto do post original
-      let parentPermlink = tagArray[0];
+      let parentPermlink = tagArray.length > 0 ? tagArray[0] : '';
       try {
         // Tentamos buscar com o permlink original primeiro
         let originalPost = await fetchPostFromHive(author, permlink);
