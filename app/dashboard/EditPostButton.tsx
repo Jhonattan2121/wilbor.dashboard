@@ -215,13 +215,60 @@ export default function EditPostButton({
   };
 
   // Manipular a seleção de arquivos
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
-    // Criar URLs de visualização para as imagens selecionadas
     const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
     setPreviews((prevPreviews) => [...prevPreviews, ...newPreviews]);
     setUploadProgress((prev) => [...prev, ...selectedFiles.map(() => 0)]);
+
+    // Para cada arquivo, já faz upload e insere o link no conteúdo
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      try {
+        setLoading(true);
+        const result = await uploadFileToIPFS(file);
+        const ext = getFileExtension(file);
+        const isVideo = file.type.startsWith('video/');
+        let fileName = '';
+        if (file.name && ext) {
+          fileName = file.name;
+        } else if (ext) {
+          fileName = `media-${i + 1}.${ext}`;
+        } else {
+          fileName = `media-${i + 1}`;
+        }
+        const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
+        setContent((prev) => {
+          let texto = prev.trim();
+          if (texto.length > 0) {
+            texto += isVideo
+              ? `\n\n<video controls src=\"${ipfsUrl}\"></video>\n`
+              : `\n\n![image](${ipfsUrl})\n`;
+          } else {
+            texto = isVideo
+              ? `<video controls src=\"${ipfsUrl}\"></video>\n`
+              : `![image](${ipfsUrl})\n`;
+          }
+          return texto;
+        });
+      } catch (err) {
+        setError('Erro ao enviar arquivo para o IPFS.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const getFileExtension = (file: File): string => {
+    const name = file.name;
+    if (name && name.includes('.')) {
+      return name.split('.').pop() || '';
+    }
+    if (file.type && file.type.includes('/')) {
+      return file.type.split('/')[1];
+    }
+    return '';
   };
 
   // Remover uma imagem da lista
@@ -280,6 +327,7 @@ export default function EditPostButton({
   };
 
   // Processar o envio do formulário de edição
+  // 2. No handleSubmit, após upload para o IPFS, monta o conteúdo com as URLs finais
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -335,12 +383,27 @@ export default function EditPostButton({
       const ipfsResults = [];
       const existingImagesCount = initialImages?.length || 0;
       const newFiles = files.slice(0);
-
+      let newContent = content.trim();
       for (let i = 0; i < newFiles.length; i++) {
         try {
           const result = await uploadFileToIPFS(newFiles[i]);
           ipfsResults.push(result);
-
+          const ext = getFileExtension(newFiles[i]);
+          const isVideo = newFiles[i].type.startsWith('video/');
+          let fileName = '';
+          if (newFiles[i].name && ext) {
+            fileName = newFiles[i].name;
+          } else if (ext) {
+            fileName = `media-${i + 1}.${ext}`;
+          } else {
+            fileName = `media-${i + 1}`;
+          }
+          const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
+          if (isVideo) {
+            newContent += `\n\n<video controls src=\"${ipfsUrl}\"></video>\n`;
+          } else {
+            newContent += `\n\n![image](${ipfsUrl})\n`;
+          }
           // Atualizar o progresso
           const newProgress = [...uploadProgress];
           newProgress[existingImagesCount + i] = 100;
@@ -354,7 +417,7 @@ export default function EditPostButton({
         }
       }
 
-      const postBody = content; 
+      const postBody = newContent; 
 
       // Preparar as tags
       const tagArray = tags
@@ -702,7 +765,7 @@ export default function EditPostButton({
                     </label>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,video/mp4,video/webm,video/quicktime"
                       multiple
                       onChange={handleFileChange}
                       className="hidden"
@@ -998,8 +1061,8 @@ export default function EditPostButton({
                 {previews.length > 0 && (
                   <div className="mt-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
-                      <label className="text-sm font-medium text-gray-300">Imagens do post</label>
-                      <p className="text-xs text-gray-400 mt-1 sm:mt-0">Toque na imagem para selecionar como capa</p>
+                      <label className="text-sm font-medium text-gray-300">Mídias do post</label>
+                      <p className="text-xs text-gray-400 mt-1 sm:mt-0">Toque na mídia para selecionar como capa</p>
                     </div>
                     
                     <div className="relative">
@@ -1034,20 +1097,22 @@ export default function EditPostButton({
                             <div key={pageIndex} className="w-full flex-shrink-0 grid grid-cols-2 gap-3">
                               {previews.slice(pageIndex * 2, pageIndex * 2 + 2).map((preview, imageIndex) => {
                                 const globalIndex = pageIndex * 2 + imageIndex;
+                                const file = files[globalIndex];
+                                const isVideo = file && file.type && file.type.startsWith('video/');
                                 return (
-                                  <div 
-                                    key={globalIndex} 
+                                  <div
+                                    key={globalIndex}
                                     className={`relative group cursor-pointer border-2 ${thumbnailIndex === globalIndex ? 'border-green-500' : 'border-transparent'} rounded-lg`}
                                     onClick={(e) => {
                                       e.preventDefault();
                                       setThumbnailIndex(globalIndex);
                                     }}
                                   >
-                                    <img
-                                      src={preview}
-                                      alt={`Preview ${globalIndex + 1}`}
-                                      className="w-full h-40 object-cover rounded-lg"
-                                    />
+                                    {isVideo ? (
+                                      <video src={preview} controls className="w-full h-40 object-cover rounded-lg bg-black" />
+                                    ) : (
+                                      <img src={preview} alt={`Preview ${globalIndex + 1}`} className="w-full h-40 object-cover rounded-lg" />
+                                    )}
                                     {thumbnailIndex === globalIndex && (
                                       <div className="absolute top-2 left-2 bg-green-600 text-white rounded-full p-1">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
