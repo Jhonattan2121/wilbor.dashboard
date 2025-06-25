@@ -39,15 +39,80 @@ export function MediaItem({
   postingKey,
   isEditMode = false
 }: MediaItemProps) {
-  const mainItem = items[0];
   const [isHovered, setIsHovered] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [imageError, setImageError] = useState(false);
   const [showAllTags, setShowAllTags] = useState(false);
   const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
-  const images = extractImagesFromMarkdown(mainItem.hiveMetadata?.body || '');
   const [isMobile, setIsMobile] = useState(false);
+  const [updatedThumbnail, setUpdatedThumbnail] = useState<string | null>(null);
+  
+  // Initialize updatedThumbnail when items change
+  useEffect(() => {
+    if (items && items.length > 0) {
+      const mainItem = items[0];
+      const thumbnailUrl = getThumbnailUrl(mainItem);
+      setUpdatedThumbnail(thumbnailUrl);
+      
+      if (mainItem.hiveMetadata) {
+        const { author, permlink } = mainItem.hiveMetadata;
+        fetchPostFromHive(author, permlink).then(post => {
+          if (post && post.json_metadata) {
+            try {
+              const metadata = typeof post.json_metadata === 'string'
+                ? JSON.parse(post.json_metadata)
+                : post.json_metadata;
+              if (metadata.image && metadata.image.length > 0) {
+                setUpdatedThumbnail(metadata.image[0]);
+              }
+            } catch (e) {
+              console.error('Erro ao analisar o JSON metadata:', e);
+            }
+          }
+        });
+      }
+    }
+  }, [items]);
+  
+  useEffect(() => {
+    if (items && items.length > 0) {
+      const mainItem = items[0];
+      let isLarge = false;
+      
+      if (isExpanded && mainItem.hiveMetadata?.body) {
+        const imageCount = extractImagesFromMarkdown(mainItem.hiveMetadata.body).length;
+        const textLength = mainItem.hiveMetadata.body.length;
+        isLarge = imageCount > 1 || textLength > 300 || (imageCount > 0 && textLength > 200);
+      } else if (isExpanded && mainItem.src?.includes(SKATEHIVE_URL)) {
+        isLarge = true;
+      }
+      
+      // Evitar chamadas desnecessárias se o valor não mudar
+      if (hasLargeContent !== isLarge) {
+        onContentSizeChange(isLarge);
+      }
+    }
+  }, [isExpanded, items, hasLargeContent, onContentSizeChange]);
+  
+  useEffect(() => {
+    setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640);
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+  
+  // Safety check: return early if no items
+  if (!items || items.length === 0) {
+    return null;
+  }
+  
+  const mainItem = items[0];
+  const images = extractImagesFromMarkdown(mainItem.hiveMetadata?.body || '');
 
   function getThumbnailUrl(item: Media): string | null {
     try {
@@ -101,55 +166,6 @@ export function MediaItem({
   }
 
   const thumbnailUrl = getThumbnailUrl(mainItem);
-  const [updatedThumbnail, setUpdatedThumbnail] = useState<string | null>(thumbnailUrl);
-  
-  useEffect(() => {
-    if (mainItem.hiveMetadata) {
-      const { author, permlink } = mainItem.hiveMetadata;
-      fetchPostFromHive(author, permlink).then(post => {
-        if (post && post.json_metadata) {
-          try {
-            const metadata = typeof post.json_metadata === 'string'
-              ? JSON.parse(post.json_metadata)
-              : post.json_metadata;
-            if (metadata.image && metadata.image.length > 0) {
-              setUpdatedThumbnail(metadata.image[0]);
-            }
-          } catch (e) {
-            console.error("Erro ao analisar o JSON metadata:", e);
-          }
-        }
-      });
-    }
-  }, [mainItem.hiveMetadata]);
-  
-  useEffect(() => {
-    let isLarge = false;
-    
-    if (isExpanded && mainItem.hiveMetadata?.body) {
-      const imageCount = extractImagesFromMarkdown(mainItem.hiveMetadata.body).length;
-      const textLength = mainItem.hiveMetadata.body.length;
-      isLarge = imageCount > 1 || textLength > 300 || (imageCount > 0 && textLength > 200);
-    } else if (isExpanded && mainItem.src?.includes(SKATEHIVE_URL)) {
-      isLarge = true;
-    }
-    
-    // Evitar chamadas desnecessárias se o valor não mudar
-    if (hasLargeContent !== isLarge) {
-      onContentSizeChange(isLarge);
-    }
-  }, [isExpanded, mainItem.hiveMetadata?.body, mainItem.src, hasLargeContent]);
-  
-  useEffect(() => {
-    setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640);
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-    };
-  }, []);
 
   const renderMedia = (media: Media, isMainVideo: boolean = false) => {
     if (media.src?.includes(SKATEHIVE_URL)) {

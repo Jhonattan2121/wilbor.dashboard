@@ -29,7 +29,9 @@ async function getHivePosts(username: string) {
     });
 
     const formattedPosts = posts.flatMap(post => {
-      // Check if the post has the "hidden" tag
+      // Note: Posts with "hidden" tag are now included in the display
+      // Uncomment the lines below if you want to hide posts with "hidden" tag again
+      /*
       try {
         const metadata = JSON.parse(post.json_metadata || '{}');
         const postTags = metadata.tags || [];
@@ -37,6 +39,7 @@ async function getHivePosts(username: string) {
           return [];
         }
       } catch (e) {}
+      */
 
       const mediaItems = MarkdownRenderer.extractMediaFromHive(post);
       return mediaItems.map((media) => {
