@@ -124,7 +124,7 @@ function AnimateItems({
           }}
           transition={{
             duration: durationResolved,
-            easing: 'easeOut',
+            ease: 'easeOut',
           }}
         >
           {item}
