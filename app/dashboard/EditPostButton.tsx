@@ -39,10 +39,47 @@ export default function EditPostButton({
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [loadingPost, setLoadingPost] = useState(false);
   const [thumbnailIndex, setThumbnailIndex] = useState<number>(0);
+  const [currentImagePage, setCurrentImagePage] = useState<number>(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Token de Gateway do Pinata
   const PINATA_GATEWAY_TOKEN =
     "Z787oWC-YVuVKNuRKECMTklkNYMENXXPYROAr7NUSDnVREVJKbMbQQEenpu3KTam";
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) {
+      setIsDragging(false);
+      return;
+    }
+    
+    const distance = touchStart - touchEnd;
+    const minSwipeDistance = 50; 
+    
+    if (distance > minSwipeDistance) {
+      setCurrentImagePage(prev => 
+        Math.min(Math.ceil(previews.length / 2) - 1, prev + 1)
+      );
+    }
+    else if (distance < -minSwipeDistance) {
+      setCurrentImagePage(prev => Math.max(0, prev - 1));
+    }
+    
+    setTouchStart(null);
+    setTouchEnd(null);
+    setIsDragging(false);
+  };
     
   // Função para garantir que o permlink esteja dentro do limite permitido
   const ensureSafePermlink = (pl: string): string => {
@@ -200,33 +237,37 @@ export default function EditPostButton({
     if (newPreviews[index]) {
       const urlToRemove = newPreviews[index];
       setContent(prevContent => {
-        // Regex para encontrar links de imagem no formato Markdown
-        const ipfsPattern = new RegExp(`!\\[image\\]\\(https://lime-useful-snake-714\\.mypinata\\.cloud/ipfs/[^\\)]*\\)\\n?`, 'g');
-        const ipfsPublicPattern = new RegExp(`!\\[image\\]\\(https://ipfs\\.io/ipfs/[^\\)]*\\)\\n?`, 'g');
-        const blobPattern = urlToRemove.startsWith('blob:') 
-          ? new RegExp(`!\\[image\\]\\(${urlToRemove.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)\\n?`, 'g')
-          : null;
-        
-        // Para URLs do IPFS, tentamos extrair o hash e procurar por ele
-        let ipfsHash = '';
+        let cleanedContent = prevContent;
+        const escapedUrl = urlToRemove.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        cleanedContent = cleanedContent.replace(
+          new RegExp(`!\\[.*?\\]\\(${escapedUrl}[^)]*\\)\\n?`, 'g'),
+          ''
+        );
+        if (urlToRemove.includes('files.peakd.com')) {
+          const peakdBase = urlToRemove.split('?')[0];
+          const escapedPeakd = peakdBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          cleanedContent = cleanedContent.replace(
+            new RegExp(`!\\[.*?\\]\\(${escapedPeakd}[^)]*\\)\\n?`, 'g'),
+            ''
+          );
+        }
         if (urlToRemove.includes('/ipfs/')) {
-          const parts = urlToRemove.split('/ipfs/');
-          if (parts.length > 1) {
-            ipfsHash = parts[1].split('?')[0].split('/')[0];
-            if (ipfsHash) {
-              const specificIpfsPattern = new RegExp(`!\\[image\\]\\(.*${ipfsHash}[^\\)]*\\)\\n?`, 'g');
-              return prevContent.replace(specificIpfsPattern, '').trim();
-            }
+          const hash = urlToRemove.split('/ipfs/')[1]?.split('?')[0]?.split('/')[0];
+          if (hash) {
+            cleanedContent = cleanedContent.replace(
+              new RegExp(`!\\[.*?\\]\\([^)]*${hash}[^)]*\\)\\n?`, 'g'),
+              ''
+            );
           }
         }
-        
-        // Tenta remover usando os padrões gerais
-        let cleanedContent = prevContent;
-        if (blobPattern) {
-          cleanedContent = cleanedContent.replace(blobPattern, '');
+        if (files[index] && files[index].name) {
+          const fileName = files[index].name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          cleanedContent = cleanedContent.replace(
+            new RegExp(`!\\[.*?\\]\\([^)]*${fileName}[^)]*\\)\\n?`, 'g'),
+            ''
+          );
         }
-        
-        return cleanedContent.replace(ipfsPattern, '').replace(ipfsPublicPattern, '').trim();
+        return cleanedContent.trim();
       });
     }
 
@@ -566,7 +607,7 @@ export default function EditPostButton({
       </button>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center px-0 pt-4 sm:pt-0 pb-0 sm:p-4">
           {/* Fundo escuro/transparente */}
           <div
             className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm"
@@ -583,12 +624,12 @@ export default function EditPostButton({
             }}
           />
 
-          {/* Modal do formulário de edição */}
-          <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-700">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Editar Post</h2>
+          {/* Modal do formulário de edição - Versão melhorada para mobile */}
+          <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-gray-700 flex flex-col m-2 sm:m-0">
+            <div className="flex justify-between items-center mb-4 pt-1 pb-2">
+              <h2 className="text-lg sm:text-xl font-bold">Editar Post</h2>
               <button
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-white p-2 -mr-2"
                 onClick={() => {
                   // Se não estiver carregando, fecha o formulário normalmente
                   if (!loading) {
@@ -653,7 +694,7 @@ export default function EditPostButton({
                     <label className="block text-sm font-medium mb-1">
                       Conteúdo
                     </label>
-                    <label htmlFor="image-upload-btn" className="flex items-center text-xs text-blue-500 hover:text-blue-400 cursor-pointer">
+                    <label htmlFor="image-upload-btn" className="flex items-center text-xs text-red-500 hover:text-red-400 cursor-pointer">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -855,7 +896,7 @@ export default function EditPostButton({
                         }
                       }
                     }}
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white min-h-[500px] resize-y"
+                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white min-h-[250px] sm:min-h-[400px] resize-y text-base"
                     placeholder="Digite algum conteúdo para o seu post (suporta markdown)"
                   />
                 </div>
@@ -867,12 +908,12 @@ export default function EditPostButton({
                     {tags.map((tag, idx) => (
                       <span
                         key={tag + idx}
-                        className="flex items-center bg-gray-700 text-white rounded-full px-3 py-1 text-xs"
+                        className="flex items-center bg-gray-700 text-white rounded-full px-3 py-1.5 text-sm"
                       >
                         #{tag}
                         <button
                           type="button"
-                          className="ml-2 text-gray-300 hover:text-red-400 focus:outline-none"
+                          className="ml-2 text-gray-300 hover:text-red-400 focus:outline-none p-1 text-lg"
                           onClick={() =>
                             setTags(tags.filter((t, i) => i !== idx))
                           }
@@ -883,25 +924,26 @@ export default function EditPostButton({
                       </span>
                     ))}
                   </div>
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (
-                        (e.key === "Enter" || e.key === "," || e.key === " ") &&
-                        tagInput.trim()
-                      ) {
-                        e.preventDefault();
-                        const newTag = tagInput
-                          .trim()
-                          .toLowerCase()
-                          .replace(/[^a-z0-9\-]/g, "");
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
                         if (
-                          newTag &&
-                          !tags.includes(newTag) &&
-                          tags.length < 10 &&
-                          newTag.length <= 24
+                          (e.key === "Enter" || e.key === "," || e.key === " ") &&
+                          tagInput.trim()
+                        ) {
+                          e.preventDefault();
+                          const newTag = tagInput
+                            .trim()
+                            .toLowerCase()
+                            .replace(/[^a-z0-9\-]/g, "");
+                          if (
+                            newTag &&
+                            !tags.includes(newTag) &&
+                            tags.length < 10 &&
+                            newTag.length <= 24
                         ) {
                           setTags([...tags, newTag]);
                         }
@@ -914,83 +956,189 @@ export default function EditPostButton({
                         setTags(tags.slice(0, -1));
                       }
                     }}
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
+                    className="w-full px-3 py-3 rounded bg-gray-800 border border-gray-700 text-white text-base"
                     placeholder="Digite e pressione Enter para adicionar"
                     maxLength={24}
                     disabled={tags.length >= 10}
                   />
-                 
+                  {tagInput.trim() && (
+                    <button
+                      type="button"
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-3 rounded-lg text-sm whitespace-nowrap"
+                      onClick={() => {
+                        const newTag = tagInput
+                          .trim()
+                          .toLowerCase()
+                          .replace(/[^a-z0-9\-]/g, "");
+                        if (
+                          newTag &&
+                          !tags.includes(newTag) &&
+                          tags.length < 10 &&
+                          newTag.length <= 24
+                        ) {
+                          setTags([...tags, newTag]);
+                          setTagInput("");
+                        }
+                      }}
+                    >
+                      Adicionar
+                    </button>
+                  )}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {tags.length}/10 tags • Clique Enter para adicionar ou Delete para remover
+                  </div>
                 </div>
 
-                {/* Preview das imagens */}
+                {/* Preview das imagens - Versão com carrossel */}
                 {previews.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
+                  <div className="mt-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
                       <label className="text-sm font-medium text-gray-300">Imagens do post</label>
-                      <p className="text-xs text-gray-400">Clique na imagem para defini-la como thumbnail</p>
+                      <p className="text-xs text-gray-400 mt-1 sm:mt-0">Toque na imagem para selecionar como capa</p>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {previews.map((preview, index) => (
-                        <div 
-                          key={index} 
-                          className={`relative group cursor-pointer border-2 ${thumbnailIndex === index ? 'border-green-500' : 'border-transparent'} rounded-lg`}
-                          onClick={() => setThumbnailIndex(index)}
+                    
+                    <div className="relative">
+                      {/* Botão anterior */}
+                      {currentImagePage > 0 && (
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentImagePage(prev => Math.max(0, prev - 1));
+                          }}
+                          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black bg-opacity-50 rounded-full p-2 text-white"
+                          aria-label="Imagens anteriores"
                         >
-                          <img
-                            src={preview}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg"
-                          />
-                          {thumbnailIndex === index && (
-                            <div className="absolute top-2 left-2 bg-green-600 text-white rounded-full p-1">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                              </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      )}
+                      
+                      {/* Container do carrossel */}
+                      <div className="overflow-hidden">
+                        <div 
+                          className="flex transition-transform duration-300 ease-in-out" 
+                          style={{ transform: `translateX(-${currentImagePage * 100}%)` }}
+                          onTouchStart={handleTouchStart}
+                          onTouchMove={handleTouchMove}
+                          onTouchEnd={handleTouchEnd}
+                        >
+                          {/* Páginas do carrossel */}
+                          {Array.from({ length: Math.ceil(previews.length / 2) }).map((_, pageIndex) => (
+                            <div key={pageIndex} className="w-full flex-shrink-0 grid grid-cols-2 gap-3">
+                              {previews.slice(pageIndex * 2, pageIndex * 2 + 2).map((preview, imageIndex) => {
+                                const globalIndex = pageIndex * 2 + imageIndex;
+                                return (
+                                  <div 
+                                    key={globalIndex} 
+                                    className={`relative group cursor-pointer border-2 ${thumbnailIndex === globalIndex ? 'border-green-500' : 'border-transparent'} rounded-lg`}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setThumbnailIndex(globalIndex);
+                                    }}
+                                  >
+                                    <img
+                                      src={preview}
+                                      alt={`Preview ${globalIndex + 1}`}
+                                      className="w-full h-40 object-cover rounded-lg"
+                                    />
+                                    {thumbnailIndex === globalIndex && (
+                                      <div className="absolute top-2 left-2 bg-green-600 text-white rounded-full p-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                          <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                    {uploadProgress[globalIndex] > 0 && uploadProgress[globalIndex] < 100 && (
+                                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                        <div className="h-2 w-3/4 bg-gray-700 rounded-full overflow-hidden">
+                                          <div
+                                            className="h-full bg-blue-500"
+                                            style={{ width: `${uploadProgress[globalIndex]}%` }}
+                                          ></div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    <button
+                                      type="button"
+                                      className="absolute top-1 right-1 bg-red-600 rounded-full p-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation(); // Evita que o clique para remover também selecione a imagem
+                                        removeFile(globalIndex);
+                                        // Se a thumbnail for removida, redefine para a primeira imagem
+                                        if (thumbnailIndex === globalIndex) {
+                                          setThumbnailIndex(0);
+                                        } else if (thumbnailIndex > globalIndex) {
+                                          // Ajusta o índice se uma imagem anterior for removida
+                                          setThumbnailIndex(thumbnailIndex - 1);
+                                        }
+                                        // Ajuste da página atual se necessário
+                                        if (currentImagePage > Math.ceil((previews.length - 1) / 2) - 1) {
+                                          setCurrentImagePage(Math.max(0, Math.ceil((previews.length - 1) / 2) - 1));
+                                        }
+                                      }}
+                                      aria-label={`Remover imagem ${globalIndex + 1}`}
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4 text-white"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          )}
-                          {uploadProgress[index] > 0 &&
-                            uploadProgress[index] < 100 && (
-                              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                <div className="h-2 w-3/4 bg-gray-700 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-blue-500"
-                                    style={{ width: `${uploadProgress[index]}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Botão próximo */}
+                      {currentImagePage < Math.ceil(previews.length / 2) - 1 && (
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentImagePage(prev => Math.min(Math.ceil(previews.length / 2) - 1, prev + 1));
+                          }}
+                          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black bg-opacity-50 rounded-full p-2 text-white"
+                          aria-label="Próximas imagens"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Indicadores de página */}
+                    {previews.length > 2 && (
+                      <div className="flex justify-center mt-3">
+                        {Array.from({ length: Math.ceil(previews.length / 2) }).map((_, index) => (
                           <button
                             type="button"
-                            className="absolute top-1 right-1 bg-red-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            key={index}
                             onClick={(e) => {
-                              e.stopPropagation(); // Evita que o clique para remover também selecione a imagem
-                              removeFile(index);
-                              // Se a thumbnail for removida, redefine para a primeira imagem
-                              if (thumbnailIndex === index) {
-                                setThumbnailIndex(0);
-                              } else if (thumbnailIndex > index) {
-                                // Ajusta o índice se uma imagem anterior for removida
-                                setThumbnailIndex(thumbnailIndex - 1);
-                              }
+                              e.preventDefault();
+                              setCurrentImagePage(index);
                             }}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4 text-white"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
+                            className={`h-2 w-2 rounded-full mx-1 ${currentImagePage === index ? 'bg-red-500' : 'bg-gray-500'}`}
+                            aria-label={`Página ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Contador de imagens */}
+                    <div className="text-xs text-center text-gray-400 mt-2">
+                      {currentImagePage * 2 + 1}-{Math.min(currentImagePage * 2 + 2, previews.length)} de {previews.length} imagens
                     </div>
                   </div>
                 )}
@@ -1002,7 +1150,7 @@ export default function EditPostButton({
                   </div>
                 )}
 
-                <div className="flex justify-end">
+                <div className="flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-2 mt-4 pt-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -1011,13 +1159,16 @@ export default function EditPostButton({
                       resetForm();
                       setShowForm(false);
                     }}
-                    className="px-4 py-2 rounded text-gray-300 hover:bg-gray-700 mr-2"
+                    className="px-4 py-3 sm:py-2 rounded text-gray-300 hover:bg-gray-700 
+                      border border-gray-700 order-2 sm:order-1 sm:mr-2"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className={`px-4 py-2 rounded text-white ${loading ? "bg-green-800" : "bg-green-600 hover:bg-green-700"}`}
+                    className={`px-4 py-3 sm:py-2 rounded text-white 
+                      ${loading ? "bg-green-800" : "bg-green-600 hover:bg-green-700"} 
+                      order-1 sm:order-2`}
                     disabled={loading}
                   >
                     {loading ? "Atualizando..." : "Atualizar Post"}
