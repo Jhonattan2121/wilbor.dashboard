@@ -129,21 +129,26 @@ export default function CreatePostButton({
                 setLoading(true);
                 const result = await uploadFileToIPFS(file);
                 const ext = getFileExtension(file);
+                const isVideo = file.type.startsWith('video/');
                 let fileName = '';
                 if (file.name && ext) {
                     fileName = file.name;
                 } else if (ext) {
-                    fileName = `image-${i + 1}.${ext}`;
+                    fileName = `media-${i + 1}.${ext}`;
                 } else {
-                    fileName = `image-${i + 1}`;
+                    fileName = `media-${i + 1}`;
                 }
                 const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
                 setContent(prev => {
                     let texto = prev.trim();
                     if (texto.length > 0) {
-                        texto += `\n\n![image](${ipfsUrl})\n`;
+                        texto += isVideo
+                            ? `\n\n<video controls src=\"${ipfsUrl}\"></video>\n`
+                            : `\n\n![image](${ipfsUrl})\n`;
                     } else {
-                        texto = `![image](${ipfsUrl})\n`;
+                        texto = isVideo
+                            ? `<video controls src=\"${ipfsUrl}\"></video>\n`
+                            : `![image](${ipfsUrl})\n`;
                     }
                     return texto;
                 });
@@ -532,7 +537,7 @@ export default function CreatePostButton({
                                         </label>
                                         <input
                                             type="file"
-                                            accept="image/*"
+                                            accept="image/*,video/mp4,video/webm,video/quicktime"
                                             multiple
                                             onChange={handleFileChange}
                                             className="hidden"
@@ -684,8 +689,8 @@ export default function CreatePostButton({
                                 {previews.length > 0 && (
                                     <div>
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
-                                            <label className="text-sm font-medium text-gray-300">Imagens do post</label>
-                                            <p className="text-xs text-gray-400 mt-1 sm:mt-0">Toque na imagem para selecionar como capa</p>
+                                            <label className="text-sm font-medium text-gray-300">Mídias do post</label>
+                                            <p className="text-xs text-gray-400 mt-1 sm:mt-0">Toque na mídia para selecionar como capa</p>
                                         </div>
                                         
                                         <div className="relative">
@@ -715,11 +720,12 @@ export default function CreatePostButton({
                                                     onTouchMove={handleTouchMove}
                                                     onTouchEnd={handleTouchEnd}
                                                 >
-                                                    {/* Páginas do carrossel */}
                                                     {Array.from({ length: Math.ceil(previews.length / 2) }).map((_, pageIndex) => (
                                                         <div key={pageIndex} className="w-full flex-shrink-0 grid grid-cols-2 gap-3">
                                                             {previews.slice(pageIndex * 2, pageIndex * 2 + 2).map((preview, imageIndex) => {
                                                                 const globalIndex = pageIndex * 2 + imageIndex;
+                                                                const file = files[globalIndex];
+                                                                const isVideo = file && file.type.startsWith('video/');
                                                                 return (
                                                                     <div 
                                                                         key={globalIndex} 
@@ -729,11 +735,11 @@ export default function CreatePostButton({
                                                                             setThumbnailIndex(globalIndex);
                                                                         }}
                                                                     >
-                                                                        <img
-                                                                            src={preview}
-                                                                            alt={`Preview ${globalIndex + 1}`}
-                                                                            className="w-full h-40 object-cover rounded-lg"
-                                                                        />
+                                                                        {isVideo ? (
+                                                                            <video src={preview} controls className="w-full h-40 object-cover rounded-lg bg-black" />
+                                                                        ) : (
+                                                                            <img src={preview} alt={`Preview ${globalIndex + 1}`} className="w-full h-40 object-cover rounded-lg" />
+                                                                        )}
                                                                         {thumbnailIndex === globalIndex && (
                                                                             <div className="absolute top-2 left-2 bg-green-600 text-white rounded-full p-1">
                                                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
