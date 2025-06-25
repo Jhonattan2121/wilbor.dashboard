@@ -588,60 +588,92 @@ export default function CreatePostButton({
                                     />
                                 </div>
 
-                                {/* Tags estilo PeakD - Versão melhorada para mobile */}
+                                {/* Tags estilo chip com rolagem horizontal no mobile */}
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Tags</label>
-                                    <div className="flex flex-wrap gap-2 mb-2">
+                                    <div
+                                        className="flex overflow-x-auto flex-nowrap gap-2 mb-2 pb-1 hide-scrollbar sm:flex-wrap sm:overflow-visible sm:gap-2"
+                                        style={{ WebkitOverflowScrolling: 'touch' }}
+                                    >
                                         {tags.map((tag, idx) => (
-                                            <span key={tag + idx} className="flex items-center bg-gray-700 text-white rounded-full px-3 py-1.5 text-sm">
-                                                #{tag}
+                                            <span
+                                                key={tag + idx}
+                                                className="flex-shrink-0 flex items-center bg-gray-700 text-white rounded-full px-4 py-2 text-sm mr-1 shadow-sm"
+                                                style={{ fontSize: '0.97rem' }}
+                                                title={tag}
+                                            >
+                                                {tag}
                                                 <button
                                                     type="button"
-                                                    className="ml-2 text-gray-300 hover:text-red-400 focus:outline-none p-1 text-lg"
+                                                    className="ml-2 text-gray-300 hover:text-red-400 focus:outline-none p-1 text-base"
                                                     onClick={() => setTags(tags.filter((t, i) => i !== idx))}
                                                     aria-label={`Remover tag ${tag}`}
                                                 >
-                                                    ×
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                                 </button>
                                             </span>
                                         ))}
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 mb-1">
                                         <input
                                             type="text"
                                             value={tagInput}
-                                            onChange={e => setTagInput(e.target.value)}
-                                            onKeyDown={e => {
-                                                if ((e.key === 'Enter' || e.key === ',' || e.key === ' ') && tagInput.trim()) {
-                                                    e.preventDefault();
-                                                    const newTag = tagInput.trim().toLowerCase().replace(/[^a-z0-9\-]/g, '');
-                                                    if (newTag && !tags.includes(newTag) && tags.length < 10 && newTag.length <= 24) {
-                                                        setTags([...tags, newTag]);
-                                                    }
-                                                    setTagInput('');
-                                                } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
-                                                    setTags(tags.slice(0, -1));
+                                            onChange={(e) => setTagInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (
+                                                  (e.key === 'Enter' || e.key === ',' || e.key === ' ') &&
+                                                  tagInput.trim()
+                                                ) {
+                                                  e.preventDefault();
+                                                  const newTag = tagInput
+                                                    .trim()
+                                                    .toLowerCase()
+                                                    .replace(/[^a-z0-9\-]/g, '');
+                                                  if (
+                                                    newTag &&
+                                                    !tags.includes(newTag) &&
+                                                    tags.length < 10 &&
+                                                    newTag.length <= 24
+                                                  ) {
+                                                    setTags([...tags, newTag]);
+                                                  }
+                                                  setTagInput('');
+                                                } else if (
+                                                  e.key === 'Backspace' &&
+                                                  !tagInput &&
+                                                  tags.length > 0
+                                                ) {
+                                                  setTags(tags.slice(0, -1));
                                                 }
                                             }}
-                                            className="w-full px-3 py-3 rounded bg-gray-800 border border-gray-700 text-white text-base"
+                                            className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white text-base"
                                             placeholder="Digite e pressione Enter para adicionar"
                                             maxLength={24}
                                             disabled={tags.length >= 10}
+                                            style={{ fontSize: '1rem' }}
                                         />
                                         {tagInput.trim() && (
-                                            <button
-                                                type="button"
-                                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-3 rounded-lg text-sm whitespace-nowrap"
-                                                onClick={() => {
-                                                    const newTag = tagInput.trim().toLowerCase().replace(/[^a-z0-9\-]/g, '');
-                                                    if (newTag && !tags.includes(newTag) && tags.length < 10 && newTag.length <= 24) {
-                                                        setTags([...tags, newTag]);
-                                                        setTagInput('');
-                                                    }
-                                                }}
-                                            >
-                                                Adicionar
-                                            </button>
+                                          <button
+                                            type="button"
+                                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap"
+                                            onClick={() => {
+                                              const newTag = tagInput
+                                                .trim()
+                                                .toLowerCase()
+                                                .replace(/[^a-z0-9\-]/g, '');
+                                              if (
+                                                newTag &&
+                                                !tags.includes(newTag) &&
+                                                tags.length < 10 &&
+                                                newTag.length <= 24
+                                              ) {
+                                                setTags([...tags, newTag]);
+                                                setTagInput('');
+                                              }
+                                            }}
+                                          >
+                                            Adicionar
+                                          </button>
                                         )}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1">
