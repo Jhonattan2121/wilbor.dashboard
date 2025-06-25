@@ -98,6 +98,7 @@ export default function PhotoGridContainer({
             username={username}
             selectedCommunity={selectedCommunity}
             setSelectedCommunity={setSelectedCommunity}
+            postingKey={postingKey || undefined}
           />
         )}
         {header}
