@@ -457,7 +457,7 @@ export default function CreatePostButton({
                         clipRule="evenodd"
                     />
                 </svg>
-                Criar post com Pinata IPFS
+                Criar post
             </button>
 
             {showForm && (

@@ -61,8 +61,10 @@ export default function DashboardProjectsClient({ posts, photosCount, cameras, s
 
   return (
     <div>
-      <div className="flex justify-between items-center p-4">
-        <div>
+      <div
+        className="flex flex-row items-center justify-between p-4 gap-2 md:gap-8 md:px-8 md:py-6"
+      >
+        <div className="flex flex-row items-center gap-2 md:gap-4">
           {loginUser && (
             <CreatePostButton
               username={loginUser}
@@ -70,12 +72,12 @@ export default function DashboardProjectsClient({ posts, photosCount, cameras, s
             />
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">
-            Logado como <b>{loginUser}</b>
+        <div className="flex flex-row items-center gap-2 md:gap-4 md:bg-zinc-900 md:rounded-lg md:px-4 md:py-2 md:shadow-lg">
+          <span className="text-sm text-gray-400 whitespace-nowrap md:text-base md:text-gray-200">
+            Logado como <b className="font-mono md:font-bold">{loginUser}</b>
           </span>
           <button
-            className="text-xs text-red-400 border border-red-400 rounded px-2 py-1 ml-2 hover:bg-red-400 hover:text-white transition"
+            className="text-xs text-red-400 border border-red-400 rounded px-2 py-1 hover:bg-red-400 hover:text-white transition md:text-sm md:px-3 md:py-1.5 md:border-2 md:rounded-md"
             onClick={handleLogout}
             title="Sair"
           >
@@ -83,15 +85,7 @@ export default function DashboardProjectsClient({ posts, photosCount, cameras, s
           </button>
         </div>
       </div>
-      <div className="flex items-center gap-2 px-4 pb-2">
-        <span className="text-green-500 font-semibold text-base">
-          Modo edição ativado: você pode editar os projetos!
-        </span>
-        <span className="text-xs text-gray-400">
-          (clique em editar nos cards)
-        </span>
-      </div>
-
+   
       <PhotoGridPage
         photos={posts}
         photosCount={photosCount}

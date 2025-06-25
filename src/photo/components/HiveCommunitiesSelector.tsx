@@ -1,8 +1,8 @@
+import { Client, Operation, PrivateKey } from '@hiveio/dhive';
 import { clsx } from 'clsx/lite';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { sendHiveOperation } from '../../../lib/hive/server-functions';
-import { Operation, Client, PrivateKey } from '@hiveio/dhive';
 
 const CreatePostButton = dynamic(
   () => import('../../../app/dashboard/CreatePostButton'),
@@ -263,15 +263,13 @@ export function HiveCommunitiesSelector({
   if (!username) return null;
 
   return (
-    <div className="mb-8 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-
-        {/* Botão para abrir o modal de comunidades */}
-        <div className="flex justify-center gap-2 my-2">
+    <div className="mb-8 flex flex-col gap-4 w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
+        {/* Botões de comunidades organizados e responsivos */}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto justify-center items-stretch sm:items-center my-2">
           <button
             onClick={() => setShowCommunitiesModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow"
-            style={{ minWidth: 0 }}
+            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow min-w-0 text-base sm:text-sm"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -280,8 +278,7 @@ export function HiveCommunitiesSelector({
           </button>
           <button
             onClick={() => setShowExploreModal(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow"
-            style={{ minWidth: 0 }}
+            className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow min-w-0 text-base sm:text-sm"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -290,7 +287,7 @@ export function HiveCommunitiesSelector({
           </button>
         </div>
         {loading && (
-          <div className="flex items-center gap-2 text-sm text-blue-400">
+          <div className="flex items-center gap-2 text-sm text-blue-400 justify-center sm:justify-end w-full sm:w-auto">
             <svg
               className="animate-spin h-4 w-4"
               xmlns="http://www.w3.org/2000/svg"
