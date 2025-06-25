@@ -217,14 +217,16 @@ export default function EditPostButton({
   // Manipular a seleção de arquivos
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
-    setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
-    const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
+    // Só adiciona arquivos reais (não placeholders)
+    const realFiles = selectedFiles.filter(f => f.size > 0 && f.name !== 'placeholder');
+    setFiles((prevFiles) => [...prevFiles, ...realFiles]);
+    const newPreviews = realFiles.map((file) => URL.createObjectURL(file));
     setPreviews((prevPreviews) => [...prevPreviews, ...newPreviews]);
-    setUploadProgress((prev) => [...prev, ...selectedFiles.map(() => 0)]);
+    setUploadProgress((prev) => [...prev, ...realFiles.map(() => 0)]);
 
-    // Para cada arquivo, já faz upload e insere o link no conteúdo
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i];
+    // Para cada arquivo, faz upload e insere o link no conteúdo se não existir
+    for (let i = 0; i < realFiles.length; i++) {
+      const file = realFiles[i];
       try {
         setLoading(true);
         const result = await uploadFileToIPFS(file);
@@ -241,14 +243,11 @@ export default function EditPostButton({
         const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
         setContent((prev) => {
           let texto = prev.trim();
-          if (texto.length > 0) {
+          // Só insere se não existir no markdown
+          if (!texto.includes(ipfsUrl)) {
             texto += isVideo
               ? `\n\n<video controls src=\"${ipfsUrl}\"></video>\n`
               : `\n\n![image](${ipfsUrl})\n`;
-          } else {
-            texto = isVideo
-              ? `<video controls src=\"${ipfsUrl}\"></video>\n`
-              : `![image](${ipfsUrl})\n`;
           }
           return texto;
         });
@@ -271,53 +270,43 @@ export default function EditPostButton({
     return '';
   };
 
-  // Remover uma imagem da lista
+  // Remover uma imagem da lista (remove apenas UM link do markdown)
   const removeFile = (index: number) => {
     const newFiles = [...files];
     const newPreviews = [...previews];
     const newProgress = [...uploadProgress];
-    
     // Revogar URL de objeto para evitar vazamento de memória
-    URL.revokeObjectURL(newPreviews[index]);
-
-    // Remover a imagem do conteúdo do post, procurando a URL dela
+    if (newPreviews[index] && newPreviews[index].startsWith('blob:')) {
+      URL.revokeObjectURL(newPreviews[index]);
+    }
+    // Remove apenas a primeira ocorrência do link correspondente no markdown
     if (newPreviews[index]) {
       const urlToRemove = newPreviews[index];
       setContent(prevContent => {
         let cleanedContent = prevContent;
-        const escapedUrl = urlToRemove.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        cleanedContent = cleanedContent.replace(
-          new RegExp(`!\\[.*?\\]\\(${escapedUrl}[^)]*\\)\\n?`, 'g'),
-          ''
-        );
-        if (urlToRemove.includes('files.peakd.com')) {
-          const peakdBase = urlToRemove.split('?')[0];
-          const escapedPeakd = peakdBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Remove só a primeira ocorrência
+        if (urlToRemove.startsWith('blob:')) {
+          // Não remove nada do markdown, pois blobs não estão lá
+        } else if (urlToRemove.includes('/ipfs/')) {
+          // Remove só a primeira ocorrência do link
           cleanedContent = cleanedContent.replace(
-            new RegExp(`!\\[.*?\\]\\(${escapedPeakd}[^)]*\\)\\n?`, 'g'),
+            new RegExp(`!\\[.*?\\]\\(${urlToRemove.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}[^)]*\\)\\n?`, ''),
             ''
           );
-        }
-        if (urlToRemove.includes('/ipfs/')) {
-          const hash = urlToRemove.split('/ipfs/')[1]?.split('?')[0]?.split('/')[0];
-          if (hash) {
-            cleanedContent = cleanedContent.replace(
-              new RegExp(`!\\[.*?\\]\\([^)]*${hash}[^)]*\\)\\n?`, 'g'),
-              ''
-            );
-          }
-        }
-        if (files[index] && files[index].name) {
-          const fileName = files[index].name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           cleanedContent = cleanedContent.replace(
-            new RegExp(`!\\[.*?\\]\\([^)]*${fileName}[^)]*\\)\\n?`, 'g'),
+            new RegExp(`<video[^>]*src=["']${urlToRemove.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}["'][^>]*>.*?<\\/video>\\n?`, ''),
+            ''
+          );
+        } else {
+          // Remove só a primeira ocorrência do link
+          cleanedContent = cleanedContent.replace(
+            new RegExp(`!\\[.*?\\]\\(${urlToRemove.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}[^)]*\\)\\n?`, ''),
             ''
           );
         }
         return cleanedContent.trim();
       });
     }
-
     newFiles.splice(index, 1);
     newPreviews.splice(index, 1);
     newProgress.splice(index, 1);
@@ -326,63 +315,59 @@ export default function EditPostButton({
     setUploadProgress(newProgress);
   };
 
+  // Função utilitária para extrair links de imagens e vídeos do markdown
+  const extractMediaLinksFromMarkdown = (markdown: string) => {
+    // Regex pega o link completo, incluindo parâmetros (corrigido para não cortar ? ou #)
+    const imageRegex = /!\[.*?\]\((https?:\/\/[^)\s]+)\)/g;
+    const videoRegex = /<video[^>]*src=["']([^"'>\s]+)["'][^>]*>/g;
+    const images: string[] = [];
+    const videos: string[] = [];
+    let match;
+    while ((match = imageRegex.exec(markdown)) !== null) {
+      images.push(match[1]); // link completo, com token e parâmetros
+    }
+    while ((match = videoRegex.exec(markdown)) !== null) {
+      videos.push(match[1]);
+    }
+    return { images, videos };
+  };
+
   // Processar o envio do formulário de edição
-  // 2. No handleSubmit, após upload para o IPFS, monta o conteúdo com as URLs finais
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!title) {
       setError("Por favor, insira um título");
       return;
     }
-
     if (!postingKey && !(window as any).hive_keychain) {
       setError(
         "Chave de postagem não fornecida ou Hive Keychain não instalado",
       );
       return;
     }
-
-    // Verificar se o usuário é o autor
     if (username.toLowerCase() !== author.toLowerCase()) {
       setError("Você não tem permissão para editar este post");
       return;
     }
-
     setLoading(true);
     setError("");
-
-    // Verificação rigorosa do permlink
     if (!permlink) {
       setError("Permlink não fornecido.");
       setLoading(false);
       return;
     }
-
-    // Verificar o permlink para garantir que seja válido e não contenha dados incorretos
     const safePermlink = ensureSafePermlink(permlink);
-    
-    // Log para depuração 
-    if (safePermlink !== permlink) {
-      console.log("Permlink original:", permlink, "Tamanho:", permlink.length);
-      console.log("Permlink seguro:", safePermlink, "Tamanho:", safePermlink.length);
-    }
-
-    // Log para depuração
-    console.log("Permlink a ser usado:", safePermlink, "Tamanho:", safePermlink.length);
-
     const keychainTimeout = setTimeout(() => {
       setLoading(false);
       setError(
         "Operação expirada ou não confirmada no Keychain. Tente novamente.",
       );
-      // Não fecha o modal automaticamente em caso de erro!
     }, 15000);
-
     try {
+      // Upload de novos arquivos e INSERÇÃO no conteúdo (como já faz)
       const ipfsResults = [];
-      const existingImagesCount = initialImages?.length || 0;
-      const newFiles = files.slice(0);
+      // Só faz upload de arquivos realmente novos (não placeholders)
+      const newFiles = files.filter(f => f.size > 0 && f.name !== 'placeholder');
       let newContent = content.trim();
       for (let i = 0; i < newFiles.length; i++) {
         try {
@@ -399,104 +384,77 @@ export default function EditPostButton({
             fileName = `media-${i + 1}`;
           }
           const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
-          if (isVideo) {
-            newContent += `\n\n<video controls src=\"${ipfsUrl}\"></video>\n`;
-          } else {
-            newContent += `\n\n![image](${ipfsUrl})\n`;
+          // Só insere se o link ainda não existe no markdown
+          if (!newContent.includes(ipfsUrl)) {
+            newContent += isVideo
+              ? `\n\n<video controls src=\"${ipfsUrl}\"></video>\n`
+              : `\n\n![image](${ipfsUrl})\n`;
           }
-          // Atualizar o progresso
+          // Atualizar progresso
           const newProgress = [...uploadProgress];
-          newProgress[existingImagesCount + i] = 100;
+          newProgress[i] = 100;
           setUploadProgress(newProgress);
         } catch (error) {
-          console.error(`Erro ao fazer upload do arquivo ${i}:`, error);
-          setError(`Falha ao fazer upload da imagem ${i + 1}`);
+          setError(`Falha ao fazer upload da mídia ${i + 1}`);
           setLoading(false);
           clearTimeout(keychainTimeout);
           return;
         }
       }
-
-      const postBody = newContent; 
-
-      // Preparar as tags
+      // Limpa arquivos após upload para evitar duplicidade futura
+      // O conteúdo do post é exatamente o do textarea (com possíveis novas mídias)
+      const postBody = newContent;
+      // Extrai as mídias do markdown para o metadata
+      const { images, videos } = extractMediaLinksFromMarkdown(postBody);
+      // Thumbnail: índice da imagem no array extraído
+      let orderedImages = images;
+      if (thumbnailIndex >= 0 && thumbnailIndex < images.length) {
+        const thumb = orderedImages[thumbnailIndex];
+        orderedImages = [thumb, ...orderedImages.filter((img, idx) => idx !== thumbnailIndex)];
+      }
       const tagArray = tags
         .map((tag) => tag.trim().toLowerCase())
         .filter((tag) => tag !== "");
-    
-      // Preparar os metadados
-      // Reordenar as imagens para colocar a thumbnail primeiro
-      const allImages = [
-        ...initialImages.filter((url) => previews.includes(url)),
-        ...ipfsResults.map((result, index) => {
-          const fileName = newFiles[index]?.name || "";
-          return getIpfsGatewayUrl(result.IpfsHash, fileName);
-        }),
-      ];
-      
-      // Se o índice da thumbnail for válido, coloca a imagem selecionada como a primeira
-      const orderedImages = [...allImages];
-      if (thumbnailIndex >= 0 && thumbnailIndex < allImages.length) {
-        // Remove a thumbnail da lista original
-        const thumbnail = orderedImages[thumbnailIndex];
-        orderedImages.splice(thumbnailIndex, 1);
-        // Insere a thumbnail no início do array
-        orderedImages.unshift(thumbnail);
-      }
-      
       const jsonMetadata = {
         tags: tagArray,
         image: orderedImages,
+        video: videos,
         app: "wilbor.art/dashboard",
       };
-
-      // Atualizar o post no Hive
-      let updateSuccess = false;
-      // Buscar o parent_permlink correto do post original
+      // Buscar parent_permlink
       let parentPermlink = tagArray.length > 0 ? tagArray[0] : '';
       try {
-        // Tentamos buscar com o permlink original primeiro
         let originalPost = await fetchPostFromHive(author, permlink);
-        
-        // Se falhar e o permlink foi modificado, tentamos com o safePermlink
         if (!originalPost && safePermlink !== permlink) {
-          console.log('Tentando buscar post com safePermlink');
           originalPost = await fetchPostFromHive(author, safePermlink);
         }
-        
         if (originalPost && originalPost.parent_permlink) {
           parentPermlink = originalPost.parent_permlink;
         }
-      } catch (e) {
-        // Se não conseguir buscar, usa tagArray[0] mesmo
-        console.warn('Não foi possível buscar informações do post original, usando tag:', tagArray[0]);
-      }
+      } catch (e) {}
+      let updateSuccess = false;
       if (postingKey) {
-        // Postar com chave privada criptografada
         updateSuccess = await updateHivePostWithEncryptedKey(
           username,
           title,
           postBody,
-          safePermlink, // Usar o permlink seguro
+          safePermlink,
           parentPermlink,
           jsonMetadata,
           postingKey,
         );
       } else {
-        // Postar com Keychain
         try {
           updateSuccess = await updateHivePostWithKeychain(
             username,
             title,
             postBody,
-            safePermlink, // Usar o permlink seguro
+            safePermlink,
             parentPermlink,
             jsonMetadata,
           );
         } catch (keychainError: any) {
-          // Verificar se é um cancelamento do usuário
           if (keychainError.isCancelled === true) {
-            console.log("Operação cancelada pelo usuário detectada");
             setError("Operação cancelada pelo usuário");
             setLoading(false);
             clearTimeout(keychainTimeout);
@@ -506,22 +464,26 @@ export default function EditPostButton({
           throw keychainError;
         }
       }
-
-      // Se chegou aqui e updateSuccess é false, algo deu errado
       if (!updateSuccess) {
         clearTimeout(keychainTimeout);
         throw new Error("Falha ao atualizar o post");
       }
-
       clearTimeout(keychainTimeout);
       setSuccess(true);
       setTimeout(() => {
         setShowForm(false);
         window.location.reload();
       }, 2000);
+      // Após submit, reconstrói files/previews APENAS a partir dos links do markdown
+      const { images: extractedImages, videos: extractedVideos } = extractMediaLinksFromMarkdown(postBody);
+      const extractedUrls = [...extractedImages, ...extractedVideos];
+      const placeholderProgress = extractedUrls.map(() => 100);
+      const placeholderFiles = extractedUrls.map(() => new File([], 'placeholder'));
+      setFiles(placeholderFiles);
+      setPreviews(extractedUrls);
+      setUploadProgress(placeholderProgress);
     } catch (error: any) {
       clearTimeout(keychainTimeout);
-      console.error("Erro ao atualizar post:", error);
       setError(
         "Falha ao atualizar o post: " + (error.message || "Erro desconhecido"),
       );
@@ -1098,7 +1060,16 @@ export default function EditPostButton({
                               {previews.slice(pageIndex * 2, pageIndex * 2 + 2).map((preview, imageIndex) => {
                                 const globalIndex = pageIndex * 2 + imageIndex;
                                 const file = files[globalIndex];
-                                const isVideo = file && file.type && file.type.startsWith('video/');
+                                // Detecta vídeo por file.type OU pela URL do preview
+                                let isVideo = false;
+                                if (file && file.type) {
+                                  isVideo = file.type.startsWith('video/');
+                                } else if (preview) {
+                                  // Detecta vídeo por extensão na URL
+                                  isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(preview) ||
+                                    preview.includes('<video') ||
+                                    preview.includes('controls src=');
+                                }
                                 return (
                                   <div
                                     key={globalIndex}
@@ -1141,7 +1112,6 @@ export default function EditPostButton({
                                         if (thumbnailIndex === globalIndex) {
                                           setThumbnailIndex(0);
                                         } else if (thumbnailIndex > globalIndex) {
-                                          // Ajusta o índice se uma imagem anterior for removida
                                           setThumbnailIndex(thumbnailIndex - 1);
                                         }
                                         // Ajuste da página atual se necessário

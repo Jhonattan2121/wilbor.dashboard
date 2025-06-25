@@ -4,13 +4,10 @@ import { IconX } from '@/components/IconX';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
 import EditPostButton from '../../../app/dashboard/EditPostButton';
-import { extractImagesFromMarkdown } from '../utils/markdownUtils';
 import { ImageGallery } from './ImageGallery';
+import { extractImagesFromMarkdown } from './markdownUtils';
 import { Media } from './types';
-import { VideoWithFullPoster } from './VideoWithFullPoster';
 
 const SKATEHIVE_URL = 'ipfs.skatehive.app/ipfs';
 
@@ -457,65 +454,40 @@ export function MediaItem({
               </button>
             </div>
             <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar overscroll-contain px-1.5 sm:px-8 py-3 sm:py-8 bg-black/90 flex flex-col items-start">
-              {mainItem.src?.includes(SKATEHIVE_URL) && (
-                <div className="w-full max-w-3xl mx-auto p-0 m-0 mb-6" style={{ background: 'none', boxShadow: 'none', borderRadius: 0 }}>
-                  <div className="relative w-full aspect-[16/9] p-0 m-0" style={{ background: 'none', boxShadow: 'none', borderRadius: 0 }}>
-                    <VideoWithFullPoster
-                      src={mainItem.src}
-                      poster={updatedThumbnail || thumbnailUrl || mainItem.thumbnailSrc || ''}
-                    />
-                  </div>
-                </div>
-              )}
-              
+              {/* Exibir vídeo acima do carrossel, se houver */}
+              {(() => {
+                // Extrair vídeos do markdown
+                const videoRegex = /<video[^>]*src=["']([^"'>]+)["'][^>]*>/g;
+                const videos: string[] = [];
+                let match;
+                if (mainItem.hiveMetadata?.body) {
+                  while ((match = videoRegex.exec(mainItem.hiveMetadata.body)) !== null) {
+                    videos.push(match[1]);
+                  }
+                }
+                if (videos.length > 0) {
+                  return (
+                    <div className="w-full max-w-3xl mx-auto mb-6">
+                      {videos.map((src, idx) => (
+                        <video
+                          key={src + idx}
+                          src={src}
+                          controls
+                          className="w-full my-4 rounded-lg bg-black"
+                        />
+                      ))}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              {/* Carrossel de imagens */}
               {images.length > 0 && (
-                <ImageGallery 
-                  images={images} 
-                  isMobile={isMobile} 
-                  initialIndex={fullscreenIndex} 
+                <ImageGallery
+                  images={images}
+                  isMobile={isMobile}
+                  initialIndex={fullscreenIndex}
                 />
-              )}
-              
-              {mainItem.hiveMetadata?.body && (
-                <div className="prose prose-invert prose-base sm:prose-lg max-w-3xl mx-auto bg-black/80 rounded-xl p-4 sm:p-8 shadow-lg mt-0 sm:mt-6 text-left pl-4 sm:pl-12 sm:ml-[-3rem]">
-                  <ReactMarkdown
-                    rehypePlugins={[rehypeRaw]}
-                    components={{
-                      img: () => null,
-                      video: () => null,
-                      iframe: () => null,
-                      p: ({ node, children, ...props }) => (
-                        <p className="mb-3 sm:mb-5 text-gray-200 leading-relaxed text-base sm:text-lg" {...props}>{children}</p>
-                      ),
-                      h1: ({ node, children, ...props }) => (
-                        <h1 className="text-2xl sm:text-4xl font-bold mb-3 sm:mb-5 mt-4 sm:mt-8 text-white" {...props}>{children}</h1>
-                      ),
-                      h2: ({ node, children, ...props }) => (
-                        <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4 mt-3 sm:mt-6 text-white" {...props}>{children}</h2>
-                      ),
-                      h3: ({ node, children, ...props }) => (
-                        <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2 mt-2 sm:mt-4 text-white" {...props}>{children}</h3>
-                      ),
-                      a: ({ node, children, ...props }) => (
-                        <a className="text-blue-400 underline hover:text-blue-200" {...props}>{children}</a>
-                      ),
-                      ul: ({ node, children, ...props }) => (
-                        <ul className="list-disc pl-4 sm:pl-6 mb-2 sm:mb-4 text-gray-200" {...props}>{children}</ul>
-                      ),
-                      ol: ({ node, children, ...props }) => (
-                        <ol className="list-decimal pl-4 sm:pl-6 mb-2 sm:mb-4 text-gray-200" {...props}>{children}</ol>
-                      ),
-                      li: ({ node, children, ...props }) => (
-                        <li className="mb-0.5 sm:mb-1" {...props}>{children}</li>
-                      ),
-                      blockquote: ({ node, children, ...props }) => (
-                        <blockquote className="border-l-4 border-gray-500 pl-2 sm:pl-4 italic my-2 sm:my-4 text-gray-300" {...props}>{children}</blockquote>
-                      ),
-                    }}
-                  >
-                    {mainItem.hiveMetadata.body}
-                  </ReactMarkdown>
-                </div>
               )}
             </div>
           </div>

@@ -96,10 +96,12 @@ export default function CreatePostButton({
     }, [loading, error]);
 
     const getIpfsGatewayUrl = (hash: string, fileName?: string): string => {
-        return `https://lime-useful-snake-714.mypinata.cloud/ipfs/${hash}?pinataGatewayToken=${PINATA_GATEWAY_TOKEN}`;
+        // Sempre retorna o gateway público do IPFS para exibição
+        return `https://ipfs.io/ipfs/${hash}`;
     };
 
     const getIpfsPublicUrl = (hash: string, fileName?: string): string => {
+        // Mantém o gateway público para consistência
         return `https://ipfs.io/ipfs/${hash}`;
     };
 
@@ -138,6 +140,7 @@ export default function CreatePostButton({
                 } else {
                     fileName = `media-${i + 1}`;
                 }
+                // Usa sempre o gateway público para exibição
                 const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
                 setContent(prev => {
                     let texto = prev.trim();
@@ -255,12 +258,18 @@ export default function CreatePostButton({
                 } else {
                     fileName = `image-${index + 1}`;
                 }
+                // Usa sempre o gateway público para exibição
                 const ipfsUrl = getIpfsPublicUrl(result.IpfsHash, fileName);
-                imagesMarkdown += `![image](${ipfsUrl})\n\n`;
+                if (file.type && file.type.startsWith('video/')) {
+                    imagesMarkdown += `<video controls src=\"${ipfsUrl}\"></video>\n\n`;
+                } else {
+                    imagesMarkdown += `![image](${ipfsUrl})\n\n`;
+                }
             });
 
             let newContent = content.trim();
-            newContent = newContent.replace(/https:\/\/lime-useful-snake-714\.mypinata\.cloud\/ipfs\/([a-zA-Z0-9]+)[^\)]*/g, (match, hash) => {
+            newContent = newContent.replace(/https:\/\/lime-useful-snake-714\.mypinata\.cloud\/ipfs\/([a-zA-Z0-9]+)[^)]*/g, (match, hash) => {
+                // Troca para gateway público
                 return `https://ipfs.io/ipfs/${hash}`;
             });
             if (imagesMarkdown.trim().length > 0) {
