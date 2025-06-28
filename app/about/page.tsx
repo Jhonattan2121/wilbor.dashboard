@@ -10,6 +10,7 @@ import { useDynamicAboutPost } from '../../src/app/about/useDynamicAboutPost';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
 import DashboardHeader from "../dashboard/DashboardHeader";
 import EditPostButton from "../dashboard/EditPostButton";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 const HIVE_USERNAME = process.env.NEXT_PUBLIC_HIVE_USERNAME || '';
 
@@ -46,14 +47,16 @@ export default function AboutPage() {
   return (
     <div className="w-full flex flex-col items-start">
       <ViewSwitcher currentSelection="about" />
-      <DashboardHeader username={username} />
       <section className="w-full flex flex-col items-start">
         <div className="w-full max-w-2xl text-left mx-0 px-3 sm:px-8 space-y-4 sm:space-y-6">
           {loading && <p>Carregando conteúdo...</p>}
           {error && <p className="text-red-500">{error}</p>}
           {markdown && (
             <>
-              <div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <DashboardHeader username={username} />
+                </div>
                 <EditPostButton
                   username={username || HIVE_USERNAME}
                   author={username || HIVE_USERNAME}
@@ -65,13 +68,10 @@ export default function AboutPage() {
                   postingKey={postingKey || undefined}
                 />
               </div>
-              {title && (
-                <h1 className="text-3xl font-bold mb-6">{title.replace(/\b\w/g, l => l.toUpperCase())}</h1>
-              )}
               <div className="prose dark:prose-invert max-w-none">
-                <ReactMarkdown>{
-                  markdown.replace(/!\[[^\]]*\]\([^\)]+\)/g, '')
-                }</ReactMarkdown>
+                <MarkdownRenderer>
+                  {markdown.replace(/!\[[^\]]*\]\([^\)]+\)/g, '')}
+                </MarkdownRenderer>
               </div>
               {media.length > 0 && (
                 <div className="my-6 w-full">
