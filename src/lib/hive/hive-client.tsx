@@ -232,3 +232,22 @@ function extractVideos(body: string): string[] {
 
   return Array.from(videoIds);
 }
+
+export async function getPostsByBlog(username: string, limit = 20) {
+  try {
+    const response = await fetch('https://api.hive.blog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'condenser_api.get_discussions_by_blog',
+        params: [{ tag: username, limit }],
+        id: 1,
+      }),
+    });
+    const data = await response.json();
+    return data.result || [];
+  } catch (error) {
+    return [];
+  }
+}
