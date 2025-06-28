@@ -198,10 +198,7 @@ export default function CreatePostButton({
             return;
         }
 
-        if (files.length === 0) {
-            setError('Por favor, selecione pelo menos uma imagem');
-            return;
-        }
+    
 
         if (!postingKey && !(window as any).hive_keychain) {
             setError('Chave de postagem não fornecida ou Hive Keychain não instalado');
@@ -314,7 +311,7 @@ export default function CreatePostButton({
             };
 
             // Geração do permlink e operações fora das funções de broadcast
-            const parentPermlink = initialCommunity || tagArray[0];
+            const parentPermlink = initialCommunity || tags[0] || 'blog';
             const permlink = createPermlink(title);
             const operations: Operation[] = [
                 [
