@@ -1,5 +1,3 @@
-
-
 import { getPostsByAuthor } from '@/lib/hive/hive-client';
 import { MarkdownRenderer } from '@/lib/markdown/MarkdownRenderer';
 import { Photo } from '@/photo/components/types';
@@ -7,6 +5,7 @@ import PhotosEmptyState from '@/photo/PhotosEmptyState';
 import { Tags } from '@/tag';
 import { Discussion } from '@hiveio/dhive';
 import DashboardProjectsClient from './DashboardProjectsClient';
+import ViewSwitcher, { SwitcherSelection } from '@/app/ViewSwitcher';
 
 const getMediaType = (url: string, mediaType?: string) => {
   if (url.includes('ipfs.skatehive.app/ipfs/')) {
@@ -175,5 +174,18 @@ export default async function DashboardPage() {
   });
   const postTags = extractAndCountTags(originalPosts, posts);
   const photosCount = formattedPosts.length;
-  return <DashboardProjectsClient posts={posts} photosCount={photosCount} cameras={[]} simulations={[]} />;
+
+  const currentSelection: SwitcherSelection = 'projects';
+
+  const drawerTagsProps = {
+    tags: postTags.map(t => t.tag),
+    selectedTag: null,
+  } as const;
+
+  return (
+    <div>
+      <ViewSwitcher currentSelection={currentSelection} drawerTagsProps={drawerTagsProps} />
+      <DashboardProjectsClient posts={posts} photosCount={photosCount} cameras={[]} simulations={[]} />
+    </div>
+  );
 }

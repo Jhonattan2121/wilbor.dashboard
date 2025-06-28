@@ -19,12 +19,15 @@ import { Metadata } from 'next/types';
 import '../tailwind.css';
 import JsonLd from './components/JsonLd';
 import DashboardPage from './dashboard/page';
+import { headers } from 'next/headers';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = (await headers()).get('x-invoke-path') || '';
+  const isDashboard = pathname === '/' || pathname === '/dashboard';
   return (
     <html
       lang="en"
@@ -38,7 +41,7 @@ export default function RootLayout({
         <AppStateProvider>
           <ThemeProvider attribute="class" defaultTheme={DEFAULT_THEME}>
             <SwrConfigClient>
-              <DashboardPage />
+              {isDashboard ? <DashboardPage /> : children}
             </SwrConfigClient>
             <ToasterWithThemes />
             <JsonLd type="website" />

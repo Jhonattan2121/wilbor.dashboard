@@ -21,11 +21,17 @@ export default function ViewSwitcher({
   drawerTagsProps?: {
     tags: string[];
     selectedTag: string | null;
-    setSelectedTag: (tag: string | null) => void;
+    setSelectedTag?: (tag: string | null) => void;
   }
 }) {
   
   const menuItems = [
+    {
+      text: "dashboard",
+      mobileText: "dashboard",
+      href: "/dashboard",
+      active: currentSelection === 'projects',
+    },
     {
       text: "sobre",
       mobileText: "sobre",
@@ -38,7 +44,6 @@ export default function ViewSwitcher({
       href: Path_Exhibitions,
       active: currentSelection === 'exhibitions',
     },
-  
     {
       text: "parceiros",
       mobileText: "parceiros",
@@ -67,17 +72,7 @@ export default function ViewSwitcher({
               {item.mobileText}
             </a>
           ))}
-          <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
-            {drawerTagsProps ? (
-              <DrawerTagsMobile
-                tags={drawerTagsProps.tags}
-                selectedTag={drawerTagsProps.selectedTag}
-                setSelectedTag={drawerTagsProps.setSelectedTag}
-              />
-            ) : (
-              <div style={{ width: 22, height: 22, opacity: 0 }} />
-            )}
-          </div>
+         
         </div>
       </div>
 
@@ -93,13 +88,7 @@ export default function ViewSwitcher({
               {item.text}
             </a>
           ))}
-          {drawerTagsProps && (
-            <DrawerTagsDesktop
-              tags={drawerTagsProps.tags}
-              selectedTag={drawerTagsProps.selectedTag}
-              setSelectedTag={drawerTagsProps.setSelectedTag}
-            />
-          )}
+         
         </div>
       </div>
     </>
