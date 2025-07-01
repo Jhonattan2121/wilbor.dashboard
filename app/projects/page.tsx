@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return createMetadata({
     title: 'Projetos',
     description: 'Explore as exposições e exibições de Wilson Domingues "Wilbor", artista multifacetado que une skate, arte e audiovisual.',
-    path: '/projects'
+    path: '/dashboard'
   });
 }
 

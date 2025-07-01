@@ -7,7 +7,7 @@ import { BASE_URL, GRID_HOMEPAGE_ENABLED } from './config';
 
 // Core paths
 export const PATH_ROOT = '/';
-export const PATH_GRID = '/projects';
+export const PATH_GRID = '/dashboard';
 export const Path_Contact = '/contact';
 export const Path_Social_Media = '/social-media';
 export const Path_Exhibitions = 'exhibitions'

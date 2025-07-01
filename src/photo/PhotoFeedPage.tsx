@@ -1,4 +1,3 @@
-import About from '@/app/about/page';
 import {
   Photo
 } from '.';
@@ -12,7 +11,7 @@ export default function PhotoFeedPage({
 }) {
   return (
     <div className="space-y-1">
-      <About />
+    
     </div>
   );
 }
