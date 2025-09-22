@@ -1,9 +1,11 @@
-"use client";
+'use client';
 
 import { uploadFileToIPFS } from '@/utils/ipfs';
-import { Client, PrivateKey, type Operation } from '@hiveio/dhive';
+import { type Operation } from '@hiveio/dhive';
 import { useCallback, useEffect, useState } from 'react';
 import { sendHiveOperation } from '../../lib/hive/server-functions';
+import { useMediaContentSync } from './MediaContentSync';
+import MediaUploader from './MediaUploader';
 
 interface EditPostButtonProps {
   username: string;
@@ -27,75 +29,49 @@ export default function EditPostButton({
   initialImages,
 }: EditPostButtonProps) {
   const [showForm, setShowForm] = useState(false);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
+  const [tagInput, setTagInput] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [loadingPost, setLoadingPost] = useState(false);
   const [thumbnailIndex, setThumbnailIndex] = useState<number>(0);
-  const [currentImagePage, setCurrentImagePage] = useState<number>(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
 
   // Token de Gateway do Pinata
-  const PINATA_GATEWAY_TOKEN =
-    "Z787oWC-YVuVKNuRKECMTklkNYMENXXPYROAr7NUSDnVREVJKbMbQQEenpu3KTam";
+  const PINATA_GATEWAY_TOKEN = process.env.NEXT_PUBLIC_PINATA_GATEWAY_TOKEN;
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
-    setIsDragging(true);
-  };
+  // Usar o hook de sincronização de mídia e conteúdo
+  const mediaContentSync = useMediaContentSync({
+    files,
+    previews,
+    content,
+    uploadProgress,
+    onContentChange: setContent,
+    onFilesChange: setFiles,
+    onPreviewsChange: setPreviews,
+    onUploadProgressChange: setUploadProgress,
+  });
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStart === null) return;
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) {
-      setIsDragging(false);
-      return;
-    }
-    
-    const distance = touchStart - touchEnd;
-    const minSwipeDistance = 50; 
-    
-    if (distance > minSwipeDistance) {
-      setCurrentImagePage(prev => 
-        Math.min(Math.ceil(previews.length / 2) - 1, prev + 1)
-      );
-    }
-    else if (distance < -minSwipeDistance) {
-      setCurrentImagePage(prev => Math.max(0, prev - 1));
-    }
-    
-    setTouchStart(null);
-    setTouchEnd(null);
-    setIsDragging(false);
-  };
-    
   // Função para garantir que o permlink esteja dentro do limite permitido
   const ensureSafePermlink = (pl: string): string => {
     // Verificação básica
     if (!pl) return `post-${Date.now().toString(36)}`;
     
-    console.log("Analisando permlink:", pl.substring(0, 50) + (pl.length > 50 ? "..." : ""), "Tamanho:", pl.length);
+    console.log('Analisando permlink:', pl.substring(0, 50) + (pl.length > 50 ? '...' : ''), 'Tamanho:', pl.length);
     
     // Tentar detectar se o permlink é um JSON (caso específico)
     try {
       if (pl.startsWith('{') && pl.includes('"') && pl.includes(':')) {
         const parsed = JSON.parse(pl);
-        console.error("ERRO CRÍTICO: Permlink contém um objeto JSON!", parsed);
+        console.error('ERRO CRÍTICO: Permlink contém um objeto JSON!', parsed);
         return `fixed-permlink-${Date.now().toString(36)}`;
       }
-    } catch (e) {
+    } catch {
       // Não é JSON válido, continua a verificação
     }
     
@@ -116,7 +92,7 @@ export default function EditPostButton({
         return safePart;
       }
       
-      // Se não for possível extrair uma parte válida, gera um novo baseado no timestamp
+      // Se não for possível extrair uma parte válida, gera novo baseado no timestamp
       const timestamp = Date.now().toString(36);
       const newPermlink = `post-${timestamp}`;
       console.log('Permlink gerado automaticamente:', newPermlink);
@@ -133,9 +109,9 @@ export default function EditPostButton({
 
   // Corrigir loop infinito no useEffect
   useEffect(() => {
-    if (!loading && error && error.includes("cancelada")) {
+    if (!loading && error && error.includes('cancelada')) {
       const timer = setTimeout(() => {
-        setError("");
+        setError('');
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -143,22 +119,22 @@ export default function EditPostButton({
 
   // Garantir que o reset do formulário não cause loops
   const resetForm = useCallback(() => {
-    setTitle(initialTitle || "");
-    setContent(initialContent || "");
+    setTitle(initialTitle || '');
+    setContent(initialContent || '');
     setTags(initialTags || []);
-    setTagInput("");
+    setTagInput('');
     setFiles([]);
     setPreviews(initialImages?.length ? initialImages.map((url) => url) : []);
     setUploadProgress(
       initialImages?.length ? Array(initialImages.length).fill(100) : [],
     );
-    setError("");
+    setError('');
     setSuccess(false);
     // Sempre reiniciar com a primeira imagem como thumbnail
     setThumbnailIndex(0);
     
     // Debug para verificar valores iniciais das tags
-    console.log("Reset do formulário feito, tags inicializadas:", initialTags || []);
+    console.log('Reset do formulário feito, tags inicializadas:', initialTags || []);
   }, [initialTitle, initialContent, initialTags, initialImages, setThumbnailIndex]);
 
   // Garantir que os estados sejam atualizados quando o modal é aberto
@@ -175,7 +151,7 @@ export default function EditPostButton({
   useEffect(() => {
     if (showForm) {
       resetForm();
-      console.log("Modal aberto, tags inicializadas:", initialTags);
+      console.log('Modal aberto, tags inicializadas:', initialTags);
     }
   }, [showForm, resetForm, initialTags]);
 
@@ -186,12 +162,12 @@ export default function EditPostButton({
   ): Promise<any> => {
     setLoadingPost(true);
     try {
-      const response = await fetch("https://api.hive.blog", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('https://api.hive.blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "condenser_api.get_content",
+          jsonrpc: '2.0',
+          method: 'condenser_api.get_content',
           params: [author, permlink],
           id: 1,
         }),
@@ -202,33 +178,62 @@ export default function EditPostButton({
       }
       return null;
     } catch (error) {
-      console.error("Erro ao buscar dados do post:", error);
+      console.error('Erro ao buscar dados do post:', error);
       return null;
     } finally {
       setLoadingPost(false);
     }
   };
 
-  const getIpfsGatewayUrl = (hash: string, fileName?: string): string => {
+  const getIpfsGatewayUrl = (hash: string, _fileName?: string): string => {
     // URL do Pinata com o token de gateway incluído
     return `https://lime-useful-snake-714.mypinata.cloud/ipfs/${hash}?pinataGatewayToken=${PINATA_GATEWAY_TOKEN}`;
   };
 
-  // Manipular a seleção de arquivos
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    // Só adiciona arquivos reais (não placeholders)
-    const realFiles = selectedFiles.filter(f => f.size > 0 && f.name !== 'placeholder');
-    setFiles((prevFiles) => [...prevFiles, ...realFiles]);
-    const newPreviews = realFiles.map((file) => URL.createObjectURL(file));
-    setPreviews((prevPreviews) => [...prevPreviews, ...newPreviews]);
-    setUploadProgress((prev) => [...prev, ...realFiles.map(() => 0)]);
+  // Função para processar e fazer upload dos arquivos selecionados
+  const handleMediaSelected = async (selectedFiles: File[]) => {
+    if (selectedFiles.length === 0) return;
 
-    // Para cada arquivo, faz upload e insere o link no conteúdo se não existir
-    for (let i = 0; i < realFiles.length; i++) {
-      const file = realFiles[i];
+    console.log('Arquivos selecionados:', selectedFiles.map(f => ({
+      nome: f.name,
+      tipo: f.type,
+      tamanho: f.size,
+    })));
+
+    // Criar URLs de objeto para os arquivos selecionados para preview
+    const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
+    console.log('URLs de preview criadas:', newPreviews);
+
+    // Adicionar os novos previews à lista existente
+    setPreviews(prevPreviews => {
+      const updatedPreviews = [...prevPreviews, ...newPreviews];
+      console.log('Lista atualizada de previews:', updatedPreviews);
+      return updatedPreviews;
+    });
+
+    // Adicionar os novos arquivos à lista existente
+    setFiles(prevFiles => [...prevFiles, ...selectedFiles]);
+
+    // Inicializar o progresso de upload para cada novo arquivo
+    setUploadProgress(prev => [...prev, ...selectedFiles.map(() => 0)]);
+
+    function getFileExtension(file: File): string {
+      const name = file.name;
+      if (name && name.includes('.')) {
+        return name.split('.').pop() || '';
+      }
+      if (file.type && file.type.includes('/')) {
+        return file.type.split('/')[1];
+      }
+      return '';
+    }
+
+    // Processar cada arquivo selecionado
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
       try {
         setLoading(true);
+        // Fazer upload do arquivo para IPFS
         const result = await uploadFileToIPFS(file);
         const ext = getFileExtension(file);
         const isVideo = file.type.startsWith('video/');
@@ -240,23 +245,60 @@ export default function EditPostButton({
         } else {
           fileName = `media-${i + 1}`;
         }
+        // Usar o gateway customizado da Pinata com token
         const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
-        setContent((prev) => {
+        console.log('Adicionando mídia ao conteúdo:', { ipfsUrl, isVideo, fileName });
+
+        // Atualizar o conteúdo do post com o novo arquivo
+        setContent(prev => {
           let texto = prev.trim();
-          // Só insere se não existir no markdown
-          if (!texto.includes(ipfsUrl)) {
-            texto += isVideo
-              ? `\n\n<video controls src=\"${ipfsUrl}\"></video>\n`
-              : `\n\n![image](${ipfsUrl})\n`;
+          if (texto.length > 0) {
+            if (isVideo) {
+              // Formato correto para vídeo em markdown/HTML
+              texto += `\n\n<video width="100%" controls src="${ipfsUrl}"></video>\n`;
+            } else {
+              texto += `\n\n![image](${ipfsUrl})\n`;
+            }
+          } else {
+            if (isVideo) {
+              // Formato correto para vídeo em markdown/HTML
+              texto = `<video width="100%" controls src="${ipfsUrl}"></video>\n`;
+            } else {
+              texto = `![image](${ipfsUrl})\n`;
+            }
           }
           return texto;
         });
       } catch (err) {
-        setError('Erro ao enviar arquivo para o IPFS.');
+        console.error('Erro ao enviar imagem para IPFS:', err);
+        setError('Erro ao enviar imagem para o IPFS.');
+
+        // Remover a preview que não teve sucesso no upload
+        const currentIndex = files.length - selectedFiles.length + i;
+        const newFiles = [...files];
+        const newPreviews = [...previews];
+        const newProgress = [...uploadProgress];
+
+        if (newPreviews[currentIndex] && newPreviews[currentIndex].startsWith('blob:')) {
+          URL.revokeObjectURL(newPreviews[currentIndex]);
+        }
+
+        newFiles.splice(currentIndex, 1);
+        newPreviews.splice(currentIndex, 1);
+        newProgress.splice(currentIndex, 1);
+
+        setFiles(newFiles);
+        setPreviews(newPreviews);
+        setUploadProgress(newProgress);
       } finally {
         setLoading(false);
       }
     }
+  };
+
+  // Função para remover um arquivo da lista
+  const handleMediaRemoved = (index: number) => {
+    mediaContentSync.handleMediaRemoved(index);
   };
 
   const getFileExtension = (file: File): string => {
@@ -270,65 +312,28 @@ export default function EditPostButton({
     return '';
   };
 
-  // Remover uma imagem da lista (remove apenas UM link do markdown)
-  const removeFile = (index: number) => {
-    const newFiles = [...files];
-    const newPreviews = [...previews];
-    const newProgress = [...uploadProgress];
-    // Revogar URL de objeto para evitar vazamento de memória
-    if (newPreviews[index] && newPreviews[index].startsWith('blob:')) {
-      URL.revokeObjectURL(newPreviews[index]);
-    }
-    // Remove apenas a primeira ocorrência do link correspondente no markdown
-    if (newPreviews[index]) {
-      const urlToRemove = newPreviews[index];
-      setContent(prevContent => {
-        let cleanedContent = prevContent;
-        // Remove só a primeira ocorrência
-        if (urlToRemove.startsWith('blob:')) {
-          // Não remove nada do markdown, pois blobs não estão lá
-        } else if (urlToRemove.includes('/ipfs/')) {
-          // Remove só a primeira ocorrência do link
-          cleanedContent = cleanedContent.replace(
-            new RegExp(`!\\[.*?\\]\\(${urlToRemove.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}[^)]*\\)\\n?`, ''),
-            ''
-          );
-          cleanedContent = cleanedContent.replace(
-            new RegExp(`<video[^>]*src=["']${urlToRemove.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}["'][^>]*>.*?<\\/video>\\n?`, ''),
-            ''
-          );
-        } else {
-          // Remove só a primeira ocorrência do link
-          cleanedContent = cleanedContent.replace(
-            new RegExp(`!\\[.*?\\]\\(${urlToRemove.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}[^)]*\\)\\n?`, ''),
-            ''
-          );
-        }
-        return cleanedContent.trim();
-      });
-    }
-    newFiles.splice(index, 1);
-    newPreviews.splice(index, 1);
-    newProgress.splice(index, 1);
-    setFiles(newFiles);
-    setPreviews(newPreviews);
-    setUploadProgress(newProgress);
-  };
-
   // Função utilitária para extrair links de imagens e vídeos do markdown
   const extractMediaLinksFromMarkdown = (markdown: string) => {
+    console.log('Extraindo mídia do markdown:', markdown.substring(0, 200));
     // Regex pega o link completo, incluindo parâmetros (corrigido para não cortar ? ou #)
     const imageRegex = /!\[.*?\]\((https?:\/\/[^)\s]+)\)/g;
+    // Regex para capturar vídeos no formato <video src=""> (formato principal usado)
     const videoRegex = /<video[^>]*src=["']([^"'>\s]+)["'][^>]*>/g;
     const images: string[] = [];
     const videos: string[] = [];
     let match;
+    
+    // Capturar imagens
     while ((match = imageRegex.exec(markdown)) !== null) {
       images.push(match[1]); // link completo, com token e parâmetros
     }
+    
+    // Capturar vídeos
     while ((match = videoRegex.exec(markdown)) !== null) {
       videos.push(match[1]);
     }
+    
+    console.log('Mídia extraída:', { images: images.length, videos: videos.length });
     return { images, videos };
   };
 
@@ -387,14 +392,14 @@ export default function EditPostButton({
           // Só insere se o link ainda não existe no markdown
           if (!newContent.includes(ipfsUrl)) {
             newContent += isVideo
-              ? `\n\n<video controls src=\"${ipfsUrl}\"></video>\n`
+              ? `\n\n<video width="100%" controls src="${ipfsUrl}"></video>\n`
               : `\n\n![image](${ipfsUrl})\n`;
           }
           // Atualizar progresso
           const newProgress = [...uploadProgress];
           newProgress[i] = 100;
           setUploadProgress(newProgress);
-        } catch (error) {
+        } catch {
           setError(`Falha ao fazer upload da mídia ${i + 1}`);
           setLoading(false);
           clearTimeout(keychainTimeout);
@@ -431,7 +436,9 @@ export default function EditPostButton({
         if (originalPost && originalPost.parent_permlink) {
           parentPermlink = originalPost.parent_permlink;
         }
-      } catch (e) {}
+      } catch {
+        // Erro ao buscar o post original - continua
+      }
       let updateSuccess = false;
       if (postingKey) {
         updateSuccess = await updateHivePostWithEncryptedKey(
@@ -604,7 +611,7 @@ export default function EditPostButton({
       await sendHiveOperation(encryptedPrivateKey, operations);
       return true;
     } catch (error) {
-      console.error("Erro ao atualizar post:", error);
+      console.error('Erro ao atualizar post:', error);
       throw error;
     }
   };
@@ -640,9 +647,9 @@ export default function EditPostButton({
               if (!loading) {
                 resetForm();
                 setShowForm(false);
-              } else if (confirm("Deseja cancelar a operação em andamento?")) {
+              } else if (confirm('Deseja cancelar a operação em andamento?')) {
                 setLoading(false);
-                setError("");
+                setError('');
                 resetForm();
                 setShowForm(false);
               }
@@ -663,9 +670,9 @@ export default function EditPostButton({
                     return;
                   }
                   // Se estiver carregando, pergunta se deseja cancelar
-                  if (confirm("Deseja cancelar a operação em andamento?")) {
+                  if (confirm('Deseja cancelar a operação em andamento?')) {
                     setLoading(false);
-                    setError("");
+                    setError('');
                     resetForm();
                     setShowForm(false);
                   }
@@ -715,213 +722,23 @@ export default function EditPostButton({
 
                 {/* Conteúdo */}
                 <div>
-                  <div className="flex justify-between items-center">
-                    <label className="block text-sm font-medium mb-1">
-                      Conteúdo
-                    </label>
-                    <label htmlFor="image-upload-btn" className="flex items-center text-xs text-red-500 hover:text-red-400 cursor-pointer">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      Adicionar imagens
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*,video/mp4,video/webm,video/quicktime"
-                      multiple
-                      onChange={handleFileChange}
-                      className="hidden"
-                      id="image-upload-btn"
-                    />
-                  </div>
+                  <MediaUploader
+                    onMediaSelected={handleMediaSelected}
+                    onMediaRemoved={handleMediaRemoved}
+                    files={files}
+                    previews={previews}
+                    uploadProgress={uploadProgress}
+                    thumbnailIndex={thumbnailIndex}
+                    onThumbnailChange={setThumbnailIndex}
+                  />
                   <textarea
                     value={content}
                     onChange={(e) => {
-                      const newContent = e.target.value;
-                      setContent(newContent);
-                      
-                      // Se o conteúdo for apagado completamente, limpar todas as imagens
-                      if (newContent.trim() === '') {
-                        previews.forEach(preview => {
-                          // Apenas revogar as URLs blob, não as URLs do IPFS
-                          if (preview.startsWith('blob:')) {
-                            URL.revokeObjectURL(preview);
-                          }
-                        });
-                        setFiles([]);
-                        setPreviews([]);
-                        setUploadProgress([]);
-                      } else {
-                        // Verificar se imagens foram deletadas manualmente do conteúdo
-                        const currentImagePatterns = [
-                          /!\[image\]\(https:\/\/lime-useful-snake-714\.mypinata\.cloud\/ipfs\/([^)]*)\)/g,
-                          /!\[image\]\(https:\/\/ipfs\.io\/ipfs\/([^)]*)\)/g,
-                          /!\[(.*?)\]\(https:\/\/files\.peakd\.com\/file\/([^)]*)\)/g,
-                          /!\[.*?\]\(https:\/\/files\.peakd\.com\/file\/peakd-hive\/([^)]*)\)/g
-                        ];
-                        
-                        // Encontrar todas as referências de imagens no texto
-                        let allMatches: RegExpMatchArray[] = [];
-                        let allHashes: string[] = [];
-                        
-                        currentImagePatterns.forEach(pattern => {
-                          const matches = Array.from(newContent.matchAll(pattern));
-                          allMatches = [...allMatches, ...matches];
-                          
-                          // Extrair os hashes dos links IPFS
-                          const hashes = matches.map(match => {
-                            const url = match[0];
-                            const hashMatch = url.match(/ipfs\/([a-zA-Z0-9]+)/);
-                            return hashMatch ? hashMatch[1] : '';
-                          }).filter(Boolean) as string[];
-                          
-                          allHashes = [...allHashes, ...hashes];
-                        });
-                        
-                        // Adicionar também URLs blob do conteúdo
-                        const blobMatches = newContent.match(/!\[image\]\(blob:[^)]*\)/g) || [];
-                        const blobUrls = blobMatches.map(match => {
-                          const urlMatch = match.match(/\((blob:[^)]+)\)/);
-                          return urlMatch ? urlMatch[1] : '';
-                        }).filter(Boolean);
-                        
-                        // Verificar se alguma imagem nos previews não está mais no conteúdo
-                        if (previews.length > 0) {
-                          const newPreviews = [...previews];
-                          const newFiles = [...files];
-                          const newProgress = [...uploadProgress];
-                          let changed = false;
-                          
-                          // Para cada preview, verificar se ainda está referenciado no conteúdo
-                          for (let i = newPreviews.length - 1; i >= 0; i--) {
-                            const preview = newPreviews[i];
-                            
-                            // Se for uma URL blob, verificar se ainda está no conteúdo
-                            if (preview.startsWith('blob:')) {
-                              if (!blobUrls.includes(preview)) {
-                                // Remover a pré-visualização que não está mais no texto
-                                URL.revokeObjectURL(preview);
-                                newPreviews.splice(i, 1);
-                                newFiles.splice(i, 1);
-                                newProgress.splice(i, 1);
-                                changed = true;
-                              }
-                            } 
-                            // Se for um link IPFS, verificar pelo hash
-                            else if (preview.includes('/ipfs/')) {
-                              const parts = preview.split('/ipfs/');
-                              if (parts.length > 1) {
-                                const hash = parts[1].split('?')[0].split('/')[0];
-                                if (hash && !allHashes.includes(hash)) {
-                                  // Hash não encontrado no conteúdo, remover
-                                  newPreviews.splice(i, 1);
-                                  newFiles.splice(i, 1);
-                                  newProgress.splice(i, 1);
-                                  changed = true;
-                                }
-                              }
-                            }
-                            // Se for um link do PeakD, verificar se ainda está no conteúdo
-                            else if (preview.includes('files.peakd.com')) {
-                              // Extrai tanto o nome do arquivo quanto os outros componentes da URL
-                              const urlParts = preview.split('/');
-                              const fileName = urlParts[urlParts.length - 1].split('?')[0];
-                              
-                              // Também verifica se há alguma parte identificadora da URL no conteúdo
-                              let isReferenced = false;
-                              
-                              // Verifica se o nome do arquivo ainda está no conteúdo
-                              if (newContent.includes(fileName)) {
-                                isReferenced = true;
-                              }
-                              
-                              // Se for um URL da PeakD, verifica por padrões específicos
-                              if (preview.includes('peakd-hive')) {
-                                // Extrair o autor e o identificador das URLs do peakd-hive 
-                                const peakdMatch = preview.match(/\/file\/peakd-hive\/([^\/]+)\/([^\/\?]+)/);
-                                if (peakdMatch && peakdMatch.length > 2) {
-                                  const author = peakdMatch[1];
-                                  const id = peakdMatch[2];
-                                  
-                                  // Se qualquer uma dessas partes importantes estiver no conteúdo, consideramos referenciada
-                                  if (newContent.includes(author) && newContent.includes(id)) {
-                                    isReferenced = true;
-                                  }
-                                }
-                              }
-                              
-                              if (!isReferenced) {
-                                // Imagem não está mais referenciada no conteúdo
-                                newPreviews.splice(i, 1);
-                                newFiles.splice(i, 1);
-                                newProgress.splice(i, 1);
-                                changed = true;
-                                console.log('Removida imagem PeakD:', fileName);
-                              }
-                            }
-                            // Se for um link do PeakD, verificar se ainda está no conteúdo
-                            else if (preview.includes('files.peakd.com')) {
-                              // Extrair o identificador único da URL do PeakD
-                              const peakdUrlMatch = preview.match(/\/file\/([^\/]+)\/([^\/\?]+)/);
-                              if (peakdUrlMatch) {
-                                const peakdId = peakdUrlMatch[2];
-                                // Verificar se este ID ainda está presente no conteúdo
-                                const stillExists = newContent.includes(peakdId);
-                                if (!stillExists) {
-                                  // ID não encontrado no conteúdo, remover
-                                  newPreviews.splice(i, 1);
-                                  newFiles.splice(i, 1);
-                                  newProgress.splice(i, 1);
-                                  changed = true;
-                                }
-                              } else {
-                                // Se não conseguir extrair o ID, verificar a URL completa
-                                const stillExists = newContent.includes(preview);
-                                if (!stillExists) {
-                                  newPreviews.splice(i, 1);
-                                  newFiles.splice(i, 1);
-                                  newProgress.splice(i, 1);
-                                  changed = true;
-                                }
-                              }
-                            }
-                          }
-                          
-                          // Atualizar os estados se houver mudanças
-                          if (changed) {
-                            setFiles(newFiles);
-                            setPreviews(newPreviews);
-                            setUploadProgress(newProgress);
-                            console.log('Imagens removidas do preview pois foram excluídas do conteúdo');
-                          }
-                        }
-                        
-                        // Verificar se houve uma restauração com Ctrl+Z ou cola
-                        const ipfsUrlMatches: string[] = allMatches.map(match => match[0]);
-                        
-                        // Se houver URLs no texto, mas poucas ou nenhuma imagem no preview, sincronizar
-                        if (ipfsUrlMatches.length > 0 && ipfsUrlMatches.length !== previews.length) {
-                          console.log('Restaurando imagens do conteúdo', ipfsUrlMatches.length);
-                          
-                          // Extrair as URLs reais das imagens do texto
-                          const extractedUrls = ipfsUrlMatches.map(match => {
-                            const urlMatch = match.match(/\(([^)]+)\)/);
-                            return urlMatch ? urlMatch[1] : '';
-                          }).filter(url => url !== '');
-                          
-                          // Definir todos como 100% concluídos
-                          const placeholderProgress = extractedUrls.map(() => 100);
-                          
-                          // Criar arquivos vazios como marcadores (não serão enviados)
-                          const placeholderFiles = extractedUrls.map(() => new File([], 'placeholder'));
-                          
-                          setFiles(placeholderFiles);
-                          setPreviews(extractedUrls);
-                          setUploadProgress(placeholderProgress);
-                        }
-                      }
+                      const newValue = e.target.value;
+                      const sync = mediaContentSync;
+                      sync.handleContentChange(newValue);
                     }}
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white min-h-[250px] sm:min-h-[400px] resize-y text-base"
+                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white min-h-[250px] sm:min-h-[400px] resize-y text-base mt-2"
                     placeholder="Digite algum conteúdo para o seu post (suporta markdown)"
                   />
                 </div>
@@ -1019,169 +836,6 @@ export default function EditPostButton({
                   </div>
                 </div>
 
-                {/* Preview das imagens - Versão com carrossel */}
-                {previews.length > 0 && (
-                  <div className="mt-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
-                      <label className="text-sm font-medium text-gray-300">Mídias do post</label>
-                      <p className="text-xs text-gray-400 mt-1 sm:mt-0">Toque na mídia para selecionar como capa</p>
-                    </div>
-                    
-                    <div className="relative">
-                      {/* Botão anterior */}
-                      {currentImagePage > 0 && (
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentImagePage(prev => Math.max(0, prev - 1));
-                          }}
-                          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black bg-opacity-50 rounded-full p-2 text-white"
-                          aria-label="Imagens anteriores"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                      )}
-                      
-                      {/* Container do carrossel */}
-                      <div className="overflow-hidden">
-                        <div 
-                          className="flex transition-transform duration-300 ease-in-out" 
-                          style={{ transform: `translateX(-${currentImagePage * 100}%)` }}
-                          onTouchStart={handleTouchStart}
-                          onTouchMove={handleTouchMove}
-                          onTouchEnd={handleTouchEnd}
-                        >
-                          {/* Páginas do carrossel */}
-                          {Array.from({ length: Math.ceil(previews.length / 2) }).map((_, pageIndex) => (
-                            <div key={pageIndex} className="w-full flex-shrink-0 grid grid-cols-2 gap-3">
-                              {previews.slice(pageIndex * 2, pageIndex * 2 + 2).map((preview, imageIndex) => {
-                                const globalIndex = pageIndex * 2 + imageIndex;
-                                const file = files[globalIndex];
-                                // Detecta vídeo por file.type OU pela URL do preview
-                                let isVideo = false;
-                                if (file && file.type) {
-                                  isVideo = file.type.startsWith('video/');
-                                } else if (preview) {
-                                  // Detecta vídeo por extensão na URL
-                                  isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(preview) ||
-                                    preview.includes('<video') ||
-                                    preview.includes('controls src=');
-                                }
-                                return (
-                                  <div
-                                    key={globalIndex}
-                                    className={`relative group cursor-pointer border-2 ${thumbnailIndex === globalIndex ? 'border-green-500' : 'border-transparent'} rounded-lg`}
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      setThumbnailIndex(globalIndex);
-                                    }}
-                                  >
-                                    {isVideo ? (
-                                      <video src={preview} controls className="w-full h-40 object-cover rounded-lg bg-black" />
-                                    ) : (
-                                      <img src={preview} alt={`Preview ${globalIndex + 1}`} className="w-full h-40 object-cover rounded-lg" />
-                                    )}
-                                    {thumbnailIndex === globalIndex && (
-                                      <div className="absolute top-2 left-2 bg-green-600 text-white rounded-full p-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                          <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                                        </svg>
-                                      </div>
-                                    )}
-                                    {uploadProgress[globalIndex] > 0 && uploadProgress[globalIndex] < 100 && (
-                                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                        <div className="h-2 w-3/4 bg-gray-700 rounded-full overflow-hidden">
-                                          <div
-                                            className="h-full bg-blue-500"
-                                            style={{ width: `${uploadProgress[globalIndex]}%` }}
-                                          ></div>
-                                        </div>
-                                      </div>
-                                    )}
-                                    <button
-                                      type="button"
-                                      className="absolute top-1 right-1 bg-red-600 rounded-full p-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation(); // Evita que o clique para remover também selecione a imagem
-                                        removeFile(globalIndex);
-                                        // Se a thumbnail for removida, redefine para a primeira imagem
-                                        if (thumbnailIndex === globalIndex) {
-                                          setThumbnailIndex(0);
-                                        } else if (thumbnailIndex > globalIndex) {
-                                          setThumbnailIndex(thumbnailIndex - 1);
-                                        }
-                                        // Ajuste da página atual se necessário
-                                        if (currentImagePage > Math.ceil((previews.length - 1) / 2) - 1) {
-                                          setCurrentImagePage(Math.max(0, Math.ceil((previews.length - 1) / 2) - 1));
-                                        }
-                                      }}
-                                      aria-label={`Remover imagem ${globalIndex + 1}`}
-                                    >
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="h-4 w-4 text-white"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                      >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      {/* Botão próximo */}
-                      {currentImagePage < Math.ceil(previews.length / 2) - 1 && (
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentImagePage(prev => Math.min(Math.ceil(previews.length / 2) - 1, prev + 1));
-                          }}
-                          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black bg-opacity-50 rounded-full p-2 text-white"
-                          aria-label="Próximas imagens"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                    
-                    {/* Indicadores de página */}
-                    {previews.length > 2 && (
-                      <div className="flex justify-center mt-3">
-                        {Array.from({ length: Math.ceil(previews.length / 2) }).map((_, index) => (
-                          <button
-                            type="button"
-                            key={index}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentImagePage(index);
-                            }}
-                            className={`h-2 w-2 rounded-full mx-1 ${currentImagePage === index ? 'bg-red-500' : 'bg-gray-500'}`}
-                            aria-label={`Página ${index + 1}`}
-                          />
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Contador de imagens */}
-                    <div className="text-xs text-center text-gray-400 mt-2">
-                      {currentImagePage * 2 + 1}-{Math.min(currentImagePage * 2 + 2, previews.length)} de {previews.length} imagens
-                    </div>
-                  </div>
-                )}
-
                 {/* Mensagem de erro */}
                 {error && (
                   <div className="bg-red-800 bg-opacity-30 border border-red-600 text-red-400 p-4 rounded">
@@ -1194,7 +848,7 @@ export default function EditPostButton({
                     type="button"
                     onClick={() => {
                       setLoading(false);
-                      setError("");
+                      setError('');
                       resetForm();
                       setShowForm(false);
                     }}
@@ -1206,11 +860,11 @@ export default function EditPostButton({
                   <button
                     type="submit"
                     className={`px-4 py-3 sm:py-2 rounded text-white 
-                      ${loading ? "bg-green-800" : "bg-green-600 hover:bg-green-700"} 
+                      ${loading ? 'bg-green-800' : 'bg-green-600 hover:bg-green-700'} 
                       order-1 sm:order-2`}
                     disabled={loading}
                   >
-                    {loading ? "Atualizando..." : "Atualizar Post"}
+                    {loading ? 'Atualizando...' : 'Atualizar Post'}
                   </button>
                 </div>
               </form>
