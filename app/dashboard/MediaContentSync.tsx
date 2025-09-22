@@ -22,6 +22,20 @@ export default function MediaContentSync({
   onUploadProgressChange,
 }: MediaContentSyncProps) {
   
+  // Cria um arquivo placeholder baseado na URL
+  const createPlaceholderFile = (url: string, isVideo: boolean = false): File => {
+    // Determina o tipo baseado no parâmetro ou extensão da URL
+    let type = 'application/octet-stream';
+    
+    if (isVideo || url.includes('.mp4') || url.includes('.webm') || url.includes('.mov')) {
+      type = 'video/mp4';
+    } else {
+      type = 'image/jpeg';
+    }
+    
+    return new File([], 'placeholder', { type });
+  };
+  
   // Remove mídia do conteúdo quando uma imagem é removida
   const removeMediaFromContent = (
     urlToRemove: string,
@@ -42,18 +56,23 @@ export default function MediaContentSync({
       // Divide o conteúdo em linhas
       const linhas = currentContent.split('\n');
       
-      // Remove a primeira imagem encontrada já que estamos removendo por índice
-      let imagemRemovida = false;
+      // Remove a primeira mídia encontrada já que estamos removendo por índice
+      let midiaRemovida = false;
       const linhasFiltradas = linhas.filter(linha => {
-        // Se já removeu uma imagem, mantém as outras
-        if (imagemRemovida) return true;
+        // Se já removeu uma mídia, mantém as outras
+        if (midiaRemovida) return true;
         
         // Se a linha tem uma imagem markdown com IPFS, remove
         const pinataImagePattern = 
           '![image](https://lime-useful-snake-714.mypinata.cloud/ipfs/';
-        if (linha.includes(pinataImagePattern)) {
-          console.log('Removendo linha com imagem IPFS:', linha);
-          imagemRemovida = true;
+        // Se a linha tem um vídeo com IPFS, remove
+        const pinataVideoPattern = 
+          'https://lime-useful-snake-714.mypinata.cloud/ipfs/';
+          
+        if (linha.includes(pinataImagePattern) || 
+            (linha.includes('<video') && linha.includes(pinataVideoPattern))) {
+          console.log('Removendo linha com mídia IPFS:', linha);
+          midiaRemovida = true;
           return false;
         }
         
@@ -95,37 +114,75 @@ export default function MediaContentSync({
 
   // Detecta restauração de conteúdo (Ctrl+Z ou cola)
   const handleContentRestoration = (newContent: string) => {
+    console.log('🔍 Verificando conteúdo para restauração...');
+    console.log('Conteúdo atual length:', newContent.length);
+    console.log('Previews atuais:', previews.length);
+    console.log('Primeiros 500 chars do conteúdo:', newContent.substring(0, 500));
+    
     // Verifica se houve uma restauração com Ctrl+Z ou cola
-    // Extrai todas as URLs de imagens do conteúdo
-    const ipfsUrlPattern = new RegExp(
+    // Extrai URLs de imagens do conteúdo
+    const ipfsImagePattern = new RegExp(
       '!\\[image\\]\\(https:\\/\\/lime-useful-snake-714\\.mypinata\\.' +
       'cloud\\/ipfs\\/[^)]*\\)',
       'g',
     );
-    const ipfsUrlMatches = newContent.match(ipfsUrlPattern) || [];
+    const imageMatches = newContent.match(ipfsImagePattern) || [];
+    console.log('🖼️ Imagens encontradas:', imageMatches);
     
-    // Se há URLs no texto, mas poucas ou nenhuma imagem no preview, sincroniza
-    if (ipfsUrlMatches.length > 0 && 
-        ipfsUrlMatches.length !== previews.length) {
-      console.log('Restaurando imagens do conteúdo', ipfsUrlMatches.length);
-      
-      // Extrai as URLs reais das imagens do texto
-      const extractedUrls = ipfsUrlMatches.map(match => {
-        const urlMatch = match.match(/\(([^)]+)\)/);
-        return urlMatch ? urlMatch[1] : '';
-      }).filter(url => url !== '');
+    // Extrai URLs de vídeos do conteúdo - versão mais flexível
+    const ipfsVideoPattern = /<video[^>]*src=["'](https:\/\/lime-useful-snake-714\.mypinata\.cloud\/ipfs\/[^"']*)["'][^>]*>/g;
+    const videoMatches = [...newContent.matchAll(ipfsVideoPattern)];
+    console.log('🎥 Vídeos regex matches:', videoMatches);
+    
+    // Também tenta uma busca mais simples para debug
+    const simpleVideoSearch = newContent.includes('<video') && newContent.includes('lime-useful-snake-714');
+    console.log('🎥 Contém <video> e lime-useful-snake-714?', simpleVideoSearch);
+    
+    // Combina todas as URLs encontradas
+    const imageUrls = imageMatches.map(match => {
+      const urlMatch = match.match(/\(([^)]+)\)/);
+      return urlMatch ? urlMatch[1] : '';
+    }).filter(url => url !== '');
+    
+    const videoUrls = videoMatches.map(match => match[1])
+      .filter(url => url !== '');
+    
+    const allUrls = [...imageUrls, ...videoUrls];
+    
+    console.log('URLs encontradas no conteúdo:', {
+      imagens: imageUrls.length,
+      videos: videoUrls.length,
+      total: allUrls.length,
+      previewsAtuais: previews.length,
+      imageUrls: imageUrls,
+      videoUrls: videoUrls,
+    });
+    
+    // Se há URLs no texto, mas diferentes quantidades no preview, sincroniza
+    if (allUrls.length > 0 && allUrls.length !== previews.length) {
+      console.log('🔄 Restaurando mídia do conteúdo:', allUrls.length, 'itens');
       
       // Define todos como 100% concluídos
-      const placeholderProgress = extractedUrls.map(() => 100);
+      const placeholderProgress = allUrls.map(() => 100);
       
-      // Cria arquivos vazios como marcadores (não serão enviados)
-      const placeholderFiles = extractedUrls.map(() => 
-        new File([], 'placeholder'),
-      );
+      // Cria arquivos baseados no tipo de mídia
+      const placeholderFiles = allUrls.map((url, index) => {
+        // Verifica se esta URL é de um vídeo
+        const isVideo = index >= imageUrls.length;
+        return createPlaceholderFile(url, isVideo);
+      });
       
       onFilesChange(placeholderFiles);
-      onPreviewsChange(extractedUrls);
+      onPreviewsChange(allUrls);
       onUploadProgressChange(placeholderProgress);
+      
+      console.log('✅ Sincronização concluída!');
+    } else if (allUrls.length === 0 && previews.length > 0) {
+      console.log('🧹 Nenhuma URL encontrada, limpando previews...');
+      // Se não há URLs no conteúdo mas há previews, limpa tudo
+      onFilesChange([]);
+      onPreviewsChange([]);
+      onUploadProgressChange([]);
     }
   };
 
@@ -137,7 +194,7 @@ export default function MediaContentSync({
     if (newContent.trim() === '') {
       handleContentCleared(newContent);
     } else {
-      // Verifica se houve restauração de conteúdo
+      // Sempre verifica se houve mudanças no conteúdo que precisam sincronizar
       handleContentRestoration(newContent);
     }
   };
