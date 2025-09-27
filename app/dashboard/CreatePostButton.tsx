@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { sendHiveOperation } from '../../lib/hive/server-functions';
 import { useMediaContentSync } from './MediaContentSync';
 import MediaUploader from './MediaUploader';
+import PostContentEditorPreview from '../../src/components/PostContentEditorPreview';
 
 interface CreatePostButtonProps {
     username: string;
@@ -480,7 +481,7 @@ export default function CreatePostButton({
                         }}
                     />
 
-                    <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-700 flex flex-col m-2 sm:m-0">
+                    <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-5xl max-h-[95vh] overflow-y-auto border border-gray-700 flex flex-col m-2 sm:m-0">
                         <div className="flex justify-between items-center mb-4 pt-1 pb-2">
                             <h2 className="text-lg sm:text-xl font-bold">
                                 Criar Post com IPFS
@@ -534,15 +535,12 @@ export default function CreatePostButton({
                                         thumbnailIndex={thumbnailIndex}
                                         onThumbnailChange={setThumbnailIndex}
                                     />
-                                    <textarea
-                                        value={content}
-                                        onChange={(e) => {
-                                            const newValue = e.target.value;
+                                    <PostContentEditorPreview
+                                        content={content}
+                                        onChange={value => {
                                             const sync = mediaContentSync;
-                                            sync.handleContentChange(newValue);
+                                            sync.handleContentChange(value);
                                         }}
-                                        className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white min-h-[250px] sm:min-h-[400px] resize-y text-base mt-2"
-                                        placeholder="Digite algum conteúdo para o seu post (suporta markdown)"
                                     />
                                 </div>
 

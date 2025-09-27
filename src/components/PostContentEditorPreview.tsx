@@ -14,7 +14,6 @@ const PostContentEditorPreview: React.FC<PostContentEditorPreviewProps> = ({
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Textarea de conteúdo */}
       <div className="flex-1 flex flex-col min-h-[350px]">
-        <label className="block text-sm font-medium mb-1">Conteúdo</label>
         <div className="flex-1 flex flex-col">
           <textarea
             value={content}
