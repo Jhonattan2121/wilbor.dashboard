@@ -1,7 +1,7 @@
 "use client";
 import { IconX } from "@/components/IconX";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from 'react-markdown';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import { Pagination } from 'swiper/modules';
@@ -10,7 +10,6 @@ import { useDynamicAboutPost } from '../../src/app/about/useDynamicAboutPost';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
 import DashboardHeader from "../dashboard/DashboardHeader";
 import EditPostButton from "../dashboard/EditPostButton";
-import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 const HIVE_USERNAME = process.env.NEXT_PUBLIC_HIVE_USERNAME || '';
 
@@ -70,7 +69,7 @@ export default function AboutPage() {
               </div>
               <div className="prose dark:prose-invert max-w-none">
                 <MarkdownRenderer>
-                  {markdown.replace(/!\[[^\]]*\]\([^\)]+\)/g, '')}
+                  {markdown}
                 </MarkdownRenderer>
               </div>
               {media.length > 0 && (
