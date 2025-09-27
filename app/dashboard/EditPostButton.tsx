@@ -4,6 +4,7 @@ import { uploadFileToIPFS } from '@/utils/ipfs';
 import { type Operation } from '@hiveio/dhive';
 import { useCallback, useEffect, useState } from 'react';
 import { sendHiveOperation } from '../../lib/hive/server-functions';
+import PostContentEditorPreview from '../../src/components/PostContentEditorPreview';
 import { useMediaContentSync } from './MediaContentSync';
 import MediaUploader from './MediaUploader';
 
@@ -144,8 +145,6 @@ export default function EditPostButton({
     }
   }, [showForm, resetForm]);
 
-  // Não faz mais reset automático ao montar, para evitar loop infinito
-  // O reset será feito manualmente ao abrir o modal
   
   // Sincronizar o estado do formulário quando o modal é aberto
   useEffect(() => {
@@ -656,20 +655,18 @@ export default function EditPostButton({
             }}
           />
 
-          {/* Modal do formulário de edição - Versão melhorada para mobile */}
-          <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-gray-700 flex flex-col m-2 sm:m-0">
+          {/* Modal do formulário de edição - Versão melhorada para desktop e mobile */}
+          <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-4 sm:p-8 w-full max-w-5xl max-h-[98vh] overflow-y-auto border border-gray-700 flex flex-col m-2 sm:m-0">
             <div className="flex justify-between items-center mb-4 pt-1 pb-2">
               <h2 className="text-lg sm:text-xl font-bold">Editar Post</h2>
               <button
                 className="text-gray-400 hover:text-white p-2 -mr-2"
                 onClick={() => {
-                  // Se não estiver carregando, fecha o formulário normalmente
                   if (!loading) {
                     resetForm();
                     setShowForm(false);
                     return;
                   }
-                  // Se estiver carregando, pergunta se deseja cancelar
                   if (confirm('Deseja cancelar a operação em andamento?')) {
                     setLoading(false);
                     setError('');
@@ -720,8 +717,8 @@ export default function EditPostButton({
                   />
                 </div>
 
-                {/* Conteúdo */}
-                <div>
+                {/* Mídias do post - sempre acima do conteúdo */}
+                <div className="mb-2">
                   <MediaUploader
                     onMediaSelected={handleMediaSelected}
                     onMediaRemoved={handleMediaRemoved}
@@ -731,17 +728,16 @@ export default function EditPostButton({
                     thumbnailIndex={thumbnailIndex}
                     onThumbnailChange={setThumbnailIndex}
                   />
-                  <textarea
-                    value={content}
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      const sync = mediaContentSync;
-                      sync.handleContentChange(newValue);
-                    }}
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white min-h-[250px] sm:min-h-[400px] resize-y text-base mt-2"
-                    placeholder="Digite algum conteúdo para o seu post (suporta markdown)"
-                  />
                 </div>
+
+                {/* Conteúdo e Preview lado a lado */}
+                <PostContentEditorPreview
+                  content={content}
+                  onChange={value => {
+                    const sync = mediaContentSync;
+                    sync.handleContentChange(value);
+                  }}
+                />
 
                 {/* Tags estilo chip com rolagem horizontal no mobile */}
                 <div>
@@ -852,15 +848,15 @@ export default function EditPostButton({
                       resetForm();
                       setShowForm(false);
                     }}
-                    className="px-4 py-3 sm:py-2 rounded text-gray-300 hover:bg-gray-700 
+                    className="px-4 py-3 sm:py-2 rounded text-gray-300 hover:bg-gray-700 \
                       border border-gray-700 order-2 sm:order-1 sm:mr-2"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className={`px-4 py-3 sm:py-2 rounded text-white 
-                      ${loading ? 'bg-green-800' : 'bg-green-600 hover:bg-green-700'} 
+                    className={`px-4 py-3 sm:py-2 rounded text-white \
+                      ${loading ? 'bg-green-800' : 'bg-green-600 hover:bg-green-700'} \
                       order-1 sm:order-2`}
                     disabled={loading}
                   >
