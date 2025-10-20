@@ -1,4 +1,4 @@
-import 'highlight.js/styles/github-dark.css'; // Ou outro tema highlight.js
+import 'highlight.js/styles/github-dark.css';
 import React from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
@@ -84,24 +84,10 @@ interface MarkdownRendererProps {
   className?: string;
 }
 
-function extractTitleAndBody(markdown: string): { title: string; body: string } {
-  // Se já começa com #, respeita o markdown original
-  if (/^\s*#/.test(markdown)) {
-    return { title: '', body: markdown };
-  }
-  // Divide pelo primeiro bloco em branco (dupla quebra de linha)
-  const [first, ...rest] = markdown.split(/\n\s*\n/);
-  const title = first.trim();
-  const body = rest.join('\n\n').trim();
-  return { title, body };
-}
-
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   children,
   className = '',
 }) => {
-  const { title, body } = extractTitleAndBody(children);
-  const content = title ? `# ${title}\n\n${body}` : body;
   return (
     <div className={`prose dark:prose-invert max-w-none ${className}`}>
       <ReactMarkdown
@@ -109,7 +95,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
       >
-        {content}
+        {children}
       </ReactMarkdown>
     </div>
   );
