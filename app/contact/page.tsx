@@ -50,7 +50,7 @@ export default function ContactPage() {
                 />
               </div>
               <div className="prose dark:prose-invert max-w-none">
-                <MarkdownRenderer className="[&_*]:no-underline [&_*]:text-inherit" >
+                <MarkdownRenderer className="[&_*]:no-underline [&_*]:text-inherit list-none" >
                   {markdown}
                 </MarkdownRenderer>
               </div>

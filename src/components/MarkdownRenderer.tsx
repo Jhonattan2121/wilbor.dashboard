@@ -2,6 +2,7 @@ import 'highlight.js/styles/github-dark.css';
 import React from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
 const markdownComponents: Components = {
@@ -26,17 +27,17 @@ const markdownComponents: Components = {
   p: ({ ...props }) => <p className="leading-relaxed mb-4" {...props} />, 
   a: ({ ...props }) => (
     <a
-      className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400"
+      className="flex items-center gap-2 text-blue-600 underline hover:text-blue-800 dark:text-blue-400"
       target="_blank"
       rel="noopener noreferrer"
       {...props}
     />
   ),
-  ul: ({ ...props }) => <ul className="list-disc ml-6 mb-4" {...props} />, 
-  ol: ({ ...props }) => <ol className="list-decimal ml-6 mb-4" {...props} />, 
+  ul: ({ ...props }) => <ul className="list-none ml-0 mb-4" {...props} />, 
+  ol: ({ ...props }) => <ol className="list-none ml-0 mb-4" {...props} />, 
   li: ({ checked, ...props }: any) => (
     <li
-      className={`mb-1 ${typeof checked === 'boolean' ? 'list-none flex items-center' : ''}`}
+      className={`mb-1 ${typeof checked === 'boolean' ? 'list-none flex items-center' : 'list-none'}`}
       {...props}
     >
       {typeof checked === 'boolean' && (
@@ -93,7 +94,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       <ReactMarkdown
         components={markdownComponents}
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
+        rehypePlugins={[rehypeHighlight, rehypeRaw]}
       >
         {children}
       </ReactMarkdown>
