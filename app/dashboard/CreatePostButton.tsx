@@ -135,14 +135,11 @@ export default function CreatePostButton({
                 const result = await uploadFileToIPFS(file);
                 const ext = getFileExtension(file);
                 const isVideo = file.type.startsWith('video/');
-                let fileName = '';
-                if (file.name && ext) {
-                    fileName = file.name;
-                } else if (ext) {
-                    fileName = `media-${i + 1}.${ext}`;
-                } else {
-                    fileName = `media-${i + 1}`;
-                }
+                const fileName = file.name && ext
+                  ? file.name
+                  : ext
+                    ? `media-${i + 1}.${ext}`
+                    : `media-${i + 1}`;
                 // Usa sempre o gateway público para exibição
                 const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
                 console.log('Adicionando mídia ao conteúdo:', { ipfsUrl, isVideo, fileName });
@@ -256,14 +253,11 @@ export default function CreatePostButton({
             ipfsResults.forEach((result, index) => {
                 const file = files[index];
                 const ext = getFileExtension(file);
-                let fileName = '';
-                if (file.name && ext) {
-                    fileName = file.name;
-                } else if (ext) {
-                    fileName = `image-${index + 1}.${ext}`;
-                } else {
-                    fileName = `image-${index + 1}`;
-                }
+                const fileName = file.name && ext
+                  ? file.name
+                  : ext
+                    ? `image-${index + 1}.${ext}`
+                    : `image-${index + 1}`;
                 // Usa sempre o gateway público para exibição
                 const ipfsUrl = getIpfsPublicUrl(result.IpfsHash, fileName);
                 if (file.type && file.type.startsWith('video/')) {
@@ -289,14 +283,11 @@ export default function CreatePostButton({
             const allImages = ipfsResults.map((result, index) => {
                 const file = files[index];
                 const ext = getFileExtension(file);
-                let fileName = '';
-                if (file.name && ext) {
-                    fileName = file.name;
-                } else if (ext) {
-                    fileName = `image-${index + 1}.${ext}`;
-                } else {
-                    fileName = `image-${index + 1}`;
-                }
+                const fileName = file.name && ext
+                  ? file.name
+                  : ext
+                    ? `image-${index + 1}.${ext}`
+                    : `image-${index + 1}`;
                 return getIpfsPublicUrl(result.IpfsHash, fileName);
             });
 

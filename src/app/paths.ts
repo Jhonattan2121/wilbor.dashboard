@@ -1,6 +1,4 @@
-import { Camera } from '@/camera';
 import { Photo, PhotoSetCategory } from '@/photo';
-import { FilmSimulation } from '@/simulation';
 import { TAG_HIDDEN } from '@/tag';
 import { parameterize } from '@/utility/string';
 import { BASE_URL, GRID_HOMEPAGE_ENABLED } from './config';
@@ -126,10 +124,10 @@ export const pathForPhoto = ({
 export const pathForTag = (tag: string) =>
   `${PREFIX_TAG}/${tag}`;
 
-export const pathForCamera = ({ make, model }: Camera) =>
+export const pathForCamera = ({ make, model }: { make: string; model: string }) =>
   `${PREFIX_CAMERA}/${parameterize(make, true)}/${parameterize(model, true)}`;
 
-export const pathForFilmSimulation = (simulation: FilmSimulation) =>
+export const pathForFilmSimulation = (simulation: string) =>
   `${PREFIX_FILM_SIMULATION}/${simulation}`;
 
 export const pathForFocalLength = (focal: number) =>
@@ -141,10 +139,10 @@ export const absolutePathForPhoto = (params: PhotoPathParams) =>
 export const absolutePathForTag = (tag: string) =>
   `${BASE_URL}${pathForTag(tag)}`;
 
-export const absolutePathForCamera = (camera: Camera) =>
+export const absolutePathForCamera = (camera: { make: string; model: string }) =>
   `${BASE_URL}${pathForCamera(camera)}`;
 
-export const absolutePathForFilmSimulation = (simulation: FilmSimulation) =>
+export const absolutePathForFilmSimulation = (simulation: string) =>
   `${BASE_URL}${pathForFilmSimulation(simulation)}`;
 
 export const absolutePathForFocalLength = (focal: number) =>
@@ -156,11 +154,11 @@ export const absolutePathForPhotoImage = (photo: PhotoOrPhotoId) =>
 export const absolutePathForTagImage = (tag: string) =>
   `${absolutePathForTag(tag)}/image`;
 
-export const absolutePathForCameraImage = (camera: Camera) =>
+export const absolutePathForCameraImage = (camera: { make: string; model: string }) =>
   `${absolutePathForCamera(camera)}/image`;
 
 export const absolutePathForFilmSimulationImage =
-  (simulation: FilmSimulation) =>
+  (simulation: string) =>
     `${absolutePathForFilmSimulation(simulation)}/image`;
 
 export const absolutePathForFocalLengthImage =
@@ -264,7 +262,7 @@ export const getPathComponents = (pathname = ''): {
   const cameraModel = pathname.match(
     new RegExp(`^${PREFIX_CAMERA}/[^/]+/([^/]+)`))?.[1];
   const simulation = pathname.match(
-    new RegExp(`^${PREFIX_FILM_SIMULATION}/([^/]+)`))?.[1] as FilmSimulation;
+    new RegExp(`^${PREFIX_FILM_SIMULATION}/([^/]+)`))?.[1];
   const focalString = pathname.match(
     new RegExp(`^${PREFIX_FOCAL_LENGTH}/([0-9]+)mm`))?.[1];
 

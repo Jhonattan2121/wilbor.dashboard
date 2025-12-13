@@ -151,11 +151,11 @@ export default function ImprovedCreatePostButton({
         const result = await uploadFileToIPFS(file);
         const ext = getFileExtension(file);
         const isVideo = file.type.startsWith('video/');
-        let fileName = file.name || `media-${i + 1}${ext ? '.' + ext : ''}`;
+        const fileName = file.name || `media-${i + 1}${ext ? '.' + ext : ''}`;
         const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
 
         setContent(prev => {
-          let texto = prev.trim();
+          const texto = prev.trim();
           const mediaMarkdown = isVideo
             ? `<video width="100%" controls src="${ipfsUrl}"></video>`
             : `![image](${ipfsUrl})`;
@@ -253,7 +253,7 @@ export default function ImprovedCreatePostButton({
       ipfsResults.forEach((result, index) => {
         const file = files[index];
         const ext = getFileExtension(file);
-        let fileName = file.name || `image-${index + 1}${ext ? '.' + ext : ''}`;
+        const fileName = file.name || `image-${index + 1}${ext ? '.' + ext : ''}`;
         const ipfsUrl = getIpfsPublicUrl(result.IpfsHash, fileName);
         
         if (file.type && file.type.startsWith('video/')) {
@@ -274,7 +274,7 @@ export default function ImprovedCreatePostButton({
       const allImages = ipfsResults.map((result, index) => {
         const file = files[index];
         const ext = getFileExtension(file);
-        let fileName = file.name || `image-${index + 1}${ext ? '.' + ext : ''}`;
+        const fileName = file.name || `image-${index + 1}${ext ? '.' + ext : ''}`;
         return getIpfsPublicUrl(result.IpfsHash, fileName);
       });
 

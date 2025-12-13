@@ -162,11 +162,11 @@ export default function NewEditPostButton({
         const result = await uploadFileToIPFS(file);
         const ext = getFileExtension(file);
         const isVideo = file.type.startsWith('video/');
-        let fileName = file.name || `media-${i + 1}${ext ? '.' + ext : ''}`;
+        const fileName = file.name || `media-${i + 1}${ext ? '.' + ext : ''}`;
         const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
 
         setContent(prev => {
-          let texto = prev.trim();
+          const texto = prev.trim();
           const mediaMarkdown = isVideo
             ? `<video width="100%" controls src="${ipfsUrl}"></video>`
             : `![image](${ipfsUrl})`;

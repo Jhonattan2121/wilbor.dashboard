@@ -1,8 +1,11 @@
 import { Client, Operation, PrivateKey } from '@hiveio/dhive';
 import { clsx } from 'clsx/lite';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { sendHiveOperation } from '../../../lib/hive/server-functions';
+import { MarkdownRenderer } from '@/lib/markdown/MarkdownRenderer';
+import MarkdownRendererComponent from '@/components/MarkdownRenderer';
 
 const CreatePostButton = dynamic(
   () => import('../../../app/dashboard/CreatePostButton'),
@@ -42,6 +45,84 @@ export function HiveCommunitiesSelector({
   const [allCommunities, setAllCommunities] = useState<HiveCommunity[]>([]);
   const [loadingAll, setLoadingAll] = useState(false);
   const [search, setSearch] = useState('');
+  const [showCommunityModal, setShowCommunityModal] = useState(false);
+  const [selectedCommunityData, setSelectedCommunityData] = useState<HiveCommunity | null>(null);
+  const [communityPosts, setCommunityPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
+  const [showUserCommunityPostsModal, setShowUserCommunityPostsModal] = useState(false);
+  const [selectedUserCommunity, setSelectedUserCommunity] = useState<HiveCommunity | null>(null);
+  const [userCommunityPosts, setUserCommunityPosts] = useState<any[]>([]);
+  const [loadingUserCommunityPosts, setLoadingUserCommunityPosts] = useState(false);
+  const [expandedUserPosts, setExpandedUserPosts] = useState<Set<string>>(new Set());
+
+  // Função para buscar posts da comunidade
+  async function fetchCommunityPosts(communityName: string) {
+    setLoadingPosts(true);
+    try {
+      const response = await fetch('https://api.hive.blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'bridge.get_ranked_posts',
+          params: { sort: 'created', tag: communityName, limit: 20 },
+          id: 1,
+        }),
+      });
+      const data = await response.json();
+      if (data.result && Array.isArray(data.result)) {
+        setCommunityPosts(data.result);
+      } else {
+        setCommunityPosts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching community posts:', error);
+      setCommunityPosts([]);
+    }
+    setLoadingPosts(false);
+  }
+
+  // Função para abrir modal da comunidade
+  function handleOpenCommunityModal(community: HiveCommunity) {
+    setSelectedCommunityData(community);
+    setShowCommunityModal(true);
+    fetchCommunityPosts(community.name);
+  }
+
+  // Função para buscar posts da comunidade do usuário
+  async function fetchUserCommunityPosts(communityName: string) {
+    setLoadingUserCommunityPosts(true);
+    try {
+      const response = await fetch('https://api.hive.blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'bridge.get_ranked_posts',
+          params: { sort: 'created', tag: communityName, limit: 20 },
+          id: 1,
+        }),
+      });
+      const data = await response.json();
+      if (data.result && Array.isArray(data.result)) {
+        setUserCommunityPosts(data.result);
+      } else {
+        setUserCommunityPosts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching user community posts:', error);
+      setUserCommunityPosts([]);
+    }
+    setLoadingUserCommunityPosts(false);
+  }
+
+  // Função para abrir modal de posts da comunidade do usuário
+  function handleOpenUserCommunityPosts(community: HiveCommunity) {
+    setSelectedUserCommunity(community);
+    setShowUserCommunityPostsModal(true);
+    fetchUserCommunityPosts(community.name);
+  }
 
   // Função para buscar comunidades do usuário
   async function fetchUserCommunities() {
@@ -381,7 +462,12 @@ export function HiveCommunitiesSelector({
                       ? 'border-blue-500 ring-2 ring-blue-500 ring-opacity-50'
                       : 'border-neutral-700 hover:border-blue-400',
                   )}
-                  onClick={() => {
+                  onClick={(e) => {
+                    // Se clicar no botão "Ver Posts", não seleciona a comunidade
+                    if ((e.target as HTMLElement).closest('.ver-posts-btn')) {
+                      e.stopPropagation();
+                      return;
+                    }
                     setSelectedCommunity(c.name);
                     setSelectedCommunityForPost(c.name);
                     setShowPostModal(true);
@@ -476,11 +562,274 @@ export function HiveCommunitiesSelector({
                           </span>
                         )}
                       </div>
+                      {/* Botão Ver Posts */}
+                      <div className="mt-2">
+                        <button
+                          className="ver-posts-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm w-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenUserCommunityPosts(c);
+                          }}
+                        >
+                          Ver Posts
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Posts das Comunidades do Usuário */}
+      {showUserCommunityPostsModal && selectedUserCommunity && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm"
+            onClick={() => {
+              setShowUserCommunityPostsModal(false);
+              setSelectedUserCommunity(null);
+              setUserCommunityPosts([]);
+            }}
+          />
+          <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto border border-gray-700">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-3">
+                <div className={clsx('w-12 h-12 flex items-center justify-center text-white rounded-full font-bold text-lg', getCommunityColor(selectedUserCommunity.name))}>
+                  {selectedUserCommunity.title.substring(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white">{selectedUserCommunity.title}</h3>
+                  <p className="text-sm text-gray-400 font-mono">@{selectedUserCommunity.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUserCommunityPostsModal(false);
+                  setSelectedUserCommunity(null);
+                  setUserCommunityPosts([]);
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {loadingUserCommunityPosts ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                <p className="ml-3 text-gray-400">Carregando posts...</p>
+              </div>
+            ) : userCommunityPosts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400">Nenhum post encontrado nesta comunidade.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {userCommunityPosts.map((post: any) => {
+                  const postId = `${post.author}-${post.permlink}`;
+                  const isExpanded = expandedUserPosts.has(postId);
+                  const mediaItems = MarkdownRenderer.extractMediaFromHive(post);
+                  const firstMedia = mediaItems[0];
+                  
+                  const toggleExpand = () => {
+                    setExpandedUserPosts(prev => {
+                      const newSet = new Set(prev);
+                      if (newSet.has(postId)) {
+                        newSet.delete(postId);
+                      } else {
+                        newSet.add(postId);
+                      }
+                      return newSet;
+                    });
+                  };
+                  
+                  return (
+                    <div 
+                      key={postId} 
+                      className={clsx(
+                        'bg-neutral-900 rounded-lg border border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer',
+                        isExpanded ? 'md:col-span-2 lg:col-span-3' : '',
+                        'hover:border-gray-600'
+                      )}
+                      onClick={toggleExpand}
+                    >
+                      {/* Card Compacto (não expandido) */}
+                      {!isExpanded && (
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-semibold text-white">@{post.author}</span>
+                            <span className="text-xs text-gray-400">•</span>
+                            <span className="text-xs text-gray-400">
+                              {new Date(post.created).toLocaleDateString('pt-BR')}
+                            </span>
+                          </div>
+                          
+                          {firstMedia && (
+                            <div className="mb-3 rounded-lg overflow-hidden">
+                              {firstMedia.type === 'iframe' ? (
+                                <div className="relative w-full aspect-square bg-black">
+                                  <iframe
+                                    src={firstMedia.url}
+                                    className="w-full h-full"
+                                    allow="autoplay; fullscreen"
+                                    frameBorder="0"
+                                  />
+                                </div>
+                              ) : firstMedia.type === 'video' ? (
+                                <video
+                                  src={firstMedia.url}
+                                  className="w-full h-auto rounded-lg"
+                                  onError={(e) => {
+                                    (e.target as HTMLVideoElement).style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <img
+                                  src={firstMedia.url}
+                                  alt={post.title}
+                                  className="w-full h-auto rounded-lg object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              )}
+                            </div>
+                          )}
+                          
+                          <h4 className="text-base font-bold text-white mb-2 line-clamp-2">{post.title}</h4>
+                          
+                          <div className="text-sm text-gray-300 line-clamp-2 mb-3">
+                            {post.body.replace(/!\[.*?\]\(.*?\)/g, '').replace(/<img[^>]*>/g, '').substring(0, 150)}...
+                          </div>
+                          
+                          {post.json_metadata && (() => {
+                            try {
+                              const metadata = JSON.parse(post.json_metadata);
+                              const tags = (metadata.tags || []).slice(0, 3);
+                              if (tags.length > 0) {
+                                return (
+                                  <div className="flex gap-1 flex-wrap">
+                                    {tags.map((tag: string) => (
+                                      <span key={tag} className="px-2 py-1 bg-purple-600/20 text-purple-400 rounded text-xs">
+                                        #{tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              }
+                            } catch {
+                              return null;
+                            }
+                          })()}
+                        </div>
+                      )}
+                      
+                      {/* Card Expandido */}
+                      {isExpanded && (
+                        <div className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-white">@{post.author}</span>
+                              <span className="text-xs text-gray-400">•</span>
+                              <span className="text-xs text-gray-400">
+                                {new Date(post.created).toLocaleDateString('pt-BR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpand();
+                              }}
+                              className="text-gray-400 hover:text-white"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          
+                          <h4 className="text-xl font-bold text-white mb-4">{post.title}</h4>
+
+                          {/* Todas as Mídias */}
+                          {mediaItems.length > 0 && (
+                            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {mediaItems.map((media, idx) => (
+                                <div key={idx}>
+                                  {media.type === 'iframe' ? (
+                                    <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-black">
+                                      <iframe
+                                        src={media.url}
+                                        className="w-full h-full"
+                                        allow="autoplay; fullscreen"
+                                        frameBorder="0"
+                                      />
+                                    </div>
+                                  ) : media.type === 'video' ? (
+                                    <video
+                                      src={media.url}
+                                      controls
+                                      className="w-full h-auto rounded-lg"
+                                    />
+                                  ) : (
+                                    <img
+                                      src={media.url}
+                                      alt={post.title}
+                                      className="w-full h-auto rounded-lg object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Conteúdo Completo */}
+                          <div className="prose prose-invert max-w-none mb-4">
+                            <MarkdownRendererComponent>
+                              {post.body}
+                            </MarkdownRendererComponent>
+                          </div>
+
+                          {/* Tags Completas */}
+                          {post.json_metadata && (() => {
+                            try {
+                              const metadata = JSON.parse(post.json_metadata);
+                              const tags = metadata.tags || [];
+                              if (tags.length > 0) {
+                                return (
+                                  <div className="flex gap-2 flex-wrap pt-4 border-t border-gray-700">
+                                    {tags.map((tag: string) => (
+                                      <span key={tag} className="px-3 py-1 bg-purple-600/20 text-purple-400 rounded-full text-sm border border-purple-600/30">
+                                        #{tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              }
+                            } catch {
+                              return null;
+                            }
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -527,43 +876,321 @@ export function HiveCommunitiesSelector({
                   const isMember = userCommunities.some(u => u.name === c.name && u.role === 'member');
                   const isGuest = userCommunities.some(u => u.name === c.name && u.role === 'guest');
                   return (
-                    <div key={c.name} className="flex flex-col sm:flex-row items-start sm:items-center bg-neutral-900 rounded-lg border border-gray-700 p-4 gap-3 shadow">
-                      <div className={clsx('w-14 h-14 flex items-center justify-center text-white rounded-full font-bold text-lg', getCommunityColor(c.name))}>
-                        {c.title.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-bold text-base text-white">{c.title}</div>
-                        <div className="text-xs text-gray-400 font-mono">@{c.name}</div>
-                        <div className="text-xs text-gray-400 mt-1 line-clamp-2">{c.about}</div>
-                        <div className="flex gap-4 mt-2 text-xs text-gray-400">
-                          <span>{c.subscribers?.toLocaleString()} membros</span>
-                          <span>{c.postsCount} posts</span>
+                    <div key={c.name} className="flex flex-col sm:flex-row items-start sm:items-center bg-neutral-900 rounded-lg border border-gray-700 p-4 gap-3 shadow hover:border-gray-600 transition-colors">
+                      <div 
+                        className="flex-1 cursor-pointer"
+                        onClick={() => {
+                          handleOpenCommunityModal(c);
+                        }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={clsx('w-14 h-14 flex items-center justify-center text-white rounded-full font-bold text-lg flex-shrink-0', getCommunityColor(c.name))}>
+                            {c.title.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-bold text-base text-white hover:text-purple-400 transition-colors">{c.title}</div>
+                            <div className="text-xs text-gray-400 font-mono">@{c.name}</div>
+                            <div className="text-xs text-gray-400 mt-1 line-clamp-2">{c.about}</div>
+                            <div className="flex gap-4 mt-2 text-xs text-gray-400">
+                              <span>{c.subscribers?.toLocaleString()} membros</span>
+                              <span>{c.postsCount} posts</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 min-w-[120px]">
+                        <button
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenCommunityModal(c);
+                          }}
+                        >
+                          Ver Posts
+                        </button>
                         {isMember ? (
                           <button
                             className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm"
-                            onClick={() => handleLeaveCommunity(c.name)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLeaveCommunity(c.name);
+                            }}
                           >
                             Sair
                           </button>
                         ) : isGuest ? (
                           <button
                             className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg text-sm"
-                            onClick={() => handleLeaveCommunity(c.name)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLeaveCommunity(c.name);
+                            }}
                           >
                             Sair 
                           </button>
                         ) : (
                           <button
                             className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm"
-                            onClick={() => handleJoinCommunity(c.name)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleJoinCommunity(c.name);
+                            }}
                           >
                             Entrar
                           </button>
                         )}
                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Posts da Comunidade */}
+      {showCommunityModal && selectedCommunityData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm"
+            onClick={() => {
+              setShowCommunityModal(false);
+              setSelectedCommunityData(null);
+              setCommunityPosts([]);
+            }}
+          />
+          <div className="relative z-10 bg-[#18181b] rounded-xl shadow-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto border border-gray-700">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-3">
+                <div className={clsx('w-12 h-12 flex items-center justify-center text-white rounded-full font-bold text-lg', getCommunityColor(selectedCommunityData.name))}>
+                  {selectedCommunityData.title.substring(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white">{selectedCommunityData.title}</h3>
+                  <p className="text-sm text-gray-400 font-mono">@{selectedCommunityData.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowCommunityModal(false);
+                  setSelectedCommunityData(null);
+                  setCommunityPosts([]);
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {loadingPosts ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                <p className="ml-3 text-gray-400">Carregando posts...</p>
+              </div>
+            ) : communityPosts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400">Nenhum post encontrado nesta comunidade.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {communityPosts.map((post: any) => {
+                  const postId = `${post.author}-${post.permlink}`;
+                  const isExpanded = expandedPosts.has(postId);
+                  const mediaItems = MarkdownRenderer.extractMediaFromHive(post);
+                  const firstMedia = mediaItems[0];
+                  
+                  const toggleExpand = () => {
+                    setExpandedPosts(prev => {
+                      const newSet = new Set(prev);
+                      if (newSet.has(postId)) {
+                        newSet.delete(postId);
+                      } else {
+                        newSet.add(postId);
+                      }
+                      return newSet;
+                    });
+                  };
+                  
+                  return (
+                    <div 
+                      key={postId} 
+                      className={clsx(
+                        'bg-neutral-900 rounded-lg border border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer',
+                        isExpanded ? 'md:col-span-2 lg:col-span-3' : '',
+                        'hover:border-gray-600'
+                      )}
+                      onClick={toggleExpand}
+                    >
+                      {/* Card Compacto (não expandido) */}
+                      {!isExpanded && (
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-semibold text-white">@{post.author}</span>
+                            <span className="text-xs text-gray-400">•</span>
+                            <span className="text-xs text-gray-400">
+                              {new Date(post.created).toLocaleDateString('pt-BR')}
+                            </span>
+                          </div>
+                          
+                          {firstMedia && (
+                            <div className="mb-3 rounded-lg overflow-hidden">
+                              {firstMedia.type === 'iframe' ? (
+                                <div className="relative w-full aspect-square bg-black">
+                                  <iframe
+                                    src={firstMedia.url}
+                                    className="w-full h-full"
+                                    allow="autoplay; fullscreen"
+                                    frameBorder="0"
+                                  />
+                                </div>
+                              ) : firstMedia.type === 'video' ? (
+                                <video
+                                  src={firstMedia.url}
+                                  className="w-full h-auto rounded-lg"
+                                  onError={(e) => {
+                                    (e.target as HTMLVideoElement).style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <img
+                                  src={firstMedia.url}
+                                  alt={post.title}
+                                  className="w-full h-auto rounded-lg object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              )}
+                            </div>
+                          )}
+                          
+                          <h4 className="text-base font-bold text-white mb-2 line-clamp-2">{post.title}</h4>
+                          
+                          <div className="text-sm text-gray-300 line-clamp-2 mb-3">
+                            {post.body.replace(/!\[.*?\]\(.*?\)/g, '').replace(/<img[^>]*>/g, '').substring(0, 150)}...
+                          </div>
+                          
+                          {post.json_metadata && (() => {
+                            try {
+                              const metadata = JSON.parse(post.json_metadata);
+                              const tags = (metadata.tags || []).slice(0, 3);
+                              if (tags.length > 0) {
+                                return (
+                                  <div className="flex gap-1 flex-wrap">
+                                    {tags.map((tag: string) => (
+                                      <span key={tag} className="px-2 py-1 bg-purple-600/20 text-purple-400 rounded text-xs">
+                                        #{tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              }
+                            } catch {
+                              return null;
+                            }
+                          })()}
+                        </div>
+                      )}
+                      
+                      {/* Card Expandido */}
+                      {isExpanded && (
+                        <div className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-white">@{post.author}</span>
+                              <span className="text-xs text-gray-400">•</span>
+                              <span className="text-xs text-gray-400">
+                                {new Date(post.created).toLocaleDateString('pt-BR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpand();
+                              }}
+                              className="text-gray-400 hover:text-white"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          
+                          <h4 className="text-xl font-bold text-white mb-4">{post.title}</h4>
+
+                          {/* Todas as Mídias */}
+                          {mediaItems.length > 0 && (
+                            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {mediaItems.map((media, idx) => (
+                                <div key={idx}>
+                                  {media.type === 'iframe' ? (
+                                    <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-black">
+                                      <iframe
+                                        src={media.url}
+                                        className="w-full h-full"
+                                        allow="autoplay; fullscreen"
+                                        frameBorder="0"
+                                      />
+                                    </div>
+                                  ) : media.type === 'video' ? (
+                                    <video
+                                      src={media.url}
+                                      controls
+                                      className="w-full h-auto rounded-lg"
+                                    />
+                                  ) : (
+                                    <img
+                                      src={media.url}
+                                      alt={post.title}
+                                      className="w-full h-auto rounded-lg object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Conteúdo Completo */}
+                          <div className="prose prose-invert max-w-none mb-4">
+                            <MarkdownRendererComponent>
+                              {post.body}
+                            </MarkdownRendererComponent>
+                          </div>
+
+                          {/* Tags Completas */}
+                          {post.json_metadata && (() => {
+                            try {
+                              const metadata = JSON.parse(post.json_metadata);
+                              const tags = metadata.tags || [];
+                              if (tags.length > 0) {
+                                return (
+                                  <div className="flex gap-2 flex-wrap pt-4 border-t border-gray-700">
+                                    {tags.map((tag: string) => (
+                                      <span key={tag} className="px-3 py-1 bg-purple-600/20 text-purple-400 rounded-full text-sm border border-purple-600/30">
+                                        #{tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              }
+                            } catch {
+                              return null;
+                            }
+                          })()}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

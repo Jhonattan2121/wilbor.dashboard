@@ -236,14 +236,11 @@ export default function EditPostButton({
         const result = await uploadFileToIPFS(file);
         const ext = getFileExtension(file);
         const isVideo = file.type.startsWith('video/');
-        let fileName = '';
-        if (file.name && ext) {
-          fileName = file.name;
-        } else if (ext) {
-          fileName = `media-${i + 1}.${ext}`;
-        } else {
-          fileName = `media-${i + 1}`;
-        }
+        const fileName = file.name && ext
+          ? file.name
+          : ext
+            ? `media-${i + 1}.${ext}`
+            : `media-${i + 1}`;
         // Usar o gateway customizado da Pinata com token
         const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
         console.log('Adicionando mídia ao conteúdo:', { ipfsUrl, isVideo, fileName });
@@ -379,14 +376,11 @@ export default function EditPostButton({
           ipfsResults.push(result);
           const ext = getFileExtension(newFiles[i]);
           const isVideo = newFiles[i].type.startsWith('video/');
-          let fileName = '';
-          if (newFiles[i].name && ext) {
-            fileName = newFiles[i].name;
-          } else if (ext) {
-            fileName = `media-${i + 1}.${ext}`;
-          } else {
-            fileName = `media-${i + 1}`;
-          }
+          const fileName = newFiles[i].name && ext
+            ? newFiles[i].name
+            : ext
+              ? `media-${i + 1}.${ext}`
+              : `media-${i + 1}`;
           const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
           // Só insere se o link ainda não existe no markdown
           if (!newContent.includes(ipfsUrl)) {
