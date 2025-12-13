@@ -9,7 +9,9 @@ import {
 } from '@/platforms/fujifilm';
 import { ExifData, ExifParserFactory } from 'ts-exif-parser';
 import { PhotoFormData } from './form';
-import { FilmSimulation } from '@/simulation';
+
+// Type stub for removed simulation module
+export type FilmSimulation = string;
 import sharp, { Sharp } from 'sharp';
 import {
   GEO_PRIVACY_ENABLED,

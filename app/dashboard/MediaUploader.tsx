@@ -162,49 +162,53 @@ export default function MediaUploader({
                       return (
                         <div 
                           key={globalIndex} 
-                          className={`relative group cursor-pointer border-2 ${thumbnailIndex === globalIndex ? 'border-green-500' : 'border-transparent'} rounded-lg`}
+                          className={`relative cursor-pointer border-2 ${thumbnailIndex === globalIndex ? 'border-green-500' : 'border-transparent'} rounded-lg`}
                           onClick={(e) => {
                             e.preventDefault();
                             onThumbnailChange(globalIndex);
                             console.log('Mídia selecionada como capa:', { globalIndex, preview });
                           }}
+                          title=""
                         >
                           {isVideo ? (
                             <video 
                               src={preview} 
                               controls 
+                              title=""
                               className="w-full h-40 object-cover rounded-lg bg-black"
                               onError={(e) => console.error('Erro ao carregar vídeo:', e)}
                             />
                           ) : (
                             <img 
                               src={preview} 
-                              alt={`Preview ${globalIndex + 1}`} 
+                              alt="" 
+                              title=""
                               className="w-full h-40 object-cover rounded-lg"
                               onError={(e) => console.error('Erro ao carregar imagem:', e)}
                             />
                           )}
                           {thumbnailIndex === globalIndex && (
-                            <div className="absolute top-2 left-2 bg-green-600 text-white rounded-full p-1">
+                            <div className="absolute top-2 left-2 bg-green-600 text-white rounded-full p-1" title="">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
                           )}
                           {uploadProgress[globalIndex] > 0 && uploadProgress[globalIndex] < 100 && (
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                              <div className="w-16 h-16 rounded-full border-4 border-white border-t-transparent animate-spin"></div>
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center" title="">
+                              <div className="w-16 h-16 rounded-full border-4 border-white border-t-transparent animate-spin" title=""></div>
                             </div>
                           )}
                           <button
                             type="button"
-                            className="absolute top-1 right-1 bg-red-600 rounded-full p-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                            className="absolute top-1 right-1 bg-red-600 rounded-full p-2 opacity-90 hover:opacity-100 transition-opacity"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               onMediaRemoved(globalIndex);
                             }}
                             aria-label={`Remover imagem ${globalIndex + 1}`}
+                            title=""
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />

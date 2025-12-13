@@ -4,18 +4,10 @@ import {
   SITE_DESCRIPTION,
   SITE_TITLE
 } from '@/app/config';
-import Footer from '@/app/Footer';
-import PhotoEscapeHandler from '@/photo/PhotoEscapeHandler';
-import ShareModals from '@/share/ShareModals';
 import AppStateProvider from '@/state/AppStateProvider';
 import SwrConfigClient from '@/state/SwrConfigClient';
 import ToasterWithThemes from '@/toast/ToasterWithThemes';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
 import { ThemeProvider } from 'next-themes';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Metadata } from 'next/types';
 import '../tailwind.css';
 import JsonLd from './components/JsonLd';
 import DashboardPage from './dashboard/page';

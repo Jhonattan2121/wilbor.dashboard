@@ -19,7 +19,10 @@ import {
 } from '@/photo/db/query';
 import { GetPhotosOptions } from './db';
 import { parseCachedPhotoDates, parseCachedPhotosDates } from '@/photo';
-import { createCameraKey } from '@/camera';
+
+// Stub function for camera key
+const createCameraKey = (camera: { make: string; model: string }) => 
+  `${camera.make}-${camera.model}`.toLowerCase().replace(/\s+/g, '-');
 import {
   PATHS_ADMIN,
   PATHS_TO_CACHE,

@@ -3,7 +3,8 @@ import {
   FILM_SIMULATION_FORM_INPUT_OPTIONS,
   MAKE_FUJIFILM,
 } from '@/platforms/fujifilm';
-import { FilmSimulation } from '@/simulation';
+// Type stub for removed simulation module
+export type FilmSimulation = string;
 import { TAG_FAVS, getValidationMessageForTags } from '@/tag';
 import {
   convertTimestampToNaivePostgresString,

@@ -1,6 +1,14 @@
 'use client';
-import { Cameras } from '@/camera';
-import { FilmSimulations } from '@/simulation';
+
+// Type stubs for removed modules
+export interface Camera {
+  make: string;
+  model: string;
+}
+
+export type Cameras = Array<{ camera: Camera; count: number }>;
+export type FilmSimulation = string;
+export type FilmSimulations = Array<{ simulation: FilmSimulation; count: number }>;
 import { useAppState } from '@/state/AppState';
 import { Tags } from '@/tag';
 import { useEffect } from 'react';

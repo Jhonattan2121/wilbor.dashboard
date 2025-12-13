@@ -4,11 +4,19 @@ import {
   SHOW_EXIF_DATA,
 } from '@/app/config';
 import { ABSOLUTE_PATH_FOR_HOME_IMAGE } from '@/app/paths';
-import { Camera } from '@/camera';
-import { formatFocalLength } from '@/focal';
 import { Lens } from '@/lens';
 import { getNextImageUrlForRequest } from '@/platforms/next-image';
-import { FilmSimulation } from '@/simulation';
+
+// Types for camera and simulation (removed modules but keeping types)
+export interface Camera {
+  make: string;
+  model: string;
+}
+
+export type FilmSimulation = string;
+
+// Stub function for focal length formatting
+const formatFocalLength = (focal?: number) => focal ? `${focal}mm` : undefined;
 import { formatDate, formatDateFromPostgresString } from '@/utility/date';
 import {
   formatAperture,
@@ -147,9 +155,9 @@ export const parsePhotoFromDb = (photoDbRaw: PhotoDb): Photo => {
     tags: photoDb.tags ?? [],
     title: photoDb.title ?? 'Untitled',
     focalLengthFormatted:
-      formatFocalLength(photoDb.focalLength),
+      photoDb.focalLength ? `${photoDb.focalLength}mm` : undefined,
     focalLengthIn35MmFormatFormatted:
-      formatFocalLength(photoDb.focalLengthIn35MmFormat),
+      photoDb.focalLengthIn35MmFormat ? `${photoDb.focalLengthIn35MmFormat}mm` : undefined,
     fNumberFormatted:
       formatAperture(photoDb.fNumber),
     isoFormatted:

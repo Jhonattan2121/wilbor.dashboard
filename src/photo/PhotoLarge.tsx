@@ -6,10 +6,8 @@ import {
   SHOW_TAKEN_AT_TIME,
 } from '@/app/config';
 import {
-  pathForFocalLength,
   pathForPhoto,
 } from '@/app/paths';
-import { cameraFromPhoto } from '@/camera';
 import DivDebugBaselineGrid from '@/components/DivDebugBaselineGrid';
 import DownloadButton from '@/components/DownloadButton';
 import SiteGrid from '@/components/SiteGrid';
@@ -18,7 +16,6 @@ import ImageLarge from '@/components/image/ImageLarge';
 import ZoomControls, { ZoomControlsRef } from '@/components/image/ZoomControls';
 import LoaderButton from '@/components/primitives/LoaderButton';
 import ShareButton from '@/share/ShareButton';
-import PhotoFilmSimulation from '@/simulation/PhotoFilmSimulation';
 import { useAppState } from '@/state/AppState';
 import { sortTags } from '@/tag';
 import PhotoTags from '@/tag/PhotoTags';
@@ -34,7 +31,6 @@ import {
   shouldShowCameraDataForPhoto,
   shouldShowExifDataForPhoto
 } from '.';
-import PhotoCamera from '../camera/PhotoCamera';
 import { RevalidatePhoto } from './InfinitePhotoScroll';
 import PhotoDate from './PhotoDate';
 import PhotoLink from './PhotoLink';
@@ -96,9 +92,10 @@ export default function PhotoLarge({
 
   const tags = sortTags(photo.tags, primaryTag);
 
-  const camera = cameraFromPhoto(photo);
+  // Camera functionality removed - keeping stub for compatibility
+  const camera = photo.make && photo.model ? { make: photo.make, model: photo.model } : undefined;
 
-  const showCameraContent = showCamera && shouldShowCameraDataForPhoto(photo);
+  const showCameraContent = false; // Disabled - camera routes removed
   const showTagsContent = tags.length > 0;
   const showExifContent = shouldShowExifDataForPhoto(photo);
 
@@ -217,12 +214,7 @@ export default function PhotoLarge({
                 </div>}
               {(showCameraContent || showTagsContent) &&
                 <div>
-                  {showCameraContent &&
-                    <PhotoCamera
-                      camera={camera}
-                      contrast="medium"
-                      prefetch={prefetchRelatedLinks}
-                    />}
+                  {/* Camera component removed */}
                   {showTagsContent &&
                     <PhotoTags
                       tags={tags}
@@ -242,12 +234,9 @@ export default function PhotoLarge({
                 <ul className="text-medium">
                   <li>
                     {photo.focalLength &&
-                      <Link
-                        href={pathForFocalLength(photo.focalLength)}
-                        className="hover:text-main active:text-medium"
-                      >
+                      <span className="text-medium">
                         {photo.focalLengthFormatted}
-                      </Link>}
+                      </span>}
                     {(
                       photo.focalLengthIn35MmFormatFormatted &&
                       // eslint-disable-next-line max-len
@@ -273,11 +262,7 @@ export default function PhotoLarge({
                   <li>{photo.isoFormatted}</li>
                   <li>{photo.exposureCompensationFormatted ?? '0ev'}</li>
                 </ul>
-                {showSimulation && photo.filmSimulation &&
-                  <PhotoFilmSimulation
-                    simulation={photo.filmSimulation}
-                    prefetch={prefetchRelatedLinks}
-                  />}
+                {/* Film simulation component removed */}
               </>}
             <div className={clsx(
               'flex gap-x-3 gap-y-baseline',
@@ -315,13 +300,9 @@ export default function PhotoLarge({
                     title="Share Photo"
                     photo={photo}
                     tag={shouldShareTag ? primaryTag : undefined}
-                    camera={shouldShareCamera ? camera : undefined}
-                    simulation={shouldShareSimulation
-                      ? photo.filmSimulation
-                      : undefined}
-                    focal={shouldShareFocalLength
-                      ? photo.focalLength
-                      : undefined}
+                    camera={undefined}
+                    simulation={undefined}
+                    focal={undefined}
                     prefetch={prefetchRelatedLinks}
                   />}
                 {ALLOW_PUBLIC_DOWNLOADS && 

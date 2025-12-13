@@ -11,9 +11,7 @@ import {
   Photo,
   PhotoDateRange,
 } from '@/photo';
-import { Cameras, createCameraKey } from '@/camera';
 import { Tags } from '@/tag';
-import { FilmSimulation, FilmSimulations } from '@/simulation';
 import { ADMIN_SQL_DEBUG_ENABLED } from '@/app/config';
 import {
   GetPhotosOptions,
@@ -21,8 +19,23 @@ import {
   getOrderByFromOptions,
 } from '.';
 import { getWheresFromOptions } from '.';
-import { FocalLengths } from '@/focal';
 import { Lenses, createLensKey } from '@/lens';
+
+// Types and stubs for removed modules
+export interface Camera {
+  make: string;
+  model: string;
+}
+
+export type Cameras = Array<{ camera: Camera; count: number }>;
+
+export type FilmSimulation = string;
+export type FilmSimulations = Array<{ simulation: FilmSimulation; count: number }>;
+
+export type FocalLengths = Array<{ focal: number; count: number }>;
+
+const createCameraKey = (camera: Camera) => 
+  `${camera.make}-${camera.model}`.toLowerCase().replace(/\s+/g, '-');
 
 const createPhotosTable = () =>
   sql`

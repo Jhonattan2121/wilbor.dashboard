@@ -1,5 +1,5 @@
 import React from 'react';
-import MarkdownEditor from './MarkdownEditor';
+import AdvancedMarkdownEditor from './AdvancedMarkdownEditor';
 
 interface PostContentEditorPreviewProps {
   content: string;
@@ -12,7 +12,7 @@ const PostContentEditorPreview: React.FC<PostContentEditorPreviewProps> = ({
 }) => {
   return (
     <div className="flex flex-col">
-      <MarkdownEditor
+      <AdvancedMarkdownEditor
         value={content}
         onChange={onChange}
         height={600}

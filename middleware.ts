@@ -5,8 +5,6 @@ import {
   PATH_ADMIN_PHOTOS,
   PATH_OG,
   PATH_OG_SAMPLE,
-  PREFIX_PHOTO,
-  PREFIX_TAG,
 } from './src/app/paths';
 import { auth } from './src/auth';
 
@@ -18,7 +16,7 @@ export function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Novo código para rotas /p/
+  // Redirect /p/ routes to /projects (for backward compatibility)
   if (pathname.startsWith('/p/')) {
     const photoId = pathname.split('/').pop();
 
@@ -32,20 +30,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(PATH_ADMIN_PHOTOS, request.url));
   } else if (pathname === PATH_OG) {
     return NextResponse.redirect(new URL(PATH_OG_SAMPLE, request.url));
-  } else if (/^\/photos\/(.)+$/.test(pathname)) {
-    // Accept /photos/* paths, but serve /p/*
-    const matches = pathname.match(/^\/photos\/(.+)$/);
-    return NextResponse.rewrite(new URL(
-      `${PREFIX_PHOTO}/${matches?.[1]}`,
-      request.url,
-    ));
-  } else if (/^\/t\/(.)+$/.test(pathname)) {
-    // Accept /t/* paths, but serve /tag/*
-    const matches = pathname.match(/^\/t\/(.+)$/);
-    return NextResponse.rewrite(new URL(
-      `${PREFIX_TAG}/${matches?.[1]}`,
-      request.url,
-    ));
   }
 
   return auth(
