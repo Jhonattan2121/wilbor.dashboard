@@ -45,6 +45,7 @@ export function useDynamicAboutPost(username: string) {
   const [title, setTitle] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +67,20 @@ export function useDynamicAboutPost(username: string) {
           const media = extractMediaFromPost(found);
           setImages(Array.from(new Set(media.images)));
           setVideos(Array.from(new Set(media.videos)));
+          
+          // Extrair tags do json_metadata
+          let postTags: string[] = [];
+          try {
+            const metadata = typeof found.json_metadata === 'string' 
+              ? JSON.parse(found.json_metadata) 
+              : found.json_metadata;
+            if (metadata && Array.isArray(metadata.tags)) {
+              postTags = metadata.tags;
+            }
+          } catch (e) {
+            console.warn('Erro ao extrair tags:', e);
+          }
+          setTags(postTags);
         } else {
           setError('Nenhum post "sobre mim" encontrado para este usuário.');
         }
@@ -76,5 +91,5 @@ export function useDynamicAboutPost(username: string) {
     })();
   }, [username]);
 
-  return { permlink, markdown, title, images, videos, loading, error };
+  return { permlink, markdown, title, images, videos, tags, loading, error };
 }

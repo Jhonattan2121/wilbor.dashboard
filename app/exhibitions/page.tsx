@@ -5,7 +5,7 @@ import { useDynamicExhibitionsPost } from '../../src/app/exhibitions/useDynamicE
 import ViewSwitcher from '../../src/app/ViewSwitcher';
 import JsonLd from '../components/JsonLd';
 import DashboardHeader from '../dashboard/DashboardHeader';
-import NewEditPostButton from '../dashboard/NewEditPostButton';
+import EditPostButton from '../dashboard/EditPostButton';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 export const dynamic = 'force-static';
@@ -17,7 +17,7 @@ const HIVE_USERNAME = process.env.NEXT_PUBLIC_HIVE_USERNAME || '';
 
 export default function ExhibitionsPage() {
   const [username, setUsername] = useState<string | null>(null);
-  const { permlink, markdown, title, images, videos, loading, error } = useDynamicExhibitionsPost(username || HIVE_USERNAME);
+  const { permlink, markdown, title, images, videos, tags, loading, error } = useDynamicExhibitionsPost(username || HIVE_USERNAME);
   const [postingKey, setPostingKey] = useState<string | null>(null);
   const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
@@ -56,13 +56,13 @@ export default function ExhibitionsPage() {
                   <DashboardHeader username={username} />
 
                 </div>
-                <NewEditPostButton
+                <EditPostButton
                   username={username || HIVE_USERNAME}
                   author={username || HIVE_USERNAME}
                   permlink={permlink || ''}
                   initialTitle={title || ''}
                   initialContent={markdown}
-                  initialTags={[]}
+                  initialTags={tags || []}
                   initialImages={images || []}
                   postingKey={postingKey || undefined}
                 />

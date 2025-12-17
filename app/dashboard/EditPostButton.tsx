@@ -142,17 +142,17 @@ export default function EditPostButton({
   useEffect(() => {
     if (showForm) {
       resetForm();
-    }
-  }, [showForm, resetForm]);
-
-  
-  // Sincronizar o estado do formulário quando o modal é aberto
-  useEffect(() => {
-    if (showForm) {
-      resetForm();
       console.log('Modal aberto, tags inicializadas:', initialTags);
     }
   }, [showForm, resetForm, initialTags]);
+
+  // Atualizar tags quando initialTags mudar (mesmo com modal aberto)
+  useEffect(() => {
+    if (showForm && initialTags && initialTags.length > 0) {
+      setTags(initialTags);
+      console.log('Tags atualizadas no modal:', initialTags);
+    }
+  }, [initialTags, showForm]);
 
   // Função para buscar post do Hive por autor e permlink
   const fetchPostFromHive = async (

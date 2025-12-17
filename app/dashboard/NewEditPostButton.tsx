@@ -118,6 +118,14 @@ export default function NewEditPostButton({
     }
   }, [showForm, initialTitle, initialContent, initialTags, initialImages]);
 
+  // Atualizar tags quando initialTags mudar (mesmo com modal aberto)
+  useEffect(() => {
+    if (showForm && initialTags && initialTags.length > 0) {
+      setTags(initialTags);
+      console.log('Tags atualizadas no modal:', initialTags);
+    }
+  }, [initialTags, showForm]);
+
   useEffect(() => {
     if (!loading && error && error.includes('cancelada')) {
       const timer = setTimeout(() => {

@@ -14,7 +14,7 @@ export const maxDuration = 60;
 export default function ContactPage() {
   const [postingKey, setPostingKey] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const { permlink, markdown, title, images, loading, error } = useDynamicContactPost(
+  const { permlink, markdown, title, images, tags, loading, error } = useDynamicContactPost(
     username || HIVE_USERNAME
   );
 
@@ -44,7 +44,7 @@ export default function ContactPage() {
                   permlink={permlink || ''}
                   initialTitle={title || ''}
                   initialContent={markdown}
-                  initialTags={[]}
+                  initialTags={tags || []}
                   initialImages={images || []}
                   postingKey={postingKey || undefined}
                 />

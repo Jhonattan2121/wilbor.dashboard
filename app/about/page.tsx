@@ -9,7 +9,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { useDynamicAboutPost } from '../../src/app/about/useDynamicAboutPost';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
 import DashboardHeader from "../dashboard/DashboardHeader";
-import NewEditPostButton from "../dashboard/NewEditPostButton";
+import EditPostButton from "../dashboard/EditPostButton";
 
 const HIVE_USERNAME = process.env.NEXT_PUBLIC_HIVE_USERNAME || '';
 
@@ -21,7 +21,7 @@ export default function AboutPage() {
   const [username, setUsername] = useState<string | null>(null);
   const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
-  const { permlink, markdown, title, images, videos, loading, error } = useDynamicAboutPost(username || HIVE_USERNAME);
+  const { permlink, markdown, title, images, videos, tags, loading, error } = useDynamicAboutPost(username || HIVE_USERNAME);
   const swiperRef = useRef<any>(null);
   const goPrev = () => {
     if (swiperRef.current) {
@@ -56,13 +56,13 @@ export default function AboutPage() {
                 <div className="flex items-center gap-2">
                   <DashboardHeader username={username} />
                 </div>
-                <NewEditPostButton
+                <EditPostButton
                   username={username || HIVE_USERNAME}
                   author={username || HIVE_USERNAME}
                   permlink={permlink || ''}
                   initialTitle={title || ''}
                   initialContent={markdown}
-                  initialTags={[]}
+                  initialTags={tags || []}
                   initialImages={images || []}
                   postingKey={postingKey || undefined}
                 />

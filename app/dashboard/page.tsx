@@ -81,9 +81,7 @@ async function getHivePosts(username: string) {
           createdAt: new Date(post.created),
           aspectRatio: 1.5,
           priority: false,
-          tags: Array.isArray(JSON.parse(post.json_metadata).tags)
-            ? JSON.parse(post.json_metadata).tags
-            : [],
+          tags: postTags,
           cameraKey: 'hive',
           camera: null,
           simulation: null,

@@ -117,6 +117,21 @@ export default function ImprovedEditPostButton({
     setThumbnailIndex(0);
   }, [initialTitle, initialContent, initialTags, initialImages]);
 
+  // Garantir que os estados sejam atualizados quando o modal é aberto
+  useEffect(() => {
+    if (showForm) {
+      resetForm();
+    }
+  }, [showForm, resetForm]);
+
+  // Atualizar tags quando initialTags mudar (mesmo com modal aberto)
+  useEffect(() => {
+    if (showForm && initialTags && initialTags.length > 0) {
+      setTags(initialTags);
+      console.log('Tags atualizadas no modal:', initialTags);
+    }
+  }, [initialTags, showForm]);
+
   // Prevenir ativação de hovers durante o mount do modal
   useEffect(() => {
     if (showForm) {
