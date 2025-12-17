@@ -1,307 +1,255 @@
-# 📷 `EXIF` Photo Blog
+# 🎨 Wilbor Dashboard
 
-https://github.com/sambecker/exif-photo-blog/assets/169298/4253ea54-558a-4358-8834-89943cfbafb4
+Dashboard profissional para gerenciar e publicar posts no blockchain Hive, com editor de markdown avançado, upload de mídia para IPFS e integração completa com Hive Keychain.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/sambecker-pro/clone?demo-description=Store%20photos%20with%20original%20camera%20data&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F39rys245Px3FVBGRJNYEON%2Fbf68d5c052bda9e9e5bec21878764bc3%2Fimage.png&demo-title=Photo%20Blog&demo-url=https%3A%2F%2Fphotos.sambecker.com&from=templates&project-name=Photo%20Blog&repository-name=exif-photo-blog&repository-url=https%3A%2F%2Fgithub.com%2Fsambecker%2Fexif-photo-blog&skippable-integrations=1&stores=%5B%7B%22type%22%3A%22postgres%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D&teamCreateStatus=hidden)
+## ✨ Funcionalidades
 
-🎬&nbsp;&nbsp;Demo
--
-https://photos.sambecker.com
+### 📝 Editor de Posts
+- **Editor de Markdown Avançado** com toolbar completa
+- **Preview em tempo real** lado a lado
+- **Sistema de tags inteligente** com sugestões populares do Hive
+- **Upload de mídia** (imagens e vídeos) para IPFS via Pinata
+- **Templates prontos** para diferentes tipos de post
+- **Auto-save** de rascunhos no localStorage
+- **Estatísticas em tempo real** (palavras, caracteres, tempo de leitura)
+- **Atalhos de teclado** para formatação rápida
 
-✨&nbsp;&nbsp;Features
--
-- Built-in auth
-- Photo upload with EXIF extraction
-- Organize photos by tag
-- Infinite scroll
-- Light/dark mode
-- Automatic OG image generation
-- CMD-K menu with photo search
-- AI-generated text descriptions
-- Support for Fujifilm simulations
+### 🔐 Autenticação
+- **Hive Keychain** - Login via extensão do navegador
+- **Chave privada** - Login alternativo com chave criptografada
+- Sessão persistente no localStorage
 
-<img src="/readme/og-image-share.png" alt="OG Image Preview" width=600 />
+### 📄 Páginas Disponíveis
+- **Dashboard** (`/dashboard`) - Gerenciamento de posts e projetos
+- **Projects** (`/projects`) - Visualização de projetos com filtros por tags
+- **About** (`/about`) - Página sobre com conteúdo dinâmico do Hive
+- **Exhibitions** (`/exhibitions`) - Exposições e prêmios
+- **Partners** (`/partners`) - Parceiros e colaborações
+- **Contact** (`/contact`) - Informações de contato
 
-🛠️&nbsp;&nbsp;Installation
--
-### 1. Deploy to Vercel
+### 🎯 Recursos Principais
+- ✅ Criar novos posts no Hive
+- ✅ Editar posts existentes com tags preservadas
+- ✅ Upload de imagens e vídeos para IPFS
+- ✅ Gerenciamento de tags com sugestões inteligentes
+- ✅ Editor markdown com preview
+- ✅ Suporte a múltiplas mídias por post
+- ✅ Seleção de thumbnail
+- ✅ Interface responsiva (mobile-first)
+- ✅ Tema claro/escuro
+- ✅ Integração completa com Hive blockchain
 
-1. Click [Deploy](https://vercel.com/new/clone?demo-title=Photo+Blog&demo-description=Store+photos+with+original+camera+data&demo-url=https%3A%2F%2Fphotos.sambecker.com&demo-image=https%3A%2F%2Fphotos.sambecker.com%2Ftemplate-image-tight&project-name=Photo+Blog&repository-name=exif-photo-blog&repository-url=https%3A%2F%2Fgithub.com%2Fsambecker%2Fexif-photo-blog&from=templates&skippable-integrations=1&teamCreateStatus=hidden&stores=%5B%7B%22type%22%3A%22postgres%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D)
-2. Add required storage ([Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres/quickstart#create-a-postgres-database) + [Vercel Blob](https://vercel.com/docs/storage/vercel-blob/quickstart#create-a-blob-store)) as part of template installation
-3. Configure environment variable for production domain in project settings
-   - `NEXT_PUBLIC_SITE_DOMAIN` (e.g., photos.domain.com—used in permalinks and seen in top-right nav)
+## 🛠️ Tecnologias
 
-### 2. Setup Auth
+- **Next.js 15.5.9** - Framework React
+- **React 19** - Biblioteca UI
+- **TypeScript** - Tipagem estática
+- **Tailwind CSS 4.0** - Estilização
+- **@hiveio/dhive** - Cliente Hive blockchain
+- **IPFS/Pinata** - Armazenamento de mídia
+- **Hive Keychain** - Autenticação
 
-1. [Generate auth secret](https://generate-secret.vercel.app/32) and add to environment variables:
-   - `AUTH_SECRET`
-2. Add admin user to environment variables:
-   - `ADMIN_EMAIL`
-   - `ADMIN_PASSWORD`
-3. Trigger redeploy
-   - Visit project on Vercel, navigate to "Deployments" tab, click ••• button next to most recent deployment, and select "Redeploy"
+## 📦 Instalação
 
-### 3. Upload your first photo 🎉
-1. Visit `/admin`
-2. Sign in with credentials supplied in Step 2
-2. Click "Upload Photos"
-3. Add optional title
-4. Click "Create"
+### Pré-requisitos
+- Node.js 18+ 
+- Yarn ou pnpm
+- Conta Hive
+- Hive Keychain instalado (opcional, mas recomendado)
+- Token Pinata Gateway (para upload de mídia)
 
-If you don't plan to change the code, or don't mind making your updates public, consider forking this repo to easily receive future updates. If you've already setup your project on Vercel see detailed instructions here on reconfiguring your project.
+### 1. Clone o repositório
 
-🔄&nbsp;&nbsp;Receiving updates
--
-If you don't plan to change the code, or don't mind making your updates public, consider [forking](https://github.com/sambecker/exif-photo-blog/fork) this repo to easily receive future updates. If you've already set up your project on Vercel see these [migration instructions](#how-do-i-receive-template-updates).
+```bash
+git clone https://github.com/seu-usuario/wilbor.dashboard.git
+cd wilbor.dashboard
+```
 
-💻&nbsp;&nbsp;Local development
--
-1. Clone code
-2. Run `pnpm i` to install dependencies
-3. If necessary, install [Vercel CLI](https://vercel.com/docs/cli#installing-vercel-cli) and authenticate by running `vercel login`
-4. Run `vercel link` to connect CLI to your project
-5. Run `vercel dev` to start dev server with Vercel-managed environment variables
+### 2. Instale as dependências
 
-See FAQ for [limitations of local development](#can-i-work-locally-without-access-to-an-image-storage-provider)
+```bash
+yarn install
+# ou
+pnpm install
+```
 
-🎨&nbsp;&nbsp;Further customization
--
-### AI text generation
+### 3. Configure as variáveis de ambiente
 
-_⚠️ READ BEFORE PROCEEDING_
+Crie um arquivo `.env.local` na raiz do projeto:
 
-> _Usage of this feature will result in fees from OpenAI. When enabling AI text generation, follow all recommended mitigations in order to avoid unexpected charges and attacks. Make sure your OpenAI secret key environment variable is not prefixed with NEXT_PUBLIC._
+```env
+# Hive Configuration
+NEXT_PUBLIC_HIVE_USERNAME=seu-usuario-hive
 
-1. Setup OpenAI
-   - If you don't already have one, create an [OpenAI](https://openai.com) account and fund it (see [this thread](https://github.com/sambecker/exif-photo-blog/issues/110) if you're having issues)
-   - Generate an API key and store in environment variable `OPENAI_SECRET_KEY`
-   - Setup usage limits to avoid unexpected charges (_recommended_)
-2. Add rate limiting (_recommended_)
-   - As an additional precaution, create an Upstash Redis store from the storage tab of the Vercel dashboard and link it to your project in order to enable rate limiting—no further configuration necessary
-3. Configure auto-generated fields (optional) 
-   - Set which text fields auto-generate when uploading a photo by storing a comma-separated list, e.g., `AI_TEXT_AUTO_GENERATED_FIELDS = title, semantic`
-   - Accepted values:
-     - `all`
-     - `title` (default)
-     - `caption`
-     - `tags` (default)
-     - `semantic` (default)
-     - `none`
+# Pinata IPFS (para upload de mídia)
+NEXT_PUBLIC_PINATA_GATEWAY_TOKEN=seu-token-pinata
 
-### Web Analytics
+# Site Configuration (opcional)
+NEXT_PUBLIC_SITE_TITLE=Wilbor Dashboard
+NEXT_PUBLIC_SITE_DESCRIPTION=Dashboard para gerenciar posts no Hive
+NEXT_PUBLIC_SITE_DOMAIN=seu-dominio.com
+```
 
-1. Open project on Vercel
-2. Click "Analytics" tab
-3. Follow "Enable Web Analytics" instructions (`@vercel/analytics` already included)
+### 4. Execute o projeto
 
-### Speed Insights
+```bash
+# Desenvolvimento
+yarn dev
 
-1. Open project on Vercel
-2. Click "Speed Insights" tab
-3. Follow "Enable Speed Insights" instructions (`@vercel/speed-insights` already included)
+# Build de produção
+yarn build
 
-### Optional configuration
+# Iniciar servidor de produção
+yarn start
+```
 
-Application behavior can be changed by configuring the following environment variables:
+O projeto estará disponível em `http://localhost:3000`
 
-#### Content
-- `NEXT_PUBLIC_SITE_TITLE` (seen in browser tab)
-- `NEXT_PUBLIC_SITE_DESCRIPTION` (seen in nav, beneath title)
-- `NEXT_PUBLIC_SITE_ABOUT` (seen in grid sidebar—accepts rich formatting tags: `<b>`, `<strong>`, `<i>`, `<em>`, `<u>`, `<br>`)
+## 🚀 Uso
+
+### Primeiro Acesso
+
+1. Acesse `/dashboard` ou `/`
+2. Faça login com:
+   - **Hive Keychain**: Clique em "Login com Keychain" e confirme na extensão
+   - **Chave Privada**: Digite seu usuário e chave privada (criptografada)
+
+### Criar um Post
+
+1. Após fazer login, clique em **"Criar Post"**
+2. Preencha o título
+3. Use o editor markdown para escrever o conteúdo
+4. Adicione tags (use as sugestões ou digite novas)
+5. Faça upload de imagens/vídeos se desejar
+6. Selecione a thumbnail (primeira imagem exibida)
+7. Clique em **"Publicar"** e confirme no Hive Keychain
+
+### Editar um Post
+
+1. No dashboard, encontre o post que deseja editar
+2. Clique no botão **"Editar"**
+3. Modifique título, conteúdo, tags ou mídia
+4. Clique em **"Atualizar Post"** e confirme no Hive Keychain
+
+### Gerenciar Tags
+
+- As tags são extraídas automaticamente dos posts existentes
+- Use o sistema de sugestões para adicionar tags populares
+- Máximo de 10 tags por post
+- Tags são salvas no `json_metadata` do post no Hive
+
+## 📁 Estrutura do Projeto
+
+```
+wilbor.dashboard/
+├── app/
+│   ├── dashboard/          # Componentes do dashboard
+│   │   ├── CreatePostButton.tsx
+│   │   ├── EditPostButton.tsx
+│   │   ├── ImprovedCreatePostButton.tsx
+│   │   ├── ImprovedEditPostButton.tsx
+│   │   ├── MediaUploader.tsx
+│   │   └── HiveLogin.tsx
+│   ├── about/              # Página About
+│   ├── exhibitions/        # Página Exhibitions
+│   ├── partners/           # Página Partners
+│   ├── contact/            # Página Contact
+│   ├── projects/           # Página Projects
+│   └── api/                # API routes
+├── src/
+│   ├── components/         # Componentes reutilizáveis
+│   │   ├── AdvancedMarkdownEditor.tsx
+│   │   ├── PostContentEditorPreview.tsx
+│   │   ├── TagSuggestions.tsx
+│   │   └── MarkdownRenderer.tsx
+│   ├── hooks/              # React hooks
+│   │   └── useDraftSaver.ts
+│   ├── lib/
+│   │   └── hive/           # Cliente Hive
+│   └── utils/
+│       └── ipfs.ts         # Utilitários IPFS
+└── public/                 # Arquivos estáticos
+```
+
+## 🔧 Configuração Avançada
+
+### Variáveis de Ambiente Opcionais
+
+#### Conteúdo
+- `NEXT_PUBLIC_SITE_TITLE` - Título do site (aparece na aba do navegador)
+- `NEXT_PUBLIC_SITE_DESCRIPTION` - Descrição do site
+- `NEXT_PUBLIC_SITE_ABOUT` - Conteúdo sobre (aceita HTML: `<b>`, `<i>`, `<br>`)
 
 #### Performance
-> ⚠️ Enabling may result in increased project usage. Static optimization [troubleshooting hints](#why-do-production-deployments-fail-when-static-optimization-is-enabled) in FAQ.
-- `NEXT_PUBLIC_STATICALLY_OPTIMIZE_PHOTOS = 1` enables static optimization for photo pages (`p/[photoId]`), i.e., renders pages at build time
-- `NEXT_PUBLIC_STATICALLY_OPTIMIZE_PHOTO_OG_IMAGES = 1` enables static optimization for OG images, i.e., renders images at build time
-- `NEXT_PUBLIC_STATICALLY_OPTIMIZE_PHOTO_CATEGORIES = 1` enables static optimization for photo categories (`tag/[tag]`, `shot-on/[make]/[model]`, etc.), i.e., renders pages at build time
-- `NEXT_PUBLIC_STATICALLY_OPTIMIZE_PHOTO_CATEGORY_OG_IMAGES = 1` enables static optimization for photo category (`tag/[tag]`, `shot-on/[make]/[model]`, etc.) OG images, i.e., renders images at build time
-- `NEXT_PUBLIC_PRESERVE_ORIGINAL_UPLOADS = 1` prevents photo uploads being compressed before storing
-- `NEXT_PUBLIC_IMAGE_QUALITY = 1-100` controls the quality of large photos
-- `NEXT_PUBLIC_BLUR_DISABLED = 1` prevents image blur data being stored and displayed (potentially useful for limiting Postgres usage)
+- `NEXT_PUBLIC_STATICALLY_OPTIMIZE_PHOTOS = 1` - Otimização estática de páginas
+- `NEXT_PUBLIC_PRESERVE_ORIGINAL_UPLOADS = 1` - Preserva uploads originais sem compressão
+- `NEXT_PUBLIC_IMAGE_QUALITY = 1-100` - Qualidade das imagens (padrão: 75)
 
 #### Visual
-
-- `NEXT_PUBLIC_DEFAULT_THEME = light | dark` sets preferred initial theme (defaults to `system` when not configured)
-- `NEXT_PUBLIC_MATTE_PHOTOS = 1` constrains the size of each photo, and displays a surrounding border (potentially useful for photos with tall aspect ratios)
+- `NEXT_PUBLIC_DEFAULT_THEME = light | dark` - Tema padrão
+- `NEXT_PUBLIC_MATTE_PHOTOS = 1` - Adiciona borda ao redor das fotos
 
 #### Display
-- `NEXT_PUBLIC_HIDE_EXIF_DATA = 1` hides EXIF data in photo details and OG images (potentially useful for portfolios, which don't focus on photography)
-- `NEXT_PUBLIC_HIDE_ZOOM_CONTROLS = 1` hides fullscreen photo zoom controls
-- `NEXT_PUBLIC_HIDE_TAKEN_AT_TIME = 1` hides taken at time from photo meta
-- `NEXT_PUBLIC_HIDE_SOCIAL = 1` removes X (formerly Twitter) button from share modal
-- `NEXT_PUBLIC_HIDE_FILM_SIMULATIONS = 1` prevents Fujifilm simulations showing up in `/grid` sidebar and CMD-K search results
-- `NEXT_PUBLIC_HIDE_REPO_LINK = 1` removes footer link to repo
+- `NEXT_PUBLIC_HIDE_EXIF_DATA = 1` - Oculta dados EXIF
+- `NEXT_PUBLIC_HIDE_ZOOM_CONTROLS = 1` - Oculta controles de zoom
+- `NEXT_PUBLIC_HIDE_SOCIAL = 1` - Remove botão de compartilhamento social
 
-#### Grid
-- `NEXT_PUBLIC_GRID_HOMEPAGE = 1` shows grid layout on homepage
-- `NEXT_PUBLIC_GRID_ASPECT_RATIO = 1.5` sets aspect ratio for grid tiles (defaults to `1`—setting to `0` removes the constraint)
-- `NEXT_PUBLIC_SHOW_LARGE_THUMBNAILS = 1` ensures large thumbnails on photo grid views (if not configured, density is based on aspect ratio)
+## 📖 Documentação Adicional
 
-#### Settings
-- `NEXT_PUBLIC_GEO_PRIVACY = 1` disables collection/display of location-based data (⚠️ re-compresses uploaded images in order to remove GPS information)
-- `NEXT_PUBLIC_ALLOW_PUBLIC_DOWNLOADS = 1` enables public photo downloads for all visitors (⚠️ may result in increased bandwidth usage)
-- `NEXT_PUBLIC_PUBLIC_API = 1` enables public API available at `/api`
-- `NEXT_PUBLIC_IGNORE_PRIORITY_ORDER = 1` prevents `priority_order` field affecting photo order
-- `NEXT_PUBLIC_SHOW_LARGE_THUMBNAILS = 1` ensures large thumbnails on photo grid views
-- `NEXT_PUBLIC_OG_TEXT_ALIGNMENT = BOTTOM` keeps OG image text bottom aligned (default is top)
+- **README_EDITOR.md** - Documentação completa do editor de posts
+- **EDITOR_IMPROVEMENTS.md** - Melhorias implementadas no editor
+- **README_EDITOR.md** - Guia de uso do editor
 
-## Alternate storage providers
+## 🐛 Troubleshooting
 
-Only one storage adapter—Vercel Blob, Cloudflare R2, or AWS S3—can be used at a time. Ideally, this is configured before photos are uploaded (see [Issue #34](https://github.com/sambecker/exif-photo-blog/issues/34) for migration considerations). If you have multiple adapters, you can set one as preferred by storing `aws-s3`, `cloudflare-r2`, or `vercel-blob` in `NEXT_PUBLIC_STORAGE_PREFERENCE`. See [FAQ](#will-there-be-support-for-image-storage-providers-beyond-vercel-aws-and-cloudflare) regarding unsupported providers.
+### Tags não aparecem ao editar
+- Certifique-se de que as tags estão sendo extraídas do `json_metadata` do post
+- Verifique os logs do console para debug
+- As tags são carregadas automaticamente quando o modal de edição é aberto
 
-### Cloudflare R2
+### Upload de mídia falha
+- Verifique se o token do Pinata está configurado corretamente
+- Confirme que o token tem permissões de upload
+- Verifique a conexão com a internet
 
-1. Setup bucket
-   - [Create R2 bucket](https://developers.cloudflare.com/r2/) with default settings
-   - Setup CORS under bucket settings:
-   ```json
-   [{
-       "AllowedHeaders": ["*"],
-       "AllowedMethods": [
-         "GET",
-         "PUT"
-       ],
-       "AllowedOrigins": [
-          "http://localhost:3000",
-          "https://{VERCEL_PROJECT_NAME}*.vercel.app",
-          "{PRODUCTION_DOMAIN}"
-       ]
-   }]
-   ```
-   - Enable public hosting by doing one of the following:
-       - Select "Connect Custom Domain" and choose a Cloudflare domain
-       - OR
-       - Select "Allow Access" from R2.dev subdomain
-   - Store public configuration:
-     - `NEXT_PUBLIC_CLOUDFLARE_R2_BUCKET`: bucket name
-     - `NEXT_PUBLIC_CLOUDFLARE_R2_ACCOUNT_ID`: account id (found on R2 overview page)
-     - `NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_DOMAIN`: either "your-custom-domain.com" or "pub-jf90908...s0d9f8s0s9df.r2.dev"
-2. Setup private credentials
-   - Create API token by selecting "Manage R2 API Tokens," and clicking "Create API Token"
-   - Select "Object Read & Write," choose "Apply to specific buckets only," and select the bucket created in Step 1
-   - Store credentials (⚠️ _Ensure access keys are not prefixed with `NEXT_PUBLIC`_):
-     - `CLOUDFLARE_R2_ACCESS_KEY`
-     - `CLOUDFLARE_R2_SECRET_ACCESS_KEY`
+### Erro de autenticação Hive
+- Certifique-se de que o Hive Keychain está instalado e desbloqueado
+- Para login com chave privada, use a chave de posting (não a active ou owner)
+- Verifique se o usuário tem permissões de posting
 
-### AWS S3
+### Build falha no Vercel
+- Certifique-se de usar Next.js 15.5.9 ou superior (corrige CVE-2025-66478)
+- Verifique todas as variáveis de ambiente necessárias
+- Confirme que todas as dependências estão no `package.json`
 
-1. Setup bucket
-   - [Create S3 bucket](https://s3.console.aws.amazon.com/s3) with "ACLs enabled," and "Block all public access" turned off
-   - Setup CORS under bucket permissions:
-     ```json
-     [{
-      "AllowedHeaders": ["*"],
-      "AllowedMethods": [
-        "GET",
-        "PUT"
-      ],
-      "AllowedOrigins": [
-        "http://localhost:*",
-        "https://{VERCEL_PROJECT_NAME}*.vercel.app",
-        "{PRODUCTION_DOMAIN}"
-      ],
-      "ExposeHeaders": []
-     }]
-     ```
-   - Store public configuration
-     - `NEXT_PUBLIC_AWS_S3_BUCKET`: bucket name
-     - `NEXT_PUBLIC_AWS_S3_REGION`: bucket region, e.g., "us-east-1"
-2. Setup private credentials
-   - [Create IAM policy](https://console.aws.amazon.com/iam/home#/policies) using JSON editor:
-     ```json
-     {
-       "Version": "2012-10-17",
-       "Statement": [
-         {
-           "Effect": "Allow",
-           "Action": [
-             "s3:PutObject",
-             "s3:PutObjectACL",
-             "s3:GetObject",
-             "s3:ListBucket",
-             "s3:DeleteObject"
-           ],
-           "Resource": [
-             "arn:aws:s3:::{BUCKET_NAME}",
-             "arn:aws:s3:::{BUCKET_NAME}/*"
-           ]
-         }
-       ]
-     }
-     ```
-   - [Create IAM user](https://console.aws.amazon.com/iam/home#/users) by choosing "Attach policies directly," and selecting the policy created above. Create "Access key" under "Security credentials," choose "Application running outside AWS," and store credentials (⚠️ _Ensure access keys are not prefixed with `NEXT_PUBLIC`_):
-     - `AWS_S3_ACCESS_KEY`
-     - `AWS_S3_SECRET_ACCESS_KEY`
+## 🔒 Segurança
 
-## Alternate database providers (experimental)
+- ⚠️ **Nunca** exponha chaves privadas em variáveis `NEXT_PUBLIC_*`
+- ⚠️ Use sempre variáveis de ambiente para credenciais sensíveis
+- ⚠️ Chaves privadas são criptografadas antes de serem armazenadas no localStorage
+- ⚠️ Sempre use HTTPS em produção
 
-Vercel Postgres can be switched to another Postgres-compatible, pooling provider by updating `POSTGRES_URL`. Some providers only work when SSL is disabled, which can configured by setting `DISABLE_POSTGRES_SSL = 1`.
+## 🤝 Contribuindo
 
-### Supabase
-1. Ensure connection string is set to "Transaction Mode" via port `6543`
-2. Disable SSL by setting `DISABLE_POSTGRES_SSL = 1`
+Contribuições são bem-vindas! Por favor:
 
-📖&nbsp;&nbsp;FAQ
--
-#### How do I receive template updates?
-> For forked repos, click "Code," then "Update branch" from the main repo page. If you originally cloned the code, you can [create a fork](https://github.com/sambecker/exif-photo-blog/fork) from GitHub, then update your Git connection from your Vercel project settings. Once you've done this, you may need to go to your project deployments page, click •••, select "Create deployment," and choose `main`.
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
 
-#### How do I edit multiple photos?
-> On desktop, select ••• menu in the top right next to site title and choose, "Select Multiple." On mobile, "Select Multiple Photos" can be accessed from the search menu. From there, you can perform bulk tag, favorite, and delete actions.
+## 📝 Licença
 
-#### Why don't my photo changes show up immediately?
-> This template statically optimizes core views such as `/` and `/grid` to minimize visitor load times. Consequently, when photos are added, edited, or removed, it might take several minutes for those changes to propagate. If it seems like a change is not taking effect, try navigating to `/admin/configuration` and clicking "Clear Cache."
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
 
-#### Why do production deployments fail when static optimization is enabled?
-> There have been reports ([Issue 184](https://github.com/sambecker/exif-photo-blog/issues/184#issuecomment-2629474045) + [185](https://github.com/sambecker/exif-photo-blog/issues/185#issuecomment-2629478570)) that having large photos (over 30MB), or a CDN, e.g., Cloudflare in front of Vercel, may destabilize static optimization.
+## 🙏 Agradecimentos
 
-#### Why don't my older photos look right?
-> As the template has evolved, EXIF fields (such as lenses) have been added, blur data is generated through a different method, and AI/privacy features have been added. In order to bring older photos up to date, either click the 'sync' button next to a photo or use the outdated photo page (`/admin/outdated`) to make batch updates.
+- Comunidade Hive por suporte e feedback
+- Equipe do Next.js pelo framework incrível
+- Pinata pelo serviço de IPFS
+- Todos os contribuidores do projeto
 
-#### Why don't my OG images load when I share a link?
-> Many services such as iMessage, Slack, and X, require near-instant responses when unfurling link-based content. In order to guarantee sufficient responsiveness, consider rendering pages and image assets ahead of time by enabling static optimization by setting `NEXT_PUBLIC_STATICALLY_OPTIMIZE_PHOTOS = 1` and `NEXT_PUBLIC_STATICALLY_OPTIMIZE_PHOTO_OG_IMAGES = 1`. Keep in mind that this will increase platform usage.
+---
 
-#### Why do vertical images take up so much space?
-> By default, all photos are shown full-width, regardless of orientation. Enable matting to showcase horizontal and vertical photos at similar scales by setting `NEXT_PUBLIC_MATTE_PHOTOS = 1`.
-
-#### Why are my grid thumbnails so small?
-> Thumbnail grid density (seen on `/grid`, tag overviews, and other photo sets) is dependent on aspect ratio configuration (ratios of 1 or less have more photos per row). This can be overridden by setting `NEXT_PUBLIC_SHOW_LARGE_THUMBNAILS = 1`.
-
-#### How secure are photos marked “hidden?”
-> While all hidden paths (`/tag/hidden/*`) require authentication, raw links to individual photo assets remain publicly accessible. Randomly generated urls from storage providers are only secure via obscurity. Use with caution.
-
-#### My images/content have fallen out of sync with my database and/or my production site no longer matches local development. What do I do?
-> Navigate to `/admin/configuration` and click "Clear Cache."
-
-#### I'm seeing server-side runtime errors when loading a page after updating my fork. What do I do?
-> Navigate to `/admin/configuration` and click "Clear Cache." If this doesn't help, [open an issue](https://github.com/sambecker/exif-photo-blog/issues/new).
-
-#### Why are my thumbnails square?
-> Absent configuration, the default grid aspect ratio is `1`. `NEXT_PUBLIC_GRID_ASPECT_RATIO` can be set to any number (for instance, `1.5` for 3:2 images) or ignored by setting to `0`.
-
-#### Why aren't Fujifilm simulations importing alongside EXIF data?
-> Fujifilm simulation data is stored in vendor-specific Makernote binaries embedded in EXIF data. Under certain circumstances an intermediary may strip out this data. For instance, there is a known issue on iOS where editing an image, e.g., cropping it, causes Makernote data loss. If simulation data appears to be missing, try importing the original file as it was stored by the camera. Additionally, if you can confirm the simulation mode, you can edit the photo and manually select it.
-
-#### Why do my images appear flipped/rotated incorrectly?
-> For a number of reasons, only EXIF orientations: 1, 3, 6, and 8 are supported. Orientations 2, 4, 5, and 7—which make use of mirroring—are not supported.
-
-#### Why does my image placeholder blur look different from photo to photo?
-> Earlier versions of this template generated blur data on the client, which varied visually from browser to browser. Data is now generated consistently on the server. If you wish to update blur data for a particular photo, edit the photo in question, make no changes, and choose "Update."
-
-#### Why are large, multi-photo uploads not finishing?
-> The default timeout for processing multiple uploads is 60 seconds (the limit for Hobby accounts). This can be extended to 5 minutes on Pro accounts by setting `maxDuration = 300` in `src/app/admin/uploads/page.tsx`.
-
-#### I've added my OpenAI key but can't seem to make it work. Why am I seeing connection errors?
-> You may need to pre-purchase credits before accessing the OpenAI API. See [Issue #110](https://github.com/sambecker/exif-photo-blog/issues/110) for discussion.
-
-#### Will there be support for image storage providers beyond Vercel, AWS, and Cloudflare?
-> At this time, there are no plans to introduce support for new storage providers. While configuring a new, AWS-compatible provider (e.g., Cloudflare R2) should not be too difficult, there's nuance to consider surrounding details like IAM, CORS, and domain configuration, which can differ slightly from platform to platform. If you’d like to contribute an implementation for a new storage provider, please open a PR.
-
-#### Can I work locally without access to an image storage provider?
-> At this time, an external storage provider is necessary in order to develop locally. If you have a strategy to propose which allows files to be locally uploaded and served to `next/image` in away that mirrors an external storage provider for debugging purposes, please open a PR.
-
-#### Can this template run in a docker image?
-> Possibly. See [Issue #116](https://github.com/sambecker/exif-photo-blog/issues/116) for discussion.
-
-#### Why am I seeing many merge conflicts when syncing my fork?
-> Previous versions of this template stored Next.js "App Router" files in `/src`, and app-level functionality in `/src/site`. If you've made customizations and are having difficulty merging updates, consider moving `/src/app` files to `/`, and renaming `src/site` to `/src/app`. Other structural changes include moving `tailwind.css` and `middleware.ts` to `/`. Additionally, it may be helpful to review [PR #195](https://github.com/sambecker/exif-photo-blog/pull/195) for an overview of the most significant changes.
+**Desenvolvido com ❤️ para a comunidade Hive 🐝**
