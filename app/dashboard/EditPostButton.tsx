@@ -138,21 +138,15 @@ export default function EditPostButton({
     console.log('Reset do formulário feito, tags inicializadas:', initialTags || []);
   }, [initialTitle, initialContent, initialTags, initialImages, setThumbnailIndex]);
 
-  // Garantir que os estados sejam atualizados quando o modal é aberto
+  // Garantir que os estados sejam atualizados APENAS quando o modal é aberto
+  // Removido resetForm e initialTags das dependências para evitar reset durante digitação
   useEffect(() => {
     if (showForm) {
       resetForm();
       console.log('Modal aberto, tags inicializadas:', initialTags);
     }
-  }, [showForm, resetForm, initialTags]);
-
-  // Atualizar tags quando initialTags mudar (mesmo com modal aberto)
-  useEffect(() => {
-    if (showForm && initialTags && initialTags.length > 0) {
-      setTags(initialTags);
-      console.log('Tags atualizadas no modal:', initialTags);
-    }
-  }, [initialTags, showForm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showForm]);
 
   // Função para buscar post do Hive por autor e permlink
   const fetchPostFromHive = async (

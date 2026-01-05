@@ -106,7 +106,8 @@ export default function NewEditPostButton({
     }
   }, [showForm]);
 
-  // Inicializar com dados do post ao abrir
+  // Inicializar com dados do post APENAS ao abrir o modal
+  // Removido as props das dependências para evitar reset durante digitação
   useEffect(() => {
     if (showForm) {
       setTitle(initialTitle || '');
@@ -117,15 +118,8 @@ export default function NewEditPostButton({
       setUploadProgress(initialImages?.length ? Array(initialImages.length).fill(100) : []);
       setThumbnailIndex(0);
     }
-  }, [showForm, initialTitle, initialContent, initialTags, initialImages]);
-
-  // Atualizar tags quando initialTags mudar (mesmo com modal aberto)
-  useEffect(() => {
-    if (showForm && initialTags && initialTags.length > 0) {
-      setTags(initialTags);
-      console.log('Tags atualizadas no modal:', initialTags);
-    }
-  }, [initialTags, showForm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showForm]);
 
   useEffect(() => {
     if (!loading && error && error.includes('cancelada')) {
