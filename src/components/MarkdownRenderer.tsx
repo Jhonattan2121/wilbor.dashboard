@@ -78,6 +78,13 @@ const markdownComponents: Components = {
   img: ({ ...props }) => (
     <img className="rounded-lg max-w-full h-auto my-4 border border-gray-200 dark:border-gray-700" {...props} />
   ),
+  iframe: ({ ...props }) => (
+    <div className="my-4 w-full overflow-hidden rounded-lg bg-black">
+      <div className="relative w-full pb-[56.25%]">
+        <iframe className="absolute inset-0 h-full w-full border-0" {...props} />
+      </div>
+    </div>
+  ),
 };
 
 interface MarkdownRendererProps {

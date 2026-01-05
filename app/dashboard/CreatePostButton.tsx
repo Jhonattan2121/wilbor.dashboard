@@ -1,6 +1,7 @@
 'use client';
 
 import { uploadFileToIPFS } from '@/utils/ipfs';
+import { uploadVideoToVimeo } from '@/utils/vimeo';
 import { type Operation } from '@hiveio/dhive';
 import { useEffect, useState } from 'react';
 import { sendHiveOperation } from '../../lib/hive/server-functions';
@@ -8,11 +9,19 @@ import { useMediaContentSync } from './MediaContentSync';
 import MediaUploader from './MediaUploader';
 import PostContentEditorPreview from '../../src/components/PostContentEditorPreview';
 
+interface MediaEntry {
+    file: File;
+    url: string;
+    isVideo: boolean;
+    source: 'pinata' | 'vimeo';
+    ipfsHash?: string;
+}
+
 interface CreatePostButtonProps {
-    username: string;
-    postingKey?: string;
-    initialCommunity?: string;
-    onPostSuccess?: () => void;
+        username: string;
+        postingKey?: string;
+        initialCommunity?: string;
+        onPostSuccess?: () => void;
 }
 
 export default function CreatePostButton({
@@ -28,6 +37,7 @@ export default function CreatePostButton({
   const [tagInput, setTagInput] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+    const [mediaEntries, setMediaEntries] = useState<MediaEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -62,6 +72,7 @@ export default function CreatePostButton({
     setError('');
     setSuccess(false);
     setThumbnailIndex(0); // Redefinir o índice do thumbnail
+    setMediaEntries([]);
   };
 
   useEffect(() => {
@@ -73,6 +84,14 @@ export default function CreatePostButton({
     }
   }, [loading, error]);
 
+    useEffect(() => {
+        if (files.length === 0 && previews.length === 0 && mediaEntries.length > 0) {
+            setMediaEntries([]);
+        } else if (mediaEntries.length > files.length) {
+            setMediaEntries(prev => prev.slice(0, files.length));
+        }
+    }, [files.length, previews.length, mediaEntries.length]);
+
   const getIpfsGatewayUrl = (hash: string, _fileName?: string): string => {
     // Usar seu gateway customizado da Pinata com token
     const url = `https://lime-useful-snake-714.mypinata.cloud/ipfs/${hash}` +
@@ -81,38 +100,14 @@ export default function CreatePostButton({
     return url;
   };
 
-  const getIpfsPublicUrl = (hash: string, _fileName?: string): string => {
-    // Usar seu gateway customizado da Pinata com token
-    const url = `https://lime-useful-snake-714.mypinata.cloud/ipfs/${hash}` +
-      `?pinataGatewayToken=${PINATA_GATEWAY_TOKEN}`;
-    return url;
-  };
-
     // Função para processar e fazer upload dos arquivos selecionados
     const handleMediaSelected = async (selectedFiles: File[]) => {
         if (selectedFiles.length === 0) return;
 
-        console.log('Arquivos selecionados:', selectedFiles.map(f => ({
-            nome: f.name,
-            tipo: f.type,
-            tamanho: f.size
-        })));
-
-        // Criar URLs de objeto para os arquivos selecionados para preview
+        const baseIndex = previews.length;
         const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
-        console.log('URLs de preview criadas:', newPreviews);
-
-        // Adicionar os novos previews à lista existente
-        setPreviews(prevPreviews => {
-            const updatedPreviews = [...prevPreviews, ...newPreviews];
-            console.log('Lista atualizada de previews:', updatedPreviews);
-            return updatedPreviews;
-        });
-
-        // Adicionar os novos arquivos à lista existente
-        setFiles(prevFiles => [...prevFiles, ...selectedFiles]);
-
-        // Inicializar o progresso de upload para cada novo arquivo
+        setPreviews(prev => [...prev, ...newPreviews]);
+        setFiles(prev => [...prev, ...selectedFiles]);
         setUploadProgress(prev => [...prev, ...selectedFiles.map(() => 0)]);
 
         function getFileExtension(file: File): string {
@@ -126,50 +121,102 @@ export default function CreatePostButton({
             return '';
         }
 
-        // Processar cada arquivo selecionado
-        for (let i = 0; i < selectedFiles.length; i++) {
-            const file = selectedFiles[i];
+        const videoExtensions = [
+            'mp4',
+            'mov',
+            'webm',
+            'ogg',
+            'm4v',
+            'avi',
+            'flv',
+            'mkv',
+        ];
+
+        for (let fileIndex = 0; fileIndex < selectedFiles.length; fileIndex++) {
+            const file = selectedFiles[fileIndex];
+            const globalIndex = baseIndex + fileIndex;
             try {
                 setLoading(true);
-                // Fazer upload do arquivo para IPFS
-                const result = await uploadFileToIPFS(file);
                 const ext = getFileExtension(file);
-                const isVideo = file.type.startsWith('video/');
-                const fileName = file.name && ext
-                  ? file.name
-                  : ext
-                    ? `media-${i + 1}.${ext}`
-                    : `media-${i + 1}`;
-                // Usa sempre o gateway público para exibição
-                const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
-                console.log('Adicionando mídia ao conteúdo:', { ipfsUrl, isVideo, fileName });
+                const normalizedExt = ext.toLowerCase();
+                const mimeType = file.type?.toLowerCase() || '';
+                const isVideo =
+                    mimeType.startsWith('video/') ||
+                    videoExtensions.includes(normalizedExt);
+                const suffix = ext ? `.${ext}` : '';
+                const fileName = file.name || `media-${globalIndex + 1}${suffix}`;
+                let mediaMarkdown = '';
+                let entry: MediaEntry;
 
-                // Atualizar o conteúdo do post com o novo arquivo
-                setContent(prev => {
-                    let texto = prev.trim();
-                    if (texto.length > 0) {
-                        if (isVideo) {
-                            // Formato padronizado para vídeo
-                            texto += `\n\n<video width="100%" controls src="${ipfsUrl}"></video>\n`;
-                        } else {
-                            texto += `\n\n![image](${ipfsUrl})\n`;
+                if (isVideo) {
+                    const vimeoResult = await uploadVideoToVimeo(file);
+                    const link = typeof vimeoResult?.link === 'string' ? vimeoResult.link : '';
+                    const uri = typeof vimeoResult?.uri === 'string'
+                        ? `https://vimeo.com${vimeoResult.uri}`
+                        : '';
+                    const videoUrl = link || uri;
+                    const embedFromApi = typeof vimeoResult?.player_embed_url === 'string'
+                        ? vimeoResult.player_embed_url
+                        : '';
+                    const vimeoId = (() => {
+                        if (typeof vimeoResult?.uri === 'string') {
+                            const id = vimeoResult.uri.split('/').pop();
+                            if (id) return id;
                         }
-                    } else {
-                        if (isVideo) {
-                            // Formato padronizado para vídeo
-                            texto = `<video width="100%" controls src="${ipfsUrl}"></video>\n`;
-                        } else {
-                            texto = `![image](${ipfsUrl})\n`;
+                        if (typeof vimeoResult?.link === 'string') {
+                            const id = vimeoResult.link.split('/').pop();
+                            if (id) return id;
                         }
+                        return '';
+                    })();
+                    const embedUrl = embedFromApi || (vimeoId
+                        ? `https://player.vimeo.com/video/${vimeoId}`
+                        : '');
+
+                    if (!videoUrl && !embedUrl) {
+                        throw new Error('Vimeo não retornou um link válido');
                     }
-                    return texto;
+
+                    mediaMarkdown = embedUrl
+                        ? `<iframe src="${embedUrl}" width="100%" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`
+                        : `<video width="100%" controls src="${videoUrl}"></video>`;
+                    entry = {
+                        file,
+                        url: videoUrl || embedUrl,
+                        isVideo: true,
+                        source: 'vimeo',
+                    };
+                } else {
+                    const result = await uploadFileToIPFS(file);
+                    const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
+                    mediaMarkdown = `![image](${ipfsUrl})`;
+                    entry = {
+                        file,
+                        url: ipfsUrl,
+                        isVideo: false,
+                        source: 'pinata',
+                        ipfsHash: result.IpfsHash,
+                    };
+                }
+
+                setMediaEntries(prev => [...prev, entry]);
+                setUploadProgress(prev => {
+                    const next = [...prev];
+                    next[globalIndex] = 100;
+                    return next;
+                });
+
+                setContent(prev => {
+                    const texto = prev.trim();
+                    return texto.length > 0
+                        ? `${texto}\n\n${mediaMarkdown}\n`
+                        : `${mediaMarkdown}\n`;
                 });
             } catch (err) {
-                console.error('Erro ao enviar imagem para IPFS:', err);
-                setError('Erro ao enviar imagem para o IPFS.');
+                console.error('Erro ao enviar mídia:', err);
+                setError('Erro ao enviar mídia.');
 
-                // Remover a preview que não teve sucesso no upload
-                const currentIndex = files.length - selectedFiles.length + i;
+                const currentIndex = baseIndex + fileIndex;
                 const newFiles = [...files];
                 const newPreviews = [...previews];
                 const newProgress = [...uploadProgress];
@@ -185,6 +232,13 @@ export default function CreatePostButton({
                 setFiles(newFiles);
                 setPreviews(newPreviews);
                 setUploadProgress(newProgress);
+                setMediaEntries(prev => {
+                    const next = [...prev];
+                    if (currentIndex >= 0 && currentIndex < next.length) {
+                        next.splice(currentIndex, 1);
+                    }
+                    return next;
+                });
             } finally {
                 setLoading(false);
             }
@@ -220,92 +274,33 @@ export default function CreatePostButton({
         }, 15000);
 
         try {
-            const ipfsResults = [];
-            for (let i = 0; i < files.length; i++) {
-                try {
-                    const result = await uploadFileToIPFS(files[i]);
-                    ipfsResults.push(result);
-
-                    const newProgress = [...uploadProgress];
-                    newProgress[i] = 100;
-                    setUploadProgress(newProgress);
-                } catch (error) {
-                    console.error(`Erro ao fazer upload do arquivo ${i}:`, error);
-                    setError(`Falha ao fazer upload da imagem ${i + 1}`);
-                    setLoading(false);
-                    clearTimeout(keychainTimeout);
-                    return;
-                }
-            }
-
-            function getFileExtension(file: File): string {
-                const name = file.name;
-                if (name && name.includes('.')) {
-                    return name.split('.').pop() || '';
-                }
-                if (file.type && file.type.includes('/')) {
-                    return file.type.split('/')[1];
-                }
-                return '';
-            }
-
-            let imagesMarkdown = '';
-            ipfsResults.forEach((result, index) => {
-                const file = files[index];
-                const ext = getFileExtension(file);
-                const fileName = file.name && ext
-                  ? file.name
-                  : ext
-                    ? `image-${index + 1}.${ext}`
-                    : `image-${index + 1}`;
-                // Usa sempre o gateway público para exibição
-                const ipfsUrl = getIpfsPublicUrl(result.IpfsHash, fileName);
-                if (file.type && file.type.startsWith('video/')) {
-                    imagesMarkdown += `<video width="100%" controls src="${ipfsUrl}"></video>\n\n`;
-                } else {
-                    imagesMarkdown += `![image](${ipfsUrl})\n\n`;
-                }
-            });
-
-            let newContent = content.trim();
-            // Manter URLs do Pinata - não fazer substituição
-            if (imagesMarkdown.trim().length > 0) {
-                if (newContent.length > 0) {
-                    newContent += '\n\n' + imagesMarkdown;
-                } else {
-                    newContent = imagesMarkdown;
-                }
-            }
-
-            const postBody = newContent;
+            const postBody = content.trim();
             const tagArray = tags.map(tag => tag.trim().toLowerCase()).filter(tag => tag !== '');
-            // Mapear todas as imagens para URLs
-            const allImages = ipfsResults.map((result, index) => {
-                const file = files[index];
-                const ext = getFileExtension(file);
-                const fileName = file.name && ext
-                  ? file.name
-                  : ext
-                    ? `image-${index + 1}.${ext}`
-                    : `image-${index + 1}`;
-                return getIpfsPublicUrl(result.IpfsHash, fileName);
-            });
+            const imageEntries = mediaEntries.filter(entry => !entry.isVideo);
+            const orderedImages = [...imageEntries];
+            const thumbnailEntry = mediaEntries[thumbnailIndex];
 
-            // Reordenar as imagens para colocar a thumbnail selecionada primeiro
-            const orderedImages = [...allImages];
-            if (thumbnailIndex >= 0 && thumbnailIndex < allImages.length) {
-                // Remove a thumbnail da posição original
-                const thumbnail = orderedImages[thumbnailIndex];
-                orderedImages.splice(thumbnailIndex, 1);
-                // Insere a thumbnail no início do array
-                orderedImages.unshift(thumbnail);
+            if (thumbnailEntry && !thumbnailEntry.isVideo) {
+                const foundIndex = orderedImages.findIndex(entry => entry.url === thumbnailEntry.url);
+                if (foundIndex > -1) {
+                    const [thumb] = orderedImages.splice(foundIndex, 1);
+                    orderedImages.unshift(thumb);
+                }
             }
 
-            const jsonMetadata = {
+            const imageUrls = orderedImages.map(entry => entry.url);
+            const videoUrls = mediaEntries
+                .filter(entry => entry.isVideo)
+                .map(entry => entry.url);
+
+            const jsonMetadata: Record<string, unknown> = {
                 tags: tagArray,
-                image: orderedImages,
+                image: imageUrls,
                 app: 'wilbor.art/dashboard',
             };
+            if (videoUrls.length > 0) {
+                jsonMetadata.video = videoUrls;
+            }
 
             // Geração do permlink e operações fora das funções de broadcast
             const parentPermlink = initialCommunity || tags[0] || 'blog';

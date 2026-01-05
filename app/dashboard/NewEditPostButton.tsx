@@ -1,6 +1,7 @@
 'use client';
 
 import { uploadFileToIPFS } from '@/utils/ipfs';
+import { uploadVideoToVimeo } from '@/utils/vimeo';
 import { type Operation } from '@hiveio/dhive';
 import { useEffect, useState } from 'react';
 import { sendHiveOperation } from '../../lib/hive/server-functions';
@@ -167,18 +168,52 @@ export default function NewEditPostButton({
       const file = selectedFiles[i];
       try {
         setLoading(true);
-        const result = await uploadFileToIPFS(file);
         const ext = getFileExtension(file);
-        const isVideo = file.type.startsWith('video/');
+        const normalizedExt = ext.toLowerCase();
+        const videoExtensions = ['mp4', 'mov', 'webm', 'ogg', 'm4v', 'avi', 'flv', 'mkv'];
+        const mimeType = file.type?.toLowerCase() || '';
+        const isVideo = mimeType.startsWith('video/') || videoExtensions.includes(normalizedExt);
         const fileName = file.name || `media-${i + 1}${ext ? '.' + ext : ''}`;
-        const ipfsUrl = getIpfsGatewayUrl(result.IpfsHash, fileName);
+        let mediaMarkdown = '';
+
+        if (isVideo) {
+          const vimeoResult = await uploadVideoToVimeo(file);
+          const videoUrl =
+            vimeoResult?.link ||
+            (typeof vimeoResult?.uri === 'string' ? `https://vimeo.com${vimeoResult.uri}` : '');
+          const embedFromApi = typeof vimeoResult?.player_embed_url === 'string'
+            ? vimeoResult.player_embed_url
+            : '';
+          const vimeoId = (() => {
+            if (typeof vimeoResult?.uri === 'string') {
+              const id = vimeoResult.uri.split('/').pop();
+              if (id) return id;
+            }
+            if (typeof vimeoResult?.link === 'string') {
+              const id = vimeoResult.link.split('/').pop();
+              if (id) return id;
+            }
+            return '';
+          })();
+          const embedUrl = embedFromApi || (vimeoId
+            ? `https://player.vimeo.com/video/${vimeoId}`
+            : '');
+
+          if (!videoUrl && !embedUrl) {
+            throw new Error('Vimeo não retornou um link válido');
+          }
+
+          mediaMarkdown = embedUrl
+            ? `<iframe src="${embedUrl}" width="100%" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`
+            : `<video width="100%" controls src="${videoUrl}"></video>`;
+        } else {
+          const ipfsResult = await uploadFileToIPFS(file);
+          const ipfsUrl = getIpfsGatewayUrl(ipfsResult.IpfsHash, fileName);
+          mediaMarkdown = `![image](${ipfsUrl})`;
+        }
 
         setContent(prev => {
           const texto = prev.trim();
-          const mediaMarkdown = isVideo
-            ? `<video width="100%" controls src="${ipfsUrl}"></video>`
-            : `![image](${ipfsUrl})`;
-          
           return texto.length > 0 ? `${texto}\n\n${mediaMarkdown}\n` : `${mediaMarkdown}\n`;
         });
       } catch (err) {
@@ -198,6 +233,7 @@ export default function NewEditPostButton({
   const extractMediaLinksFromMarkdown = (markdown: string) => {
     const imageRegex = /!\[.*?\]\((https?:\/\/[^)\s]+)\)/g;
     const videoRegex = /<video[^>]*src=["']([^"'>\s]+)["'][^>]*>/g;
+    const iframeRegex = /<iframe[^>]*src=["']([^"'>\s]+)["'][^>]*><\/iframe>/g;
     const images: string[] = [];
     const videos: string[] = [];
     let match;
@@ -209,7 +245,11 @@ export default function NewEditPostButton({
     while ((match = videoRegex.exec(markdown)) !== null) {
       videos.push(match[1]);
     }
-    
+
+    while ((match = iframeRegex.exec(markdown)) !== null) {
+      videos.push(match[1]);
+    }
+
     return { images, videos };
   };
 
@@ -635,4 +675,3 @@ export default function NewEditPostButton({
     </>
   );
 }
-
