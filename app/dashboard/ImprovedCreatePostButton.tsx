@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import { uploadFileToIPFS } from '@/utils/ipfs';
 import { uploadVideoToVimeo } from '@/utils/vimeo';
@@ -624,6 +624,16 @@ export default function ImprovedCreatePostButton({
 
                 {/* Editor de Conteúdo */}
                 <div>
+                  <div className="mb-3 bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-600/50 rounded-lg p-3 flex items-start gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-300">
+                        <strong className="text-blue-400">Novo no Markdown?</strong> Use os botões da toolbar para formatar automaticamente ou clique no botão <strong className="text-purple-400">"Ajuda"</strong> para ver exemplos completos e aprender a usar o Markdown!
+                      </p>
+                    </div>
+                  </div>
                   <PostContentEditorPreview
                     content={content}
                     onChange={value => {

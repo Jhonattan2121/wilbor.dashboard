@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
+import MarkdownHelpGuide from './MarkdownHelpGuide';
 
 interface AdvancedMarkdownEditorProps {
   value: string;
@@ -31,6 +32,7 @@ const AdvancedMarkdownEditor: React.FC<AdvancedMarkdownEditorProps> = ({
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
+  const [showHelpGuide, setShowHelpGuide] = useState(false);
 
   // Prevenir abertura automática no mount
   useEffect(() => {
@@ -180,22 +182,90 @@ const AdvancedMarkdownEditor: React.FC<AdvancedMarkdownEditorProps> = ({
   };
 
   const toolbarButtons: ToolbarButton[] = [
-    { icon: <BoldIcon />, title: 'Negrito (Ctrl+B)', action: actions.bold, shortcut: 'Ctrl+B' },
-    { icon: <ItalicIcon />, title: 'Itálico (Ctrl+I)', action: actions.italic, shortcut: 'Ctrl+I' },
-    { icon: <StrikethroughIcon />, title: 'Tachado', action: actions.strikethrough },
-    { icon: <H1Icon />, title: 'Título 1', action: actions.h1 },
-    { icon: <H2Icon />, title: 'Título 2', action: actions.h2 },
-    { icon: <H3Icon />, title: 'Título 3', action: actions.h3 },
-    { icon: <QuoteIcon />, title: 'Citação', action: actions.quote },
-    { icon: <CodeIcon />, title: 'Código inline (Ctrl+`)', action: actions.code, shortcut: 'Ctrl+`' },
-    { icon: <CodeBlockIcon />, title: 'Bloco de código', action: actions.codeBlock },
-    { icon: <LinkIcon />, title: 'Link (Ctrl+K)', action: actions.link, shortcut: 'Ctrl+K' },
-    { icon: <ImageIcon />, title: 'Imagem', action: actions.image },
-    { icon: <VideoIcon />, title: 'Vídeo', action: actions.video },
-    { icon: <UListIcon />, title: 'Lista não ordenada', action: actions.unorderedList },
-    { icon: <OListIcon />, title: 'Lista ordenada', action: actions.orderedList },
-    { icon: <TableIcon />, title: 'Tabela', action: actions.table },
-    { icon: <HRIcon />, title: 'Linha horizontal', action: actions.hr },
+    { 
+      icon: <BoldIcon />, 
+      title: 'Negrito: Deixa o texto em negrito. Selecione o texto e clique ou use Ctrl+B', 
+      action: actions.bold, 
+      shortcut: 'Ctrl+B' 
+    },
+    { 
+      icon: <ItalicIcon />, 
+      title: 'Itálico: Deixa o texto em itálico. Selecione o texto e clique ou use Ctrl+I', 
+      action: actions.italic, 
+      shortcut: 'Ctrl+I' 
+    },
+    { 
+      icon: <StrikethroughIcon />, 
+      title: 'Tachado: Risca o texto selecionado. Exemplo: ~~texto riscado~~', 
+      action: actions.strikethrough 
+    },
+    { 
+      icon: <H1Icon />, 
+      title: 'Título Principal: Cria um título grande no início da linha. Exemplo: # Título', 
+      action: actions.h1 
+    },
+    { 
+      icon: <H2Icon />, 
+      title: 'Subtítulo: Cria um subtítulo médio. Exemplo: ## Subtítulo', 
+      action: actions.h2 
+    },
+    { 
+      icon: <H3Icon />, 
+      title: 'Sub-subtítulo: Cria um subtítulo menor. Exemplo: ### Sub-subtítulo', 
+      action: actions.h3 
+    },
+    { 
+      icon: <QuoteIcon />, 
+      title: 'Citação: Cria uma citação destacada. Exemplo: > Texto citado', 
+      action: actions.quote 
+    },
+    { 
+      icon: <CodeIcon />, 
+      title: 'Código Inline: Formata texto como código. Selecione e clique ou use Ctrl+`', 
+      action: actions.code, 
+      shortcut: 'Ctrl+`' 
+    },
+    { 
+      icon: <CodeBlockIcon />, 
+      title: 'Bloco de Código: Cria um bloco de código formatado com múltiplas linhas', 
+      action: actions.codeBlock 
+    },
+    { 
+      icon: <LinkIcon />, 
+      title: 'Link: Adiciona um link clicável. Selecione o texto e clique ou use Ctrl+K', 
+      action: actions.link, 
+      shortcut: 'Ctrl+K' 
+    },
+    { 
+      icon: <ImageIcon />, 
+      title: 'Imagem: Insere uma imagem. Formato: ![descrição](url-da-imagem)', 
+      action: actions.image 
+    },
+    { 
+      icon: <VideoIcon />, 
+      title: 'Vídeo: Insere um player de vídeo. Use a URL do vídeo', 
+      action: actions.video 
+    },
+    { 
+      icon: <UListIcon />, 
+      title: 'Lista com Marcadores: Cria uma lista com pontos. Exemplo: - Item 1', 
+      action: actions.unorderedList 
+    },
+    { 
+      icon: <OListIcon />, 
+      title: 'Lista Numerada: Cria uma lista numerada. Exemplo: 1. Primeiro item', 
+      action: actions.orderedList 
+    },
+    { 
+      icon: <TableIcon />, 
+      title: 'Tabela: Insere uma tabela formatada com colunas e linhas', 
+      action: actions.table 
+    },
+    { 
+      icon: <HRIcon />, 
+      title: 'Linha Horizontal: Adiciona uma linha divisória no conteúdo', 
+      action: actions.hr 
+    },
   ];
 
   return (
@@ -209,14 +279,32 @@ const AdvancedMarkdownEditor: React.FC<AdvancedMarkdownEditorProps> = ({
               type="button"
               onClick={btn.action}
               title={btn.title}
-              className="p-2 hover:bg-gray-700 rounded transition-colors text-gray-300 hover:text-white"
+              className="p-2 hover:bg-gray-700 rounded transition-colors text-gray-300 hover:text-white relative group"
             >
               {btn.icon}
+              {btn.shortcut && (
+                <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-gray-400 px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                  {btn.shortcut}
+                </span>
+              )}
             </button>
           ))}
         </div>
         
         <div className="ml-auto flex gap-2 items-center">
+          {/* Botão de Ajuda */}
+          <button
+            type="button"
+            onClick={() => setShowHelpGuide(true)}
+            className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-sm text-white transition-colors flex items-center gap-1"
+            title="Abrir guia de ajuda do Markdown"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Ajuda
+          </button>
+
           {/* Dropdown de templates */}
           <div className="relative" ref={templatesRef}>
             <button
@@ -292,13 +380,21 @@ const AdvancedMarkdownEditor: React.FC<AdvancedMarkdownEditorProps> = ({
             onKeyDown={handleKeyDown}
             className="w-full p-4 bg-gray-900 text-gray-100 border border-gray-700 rounded-b-lg lg:rounded-bl-lg lg:rounded-tr-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm leading-relaxed resize-none"
             style={{ height: `${height}px` }}
-            placeholder="Escreva seu conteúdo aqui... Use Markdown para formatação.
+            placeholder="✍️ Escreva seu conteúdo aqui...
 
-Dicas:
-- Ctrl+B para negrito
-- Ctrl+I para itálico  
-- Ctrl+K para adicionar link
-- Use os botões da toolbar acima para mais opções"
+💡 DICAS RÁPIDAS:
+• Use os botões acima para formatar automaticamente
+• Ou digite markdown manualmente:
+  **negrito**  *itálico*  [link](url)  ![imagem](url)
+• Pressione Ctrl+B para negrito, Ctrl+I para itálico
+• Clique em '👁️ Preview' para ver como ficará
+• Use o botão 'Ajuda' para ver exemplos completos
+
+Exemplo rápido:
+# Meu Título
+Este é um parágrafo com **texto em negrito** e *texto em itálico*.
+- Item da lista 1
+- Item da lista 2"
           />
         </div>
 
@@ -316,6 +412,12 @@ Dicas:
         <span>🔤 {charCount} caracteres</span>
         <span>⏱️ ~{readingTime} min de leitura</span>
       </div>
+
+      {/* Guia de Ajuda */}
+      <MarkdownHelpGuide
+        isOpen={showHelpGuide}
+        onClose={() => setShowHelpGuide(false)}
+      />
     </div>
   );
 };
