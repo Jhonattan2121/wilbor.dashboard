@@ -44,6 +44,7 @@ export default function ImprovedEditPostButton({
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [loadingPost, setLoadingPost] = useState(false);
   const [thumbnailIndex, setThumbnailIndex] = useState<number>(0);
+  const [previousThumbnailIndex, setPreviousThumbnailIndex] = useState<number>(-1);
 
   const PINATA_GATEWAY_TOKEN = process.env.NEXT_PUBLIC_PINATA_GATEWAY_TOKEN;
 
@@ -102,6 +103,55 @@ export default function ImprovedEditPostButton({
     }
   }, [loading, error]);
 
+  // Função para remover imagem do conteúdo markdown
+  const removeImageFromContent = (imageUrl: string, currentContent: string): string => {
+    if (!imageUrl || !currentContent) return currentContent;
+    
+    console.log('Removendo imagem do conteúdo:', imageUrl);
+    
+    // Extrai o hash IPFS da URL se for uma URL do Pinata
+    const ipfsHashMatch = imageUrl.match(/ipfs\/([a-zA-Z0-9]+)/);
+    const hashToSearch = ipfsHashMatch ? ipfsHashMatch[1] : null;
+    
+    // Remove a linha que contém a imagem markdown
+    const lines = currentContent.split('\n');
+    const filteredLines = lines.filter(line => {
+      // Remove linhas que contêm a URL completa da imagem
+      if (line.includes(imageUrl)) {
+        return false;
+      }
+      
+      // Remove linhas que contêm o hash IPFS (caso a URL tenha parâmetros diferentes)
+      if (hashToSearch && line.includes(hashToSearch)) {
+        // Verifica se é realmente uma linha de imagem markdown
+        if (line.trim().startsWith('![') || line.includes('![image]') || line.includes('![')) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+    
+    const result = filteredLines.join('\n').trim();
+    console.log('Imagem removida do conteúdo');
+    return result;
+  };
+
+  // Função para adicionar imagem ao conteúdo markdown
+  const addImageToContent = (imageUrl: string, currentContent: string): string => {
+    if (!imageUrl) return currentContent;
+    
+    // Verifica se a imagem já está no conteúdo
+    if (currentContent.includes(imageUrl)) {
+      return currentContent;
+    }
+    
+    // Adiciona a imagem no final do conteúdo
+    const markdown = `![image](${imageUrl})`;
+    const texto = currentContent.trim();
+    return texto.length > 0 ? `${texto}\n\n${markdown}\n` : `${markdown}\n`;
+  };
+
   const resetForm = useCallback(() => {
     setTitle(initialTitle || '');
     setContent(initialContent || '');
@@ -115,6 +165,7 @@ export default function ImprovedEditPostButton({
     setError('');
     setSuccess(false);
     setThumbnailIndex(0);
+    setPreviousThumbnailIndex(-1);
   }, [initialTitle, initialContent, initialTags, initialImages]);
 
   // Garantir que os estados sejam atualizados APENAS quando o modal é aberto
@@ -138,6 +189,52 @@ export default function ImprovedEditPostButton({
       setIsMounted(false);
     }
   }, [showForm]);
+
+  // Handler customizado para mudança de thumbnail
+  const handleThumbnailChange = (newIndex: number) => {
+    if (!showForm) return;
+    
+    console.log('Thumbnail mudou para:', newIndex);
+    
+    // Extrai URLs das imagens do conteúdo atual
+    const { images } = extractMediaLinksFromMarkdown(content);
+    
+    console.log('Imagens encontradas no conteúdo:', images);
+    console.log('Índice anterior:', previousThumbnailIndex, 'Novo índice:', newIndex);
+    
+    // Se havia um thumbnail anterior, adiciona de volta ao conteúdo
+    if (previousThumbnailIndex >= 0 && previousThumbnailIndex < images.length) {
+      const previousImageUrl = images[previousThumbnailIndex];
+      if (previousImageUrl) {
+        console.log('Adicionando imagem anterior de volta:', previousImageUrl);
+        setContent(prev => {
+          const newContent = addImageToContent(previousImageUrl, prev);
+          console.log('Conteúdo após adicionar imagem anterior');
+          return newContent;
+        });
+      }
+    }
+
+    // Remove a nova imagem selecionada como thumbnail do conteúdo
+    if (newIndex >= 0 && newIndex < images.length) {
+      const thumbnailImageUrl = images[newIndex];
+      if (thumbnailImageUrl) {
+        console.log('Removendo nova thumbnail do conteúdo:', thumbnailImageUrl);
+        setContent(prev => {
+          const newContent = removeImageFromContent(thumbnailImageUrl, prev);
+          console.log('Conteúdo após remover thumbnail');
+          return newContent;
+        });
+      } else {
+        console.warn('URL da thumbnail não encontrada no índice:', newIndex);
+      }
+    } else {
+      console.warn('Índice de thumbnail inválido:', newIndex, 'Total de imagens:', images.length);
+    }
+
+    setPreviousThumbnailIndex(newIndex);
+    setThumbnailIndex(newIndex);
+  };
 
   const fetchPostFromHive = async (
     author: string,
@@ -337,13 +434,26 @@ export default function ImprovedEditPostButton({
         }
       }
       
-      const postBody = newContent;
-      const { images, videos } = extractMediaLinksFromMarkdown(postBody);
+      // Remove a imagem do thumbnail do conteúdo antes de enviar
+      let postBody = newContent;
+      const { images: allImages, videos } = extractMediaLinksFromMarkdown(postBody);
+      
+      // Remove a imagem do thumbnail do conteúdo se ela estiver lá
+      if (thumbnailIndex >= 0 && thumbnailIndex < allImages.length) {
+        const thumbnailImageUrl = allImages[thumbnailIndex];
+        if (thumbnailImageUrl) {
+          postBody = removeImageFromContent(thumbnailImageUrl, postBody);
+        }
+      }
+      
+      // Re-extrai as imagens após remover o thumbnail
+      const { images, videos: finalVideos } = extractMediaLinksFromMarkdown(postBody);
       
       let orderedImages = images;
-      if (thumbnailIndex >= 0 && thumbnailIndex < images.length) {
-        const thumb = orderedImages[thumbnailIndex];
-        orderedImages = [thumb, ...orderedImages.filter((img, idx) => idx !== thumbnailIndex)];
+      if (thumbnailIndex >= 0 && thumbnailIndex < allImages.length) {
+        const thumb = allImages[thumbnailIndex];
+        // Adiciona o thumbnail no início do array de imagens para o metadata
+        orderedImages = [thumb, ...images.filter(img => img !== thumb)];
       }
       
       const tagArray = tags
@@ -353,7 +463,7 @@ export default function ImprovedEditPostButton({
       const jsonMetadata = {
         tags: tagArray,
         image: orderedImages,
-        video: videos,
+        video: finalVideos,
         app: "wilbor.art/dashboard",
       };
       
@@ -666,7 +776,7 @@ export default function ImprovedEditPostButton({
                     previews={previews}
                     uploadProgress={uploadProgress}
                     thumbnailIndex={thumbnailIndex}
-                    onThumbnailChange={setThumbnailIndex}
+                    onThumbnailChange={handleThumbnailChange}
                   />
                 </div>
 

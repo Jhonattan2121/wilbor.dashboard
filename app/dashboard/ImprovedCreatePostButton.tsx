@@ -8,8 +8,8 @@ import { sendHiveOperation } from '../../lib/hive/server-functions';
 import PostContentEditorPreview from '../../src/components/PostContentEditorPreview';
 import TagSuggestions from '../../src/components/TagSuggestions';
 import { useDraftSaver } from '../../src/hooks/useDraftSaver';
-import MediaUploader from './MediaUploader';
 import { useMediaContentSync } from './MediaContentSync';
+import MediaUploader from './MediaUploader';
 
 interface MediaEntry {
   file: File;
@@ -46,6 +46,7 @@ export default function ImprovedCreatePostButton({
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [thumbnailIndex, setThumbnailIndex] = useState<number>(0);
   const [showDraftAlert, setShowDraftAlert] = useState(false);
+  const [previousThumbnailIndex, setPreviousThumbnailIndex] = useState<number>(-1);
 
   // Sistema de rascunhos
   const {
@@ -68,6 +69,81 @@ export default function ImprovedCreatePostButton({
       setShowDraftAlert(true);
     }
   }, [showForm, hasDraft]);
+
+  // Função para remover imagem do conteúdo markdown
+  const removeImageFromContent = (imageUrl: string, currentContent: string): string => {
+    if (!imageUrl || !currentContent) return currentContent;
+    
+    console.log('Removendo imagem do conteúdo:', imageUrl);
+    
+    // Extrai o hash IPFS da URL se for uma URL do Pinata
+    const ipfsHashMatch = imageUrl.match(/ipfs\/([a-zA-Z0-9]+)/);
+    const hashToSearch = ipfsHashMatch ? ipfsHashMatch[1] : null;
+    
+    // Remove a linha que contém a imagem markdown
+    const lines = currentContent.split('\n');
+    const filteredLines = lines.filter(line => {
+      // Remove linhas que contêm a URL completa da imagem
+      if (line.includes(imageUrl)) {
+        return false;
+      }
+      
+      // Remove linhas que contêm o hash IPFS (caso a URL tenha parâmetros diferentes)
+      if (hashToSearch && line.includes(hashToSearch)) {
+        // Verifica se é realmente uma linha de imagem markdown
+        if (line.trim().startsWith('![') || line.includes('![image]') || line.includes('![')) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+    
+    const result = filteredLines.join('\n').trim();
+    console.log('Imagem removida do conteúdo');
+    return result;
+  };
+
+  // Função para adicionar imagem ao conteúdo markdown
+  const addImageToContent = (imageUrl: string, currentContent: string): string => {
+    if (!imageUrl) return currentContent;
+    
+    // Verifica se a imagem já está no conteúdo
+    if (currentContent.includes(imageUrl)) {
+      return currentContent;
+    }
+    
+    // Adiciona a imagem no final do conteúdo
+    const markdown = `![image](${imageUrl})`;
+    const texto = currentContent.trim();
+    return texto.length > 0 ? `${texto}\n\n${markdown}\n` : `${markdown}\n`;
+  };
+
+  // Handler customizado para mudança de thumbnail
+  const handleThumbnailChange = (newIndex: number) => {
+    console.log('Thumbnail mudou para:', newIndex);
+    
+    // Se havia um thumbnail anterior e não era vídeo, adiciona de volta ao conteúdo
+    if (previousThumbnailIndex >= 0 && previousThumbnailIndex < mediaEntries.length) {
+      const previousEntry = mediaEntries[previousThumbnailIndex];
+      if (!previousEntry.isVideo && previousEntry.url) {
+        console.log('Adicionando imagem anterior de volta:', previousEntry.url);
+        setContent(prev => addImageToContent(previousEntry.url, prev));
+      }
+    }
+
+    // Remove a nova imagem selecionada como thumbnail do conteúdo (se não for vídeo)
+    if (newIndex >= 0 && newIndex < mediaEntries.length) {
+      const thumbnailEntry = mediaEntries[newIndex];
+      if (!thumbnailEntry.isVideo && thumbnailEntry.url) {
+        console.log('Removendo nova thumbnail do conteúdo:', thumbnailEntry.url);
+        setContent(prev => removeImageFromContent(thumbnailEntry.url, prev));
+      }
+    }
+
+    setPreviousThumbnailIndex(newIndex);
+    setThumbnailIndex(newIndex);
+  };
 
   // Hook de sincronização de mídia e conteúdo
   const mediaContentSync = useMediaContentSync({
@@ -323,11 +399,17 @@ export default function ImprovedCreatePostButton({
     }, 15000);
 
     try {
-      const postBody = content.trim();
+      // Remove a imagem do thumbnail do conteúdo antes de enviar
+      let postBody = content.trim();
+      const thumbnailEntry = mediaEntries[thumbnailIndex];
+      
+      if (thumbnailEntry && !thumbnailEntry.isVideo && thumbnailEntry.url) {
+        postBody = removeImageFromContent(thumbnailEntry.url, postBody);
+      }
+
       const tagArray = tags.map(tag => tag.trim().toLowerCase()).filter(tag => tag !== '');
       const imageEntries = mediaEntries.filter(entry => !entry.isVideo);
       const orderedImages = [...imageEntries];
-      const thumbnailEntry = mediaEntries[thumbnailIndex];
 
       if (thumbnailEntry && !thumbnailEntry.isVideo) {
         const foundIndex = orderedImages.findIndex(entry => entry.url === thumbnailEntry.url);
@@ -618,7 +700,7 @@ export default function ImprovedCreatePostButton({
                     previews={previews}
                     uploadProgress={uploadProgress}
                     thumbnailIndex={thumbnailIndex}
-                    onThumbnailChange={setThumbnailIndex}
+                    onThumbnailChange={handleThumbnailChange}
                   />
                 </div>
 
