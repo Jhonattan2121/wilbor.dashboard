@@ -154,7 +154,41 @@ export default function ImprovedEditPostButton({
 
   const resetForm = useCallback(() => {
     setTitle(initialTitle || '');
-    setContent(initialContent || '');
+    
+    // Remove a thumbnail (primeira imagem) do conteúdo se ela estiver lá
+    let processedContent = initialContent || '';
+    if (initialImages && initialImages.length > 0) {
+      const thumbnailUrl = initialImages[0]; // A primeira imagem geralmente é a thumbnail
+      if (thumbnailUrl) {
+        // Extrai o hash IPFS da URL se for uma URL do Pinata
+        const ipfsHashMatch = thumbnailUrl.match(/ipfs\/([a-zA-Z0-9]+)/);
+        const hashToSearch = ipfsHashMatch ? ipfsHashMatch[1] : null;
+        
+        // Remove a linha que contém a imagem markdown
+        const lines = processedContent.split('\n');
+        const filteredLines = lines.filter(line => {
+          // Remove linhas que contêm a URL completa da imagem
+          if (line.includes(thumbnailUrl)) {
+            return false;
+          }
+          
+          // Remove linhas que contêm o hash IPFS (caso a URL tenha parâmetros diferentes)
+          if (hashToSearch && line.includes(hashToSearch)) {
+            // Verifica se é realmente uma linha de imagem markdown
+            if (line.trim().startsWith('![') || line.includes('![image]') || line.includes('![')) {
+              return false;
+            }
+          }
+          
+          return true;
+        });
+        
+        processedContent = filteredLines.join('\n').trim();
+        console.log('Thumbnail removida automaticamente do conteúdo ao carregar post');
+      }
+    }
+    
+    setContent(processedContent);
     setTags(initialTags || []);
     setTagInput('');
     setFiles([]);
