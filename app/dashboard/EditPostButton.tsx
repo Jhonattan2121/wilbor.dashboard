@@ -42,6 +42,11 @@ export default function EditPostButton({
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [loadingPost, setLoadingPost] = useState(false);
   const [thumbnailIndex, setThumbnailIndex] = useState<number>(0);
+  const [previousThumbnailIndex, setPreviousThumbnailIndex] = useState<number>(0);
+  // Rastreia posições das mídias removidas: { index: { lineIndex: number, removedLine: string } }
+  const [removedMediaPositions, setRemovedMediaPositions] = useState<
+    Record<number, { lineIndex: number; removedLine: string }>
+  >({});
 
   // Token de Gateway do Pinata
   const PINATA_GATEWAY_TOKEN = process.env.NEXT_PUBLIC_PINATA_GATEWAY_TOKEN;
@@ -133,6 +138,8 @@ export default function EditPostButton({
     setSuccess(false);
     // Sempre reiniciar com a primeira imagem como thumbnail
     setThumbnailIndex(0);
+    setPreviousThumbnailIndex(0);
+    setRemovedMediaPositions({});
     
     // Debug para verificar valores iniciais das tags
     console.log('Reset do formulário feito, tags inicializadas:', initialTags || []);
@@ -147,6 +154,70 @@ export default function EditPostButton({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showForm]);
+
+  // Quando muda a thumbnail selecionada, remove sua URL e restaura a anterior
+  useEffect(() => {
+    if (!showForm || previews.length === 0) return;
+    
+    if (thumbnailIndex !== previousThumbnailIndex) {
+      // Restaura URL da thumbnail anterior
+      if (previousThumbnailIndex >= 0 && previousThumbnailIndex < previews.length) {
+        const previousUrl = previews[previousThumbnailIndex];
+        const previousFile = files[previousThumbnailIndex];
+        const isPreviousVideo = previousFile && previousFile.type.startsWith('video/');
+        
+        // Se estava removida, restaura
+        if (removedMediaPositions[previousThumbnailIndex]) {
+          const position = removedMediaPositions[previousThumbnailIndex];
+          const linhas = content.split('\n');
+          const mediaLine = position.removedLine;
+          
+          // Insere na posição original (ajustando se houve mudanças)
+          let insertIndex = Math.min(position.lineIndex, linhas.length);
+          linhas.splice(insertIndex, 0, mediaLine);
+          
+          setContent(linhas.join('\n'));
+          
+          setRemovedMediaPositions(prev => {
+            const newPositions = { ...prev };
+            delete newPositions[previousThumbnailIndex];
+            return newPositions;
+          });
+        }
+      }
+      
+      // Remove URL da nova thumbnail
+      const currentUrl = previews[thumbnailIndex];
+      const currentFile = files[thumbnailIndex];
+      
+      // Procura e remove a URL do markdown
+      const linhas = content.split('\n');
+      let lineIndexRemoved = -1;
+      let removedLine = '';
+      
+      const linhasFiltradas = linhas.filter((linha, idx) => {
+        // Se a linha contém a URL da thumbnail atual, remove
+        if (linha.includes(currentUrl) && lineIndexRemoved < 0) {
+          lineIndexRemoved = idx;
+          removedLine = linha;
+          return false;
+        }
+        return true;
+      });
+      
+      if (lineIndexRemoved >= 0) {
+        setContent(linhasFiltradas.join('\n').trim());
+        setRemovedMediaPositions(prev => ({
+          ...prev,
+          [thumbnailIndex]: { lineIndex: lineIndexRemoved, removedLine },
+        }));
+        console.log('URL removida da thumbnail:', { index: thumbnailIndex, lineIndex: lineIndexRemoved });
+      }
+      
+      setPreviousThumbnailIndex(thumbnailIndex);
+      console.log('Thumbnail mudada:', { de: previousThumbnailIndex, para: thumbnailIndex });
+    }
+  }, [thumbnailIndex, showForm, previews, files, content, removedMediaPositions]);
 
   // Função para buscar post do Hive por autor e permlink
   const fetchPostFromHive = async (
@@ -286,9 +357,30 @@ export default function EditPostButton({
     }
   };
 
+  // Função para fazer toggle da URL no markdown (remove/restaura na posição original)
+
+
   // Função para remover um arquivo da lista
   const handleMediaRemoved = (index: number) => {
+    // Remover a mídia do conteúdo e dos estados
     mediaContentSync.handleMediaRemoved(index);
+    
+    // Ajustar o thumbnailIndex se necessário
+    // Se removeu uma imagem antes do thumbnail atual, decrementa
+    // Se removeu a thumbnail atual e é a última, usa a anterior
+    if (thumbnailIndex > index) {
+      // Imagem removida foi antes do thumbnail, decrementa
+      setThumbnailIndex(thumbnailIndex - 1);
+    } else if (thumbnailIndex === index && thumbnailIndex > 0) {
+      // Removeu a thumbnail atual, usa a anterior
+      setThumbnailIndex(thumbnailIndex - 1);
+    } else if (thumbnailIndex === index && thumbnailIndex === 0 && previews.length > 1) {
+      // Removeu o primeiro (index 0) e há mais imagens, mantém 0
+      // Nada a fazer, já está em 0
+    } else if (index === 0 && previews.length === 1) {
+      // Removeu a última imagem, reseta para 0
+      setThumbnailIndex(0);
+    }
   };
 
   const getFileExtension = (file: File): string => {

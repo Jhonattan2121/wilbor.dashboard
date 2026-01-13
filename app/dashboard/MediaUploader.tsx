@@ -161,15 +161,15 @@ export default function MediaUploader({
                       
                       return (
                         <div 
-                          key={globalIndex} 
-                          className={`relative cursor-pointer border-2 ${thumbnailIndex === globalIndex ? 'border-green-500' : 'border-transparent'} rounded-lg`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            onThumbnailChange(globalIndex);
-                            console.log('Mídia selecionada como capa:', { globalIndex, preview });
-                          }}
-                          title=""
-                        >
+                           key={globalIndex} 
+                           className={`relative cursor-pointer border-2 ${thumbnailIndex === globalIndex ? 'border-green-500' : 'border-transparent'} rounded-lg`}
+                           onClick={(e) => {
+                             e.preventDefault();
+                             onThumbnailChange(globalIndex);
+                             console.log('Thumbnail selecionada:', { globalIndex, preview });
+                           }}
+                           title=""
+                         >
                           {isVideo ? (
                             <video 
                               src={preview} 
