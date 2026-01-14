@@ -160,42 +160,31 @@ export default function EditPostButton({
     if (!showForm || previews.length === 0) return;
     
     if (thumbnailIndex !== previousThumbnailIndex) {
+      let nextLines = content.split('\n');
+      let nextRemovedPositions = { ...removedMediaPositions };
+
       // Restaura URL da thumbnail anterior
       if (previousThumbnailIndex >= 0 && previousThumbnailIndex < previews.length) {
-        const _previousUrl = previews[previousThumbnailIndex];
-        const previousFile = files[previousThumbnailIndex];
-        const _isPreviousVideo = previousFile && previousFile.type.startsWith('video/');
-        
         // Se estava removida, restaura
-        if (removedMediaPositions[previousThumbnailIndex]) {
-          const position = removedMediaPositions[previousThumbnailIndex];
-          const linhas = content.split('\n');
+        if (nextRemovedPositions[previousThumbnailIndex]) {
+          const position = nextRemovedPositions[previousThumbnailIndex];
           const mediaLine = position.removedLine;
           
           // Insere na posição original (ajustando se houve mudanças)
-          const insertIndex = Math.min(position.lineIndex, linhas.length);
-          linhas.splice(insertIndex, 0, mediaLine);
-          
-          setContent(linhas.join('\n'));
-          
-          setRemovedMediaPositions(prev => {
-            const newPositions = { ...prev };
-            delete newPositions[previousThumbnailIndex];
-            return newPositions;
-          });
+          const insertIndex = Math.min(position.lineIndex, nextLines.length);
+          nextLines.splice(insertIndex, 0, mediaLine);
+          delete nextRemovedPositions[previousThumbnailIndex];
         }
       }
       
       // Remove URL da nova thumbnail
       const currentUrl = previews[thumbnailIndex];
-      const _currentFile = files[thumbnailIndex];
       
       // Procura e remove a URL do markdown
-      const linhas = content.split('\n');
       let lineIndexRemoved = -1;
       let removedLine = '';
       
-      const linhasFiltradas = linhas.filter((linha, idx) => {
+      const linhasFiltradas = nextLines.filter((linha, idx) => {
         // Se a linha contém a URL da thumbnail atual, remove
         if (linha.includes(currentUrl) && lineIndexRemoved < 0) {
           lineIndexRemoved = idx;
@@ -206,14 +195,16 @@ export default function EditPostButton({
       });
       
       if (lineIndexRemoved >= 0) {
-        setContent(linhasFiltradas.join('\n').trim());
-        setRemovedMediaPositions(prev => ({
-          ...prev,
+        nextLines = linhasFiltradas;
+        nextRemovedPositions = {
+          ...nextRemovedPositions,
           [thumbnailIndex]: { lineIndex: lineIndexRemoved, removedLine },
-        }));
+        };
         console.log('URL removida da thumbnail:', { index: thumbnailIndex, lineIndex: lineIndexRemoved });
       }
       
+      setContent(nextLines.join('\n').trim());
+      setRemovedMediaPositions(nextRemovedPositions);
       setPreviousThumbnailIndex(thumbnailIndex);
       console.log('Thumbnail mudada:', { de: previousThumbnailIndex, para: thumbnailIndex });
     }
