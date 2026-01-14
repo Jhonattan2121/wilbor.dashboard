@@ -152,13 +152,174 @@ export default function ImprovedEditPostButton({
     return texto.length > 0 ? `${texto}\n\n${markdown}\n` : `${markdown}\n`;
   };
 
-  const resetForm = useCallback(() => {
-    setTitle(initialTitle || '');
+  // Função para buscar post do Hive por autor e permlink
+  const fetchPostFromHive = async (
+    author: string,
+    permlink: string,
+  ): Promise<any> => {
+    setLoadingPost(true);
+    try {
+      const response = await fetch('https://api.hive.blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'condenser_api.get_content',
+          params: [author, permlink],
+          id: 1,
+        }),
+      });
+      const data = await response.json();
+      if (data && data.result) {
+        return data.result;
+      }
+      return null;
+    } catch (error) {
+      console.error('Erro ao buscar dados do post:', error);
+      return null;
+    } finally {
+      setLoadingPost(false);
+    }
+  };
+
+  // Função auxiliar para normalizar URLs (remove parâmetros de query, normaliza IPFS)
+  const normalizeUrl = (url: string): string => {
+    if (!url) return '';
+    // Remove parâmetros de query
+    const urlWithoutParams = url.split('?')[0];
+    // Extrai hash IPFS se existir
+    const ipfsMatch = urlWithoutParams.match(/ipfs\/([a-zA-Z0-9]+)/);
+    return ipfsMatch ? ipfsMatch[1] : urlWithoutParams;
+  };
+
+  // Função para extrair hash IPFS de uma URL
+  const extractIpfsHash = (url: string): string | null => {
+    if (!url) return null;
+    const match = url.match(/ipfs\/([a-zA-Z0-9]+)/);
+    return match ? match[1] : null;
+  };
+
+  // Função para encontrar o índice da thumbnail atual no array de imagens
+  const findThumbnailIndex = async (images: string[]): Promise<number> => {
+    if (!images || images.length === 0) return 0;
     
-    // Remove a thumbnail (primeira imagem) do conteúdo se ela estiver lá
+    try {
+      const post = await fetchPostFromHive(author, permlink);
+      if (post && post.json_metadata) {
+        const metadata = typeof post.json_metadata === 'string'
+          ? JSON.parse(post.json_metadata)
+          : post.json_metadata;
+        
+        if (metadata.image && metadata.image.length > 0) {
+          const currentThumbnail = metadata.image[0];
+          
+          // Normaliza a thumbnail para comparação
+          const thumbnailHash = extractIpfsHash(currentThumbnail);
+          const thumbnailClean = currentThumbnail.split('?')[0].split('#')[0].toLowerCase();
+          const thumbnailFileName = thumbnailClean.split('/').pop() || '';
+          
+          // Procura a thumbnail no array de imagens - comparação precisa
+          for (let i = 0; i < images.length; i++) {
+            const imageHash = extractIpfsHash(images[i]);
+            const imageClean = images[i].split('?')[0].split('#')[0].toLowerCase();
+            const imageFileName = imageClean.split('/').pop() || '';
+            
+            // 1. Comparação exata (mais confiável)
+            if (images[i] === currentThumbnail) {
+              return i;
+            }
+            
+            // 2. Comparação por URL limpa (sem query params)
+            if (imageClean === thumbnailClean) {
+              return i;
+            }
+            
+            // 3. Comparação por hash IPFS (muito confiável)
+            if (thumbnailHash && imageHash && thumbnailHash === imageHash) {
+              return i;
+            }
+            
+            // 4. Comparação por nome do arquivo
+            if (thumbnailFileName && imageFileName && thumbnailFileName === imageFileName) {
+              return i;
+            }
+            
+            // 5. Comparação por parte do hash no caminho
+            if (thumbnailHash && images[i].includes(thumbnailHash)) {
+              return i;
+            }
+            if (imageHash && currentThumbnail.includes(imageHash)) {
+              return i;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      // Silencioso em caso de erro
+    }
+    
+    return 0;
+  };
+
+  const resetForm = useCallback(async () => {
+    setTitle(initialTitle || '');
+    setTagInput('');
+    setFiles([]);
+    setError('');
+    setSuccess(false);
+    
+    // Busca o post do Hive para pegar a thumbnail selecionada
+    let allImages = initialImages ? [...initialImages] : [];
+    let thumbnailIndexToUse = 0;
+    
+    try {
+      const post = await fetchPostFromHive(author, permlink);
+      if (post && post.json_metadata) {
+        const metadata = typeof post.json_metadata === 'string'
+          ? JSON.parse(post.json_metadata)
+          : post.json_metadata;
+        
+        if (metadata.image && metadata.image.length > 0) {
+          // A primeira imagem do metadata é SEMPRE a thumbnail selecionada
+          const thumbnailUrl = metadata.image[0];
+          
+          // Remove a thumbnail do array se já estiver lá
+          allImages = allImages.filter(img => {
+            const imgHash = extractIpfsHash(img);
+            const thumbHash = extractIpfsHash(thumbnailUrl);
+            return !(img === thumbnailUrl || 
+                    (imgHash && thumbHash && imgHash === thumbHash) ||
+                    img.includes(thumbHash || '') ||
+                    thumbnailUrl.includes(imgHash || ''));
+          });
+          
+          // Coloca a thumbnail como PRIMEIRA no array
+          allImages = [thumbnailUrl, ...allImages];
+          thumbnailIndexToUse = 0; // SEMPRE 0 porque a thumbnail é a primeira
+          
+          // Adiciona outras imagens do metadata que não estão no array
+          for (let i = 1; i < metadata.image.length; i++) {
+            const metaImage = metadata.image[i];
+            const alreadyExists = allImages.some(img => {
+              const imgHash = extractIpfsHash(img);
+              const metaHash = extractIpfsHash(metaImage);
+              return img === metaImage || 
+                     (imgHash && metaHash && imgHash === metaHash);
+            });
+            if (!alreadyExists) {
+              allImages.push(metaImage);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      // Em caso de erro, usa initialImages como está
+    }
+    
+    // Remove a thumbnail do conteúdo se ela estiver lá
     let processedContent = initialContent || '';
-    if (initialImages && initialImages.length > 0) {
-      const thumbnailUrl = initialImages[0]; // A primeira imagem geralmente é a thumbnail
+    if (allImages.length > 0) {
+      const thumbnailUrl = allImages[0]; // Primeira é sempre a thumbnail
       if (thumbnailUrl) {
         // Extrai o hash IPFS da URL se for uma URL do Pinata
         const ipfsHashMatch = thumbnailUrl.match(/ipfs\/([a-zA-Z0-9]+)/);
@@ -184,23 +345,16 @@ export default function ImprovedEditPostButton({
         });
         
         processedContent = filteredLines.join('\n').trim();
-        console.log('Thumbnail removida automaticamente do conteúdo ao carregar post');
       }
     }
     
     setContent(processedContent);
     setTags(initialTags || []);
-    setTagInput('');
-    setFiles([]);
-    setPreviews(initialImages?.length ? initialImages.map((url) => url) : []);
-    setUploadProgress(
-      initialImages?.length ? Array(initialImages.length).fill(100) : [],
-    );
-    setError('');
-    setSuccess(false);
-    setThumbnailIndex(0);
-    setPreviousThumbnailIndex(-1);
-  }, [initialTitle, initialContent, initialTags, initialImages]);
+    setPreviews(allImages);
+    setUploadProgress(allImages.length ? Array(allImages.length).fill(100) : []);
+    setThumbnailIndex(thumbnailIndexToUse);
+    setPreviousThumbnailIndex(thumbnailIndexToUse);
+  }, [initialTitle, initialContent, initialTags, initialImages, author, permlink]);
 
   // Garantir que os estados sejam atualizados APENAS quando o modal é aberto
   // Removido resetForm das dependências para evitar reset durante digitação
@@ -268,35 +422,6 @@ export default function ImprovedEditPostButton({
 
     setPreviousThumbnailIndex(newIndex);
     setThumbnailIndex(newIndex);
-  };
-
-  const fetchPostFromHive = async (
-    author: string,
-    permlink: string,
-  ): Promise<any> => {
-    setLoadingPost(true);
-    try {
-      const response = await fetch('https://api.hive.blog', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'condenser_api.get_content',
-          params: [author, permlink],
-          id: 1,
-        }),
-      });
-      const data = await response.json();
-      if (data && data.result) {
-        return data.result;
-      }
-      return null;
-    } catch (error) {
-      console.error('Erro ao buscar dados do post:', error);
-      return null;
-    } finally {
-      setLoadingPost(false);
-    }
   };
 
   const getIpfsGatewayUrl = (hash: string, _fileName?: string): string => {
@@ -473,8 +598,8 @@ export default function ImprovedEditPostButton({
       const { images: allImages, videos: _videos } = extractMediaLinksFromMarkdown(postBody);
       
       // Remove a imagem do thumbnail do conteúdo se ela estiver lá
-      if (thumbnailIndex >= 0 && thumbnailIndex < allImages.length) {
-        const thumbnailImageUrl = allImages[thumbnailIndex];
+      if (thumbnailIndex >= 0 && thumbnailIndex < previews.length) {
+        const thumbnailImageUrl = previews[thumbnailIndex];
         if (thumbnailImageUrl) {
           postBody = removeImageFromContent(thumbnailImageUrl, postBody);
         }
@@ -483,11 +608,14 @@ export default function ImprovedEditPostButton({
       // Re-extrai as imagens após remover o thumbnail
       const { images, videos: finalVideos } = extractMediaLinksFromMarkdown(postBody);
       
+      // IMPORTANTE: A thumbnail foi removida do conteúdo, então precisa vir dos previews
+      // Previews contém TODAS as imagens (incluindo a thumbnail removida)
       let orderedImages = images;
-      if (thumbnailIndex >= 0 && thumbnailIndex < allImages.length) {
-        const thumb = allImages[thumbnailIndex];
-        // Adiciona o thumbnail no início do array de imagens para o metadata
-        orderedImages = [thumb, ...images.filter(img => img !== thumb)];
+      if (thumbnailIndex >= 0 && thumbnailIndex < previews.length) {
+        // Pega a thumbnail dos previews (que tem todas as imagens na ordem correta)
+        const thumbnailUrl = previews[thumbnailIndex];
+        // Garante que a thumbnail seja a primeira no array
+        orderedImages = [thumbnailUrl, ...images.filter(img => img !== thumbnailUrl)];
       }
       
       const tagArray = tags

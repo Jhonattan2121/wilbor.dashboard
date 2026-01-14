@@ -49,26 +49,47 @@ export function MediaItem({
   useEffect(() => {
     if (items && items.length > 0) {
       const mainItem = items[0];
-      const thumbnailUrl = getThumbnailUrl(mainItem);
-      setUpdatedThumbnail(thumbnailUrl);
       
-      if (mainItem.hiveMetadata) {
-        const { author, permlink } = mainItem.hiveMetadata;
-        fetchPostFromHive(author, permlink).then(post => {
-          if (post && post.json_metadata) {
-            try {
-              const metadata = typeof post.json_metadata === 'string'
-                ? JSON.parse(post.json_metadata)
-                : post.json_metadata;
-              if (metadata.image && metadata.image.length > 0) {
-                setUpdatedThumbnail(metadata.image[0]);
-              }
-            } catch (e) {
-              console.error('Erro ao analisar o JSON metadata:', e);
-            }
-          }
-        });
+      // Se não tem hiveMetadata, usa a thumbnail local diretamente
+      if (!mainItem.hiveMetadata) {
+        const thumbnailUrl = getThumbnailUrl(mainItem);
+        setUpdatedThumbnail(thumbnailUrl);
+        return;
       }
+      
+      // Se tem hiveMetadata, busca do Hive primeiro antes de definir
+      const { author, permlink } = mainItem.hiveMetadata;
+      fetchPostFromHive(author, permlink).then(post => {
+        if (post && post.json_metadata) {
+          try {
+            const metadata = typeof post.json_metadata === 'string'
+              ? JSON.parse(post.json_metadata)
+              : post.json_metadata;
+            if (metadata.image && metadata.image.length > 0) {
+              // Usa a thumbnail do metadata (que é a selecionada)
+              setUpdatedThumbnail(metadata.image[0]);
+            } else {
+              // Se não encontrou no metadata, usa a thumbnail local
+              const thumbnailUrl = getThumbnailUrl(mainItem);
+              setUpdatedThumbnail(thumbnailUrl);
+            }
+          } catch (e) {
+            // Em caso de erro, usa a thumbnail local
+            const thumbnailUrl = getThumbnailUrl(mainItem);
+            setUpdatedThumbnail(thumbnailUrl);
+          }
+        } else {
+          // Se não encontrou o post, usa a thumbnail local
+          const thumbnailUrl = getThumbnailUrl(mainItem);
+          setUpdatedThumbnail(thumbnailUrl);
+        }
+      }).catch(() => {
+        // Em caso de erro no fetch, usa a thumbnail local
+        const thumbnailUrl = getThumbnailUrl(mainItem);
+        setUpdatedThumbnail(thumbnailUrl);
+      });
+    } else {
+      setUpdatedThumbnail(null);
     }
   }, [items]);
   
