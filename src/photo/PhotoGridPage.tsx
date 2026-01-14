@@ -15,7 +15,7 @@ import { useEffect } from 'react';
 import { Photo } from './components/types';
 import PhotoGridContainer from './PhotoProjectsContainer';
 
-const PATH_GRID_INFERRED = 'projects';
+const _PATH_GRID_INFERRED = 'projects';
 
 export default function PhotoGridPage({
   photos,
@@ -27,7 +27,7 @@ export default function PhotoGridPage({
   setSelectedTag,
   username,
   postingKey,
-  isEditMode
+  isEditMode,
 }: {
   photos: Photo[],
   photosCount: number,
@@ -59,7 +59,7 @@ export default function PhotoGridPage({
             ...photo,
             type: photo.type === 'video' ? 'video' : 'photo',
             thumbnailSrc: photo.type === 'video' ? photo.thumbnailSrc : undefined,
-            videoUrl: photo.type === 'video' ? photo.src : undefined
+            videoUrl: photo.type === 'video' ? photo.src : undefined,
           }))}
           sidebar={undefined}
           selectedTag={selectedTag}

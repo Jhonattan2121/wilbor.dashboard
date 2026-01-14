@@ -34,7 +34,7 @@ export function MediaItem({
   isReversedLayout = false,
   username,
   postingKey,
-  isEditMode = false
+  isEditMode = false,
 }: MediaItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -124,7 +124,7 @@ export function MediaItem({
               return parsedMetadata.image[0];
             }
           } catch (parseError) {
-            console.error("Error parsing JSON metadata:", parseError);
+            console.error('Error parsing JSON metadata:', parseError);
           }
         }
       }
@@ -148,8 +148,8 @@ export function MediaItem({
           jsonrpc: '2.0',
           method: 'condenser_api.get_content',
           params: [author, permlink],
-          id: 1
-        })
+          id: 1,
+        }),
       });
       const data = await response.json();
       if (data && data.result) {
@@ -157,7 +157,7 @@ export function MediaItem({
       }
       return null;
     } catch (error) {
-      console.error("Error fetching post data:", error);
+      console.error('Error fetching post data:', error);
       return null;
     }
   }
@@ -176,8 +176,8 @@ export function MediaItem({
             <video
               src={media.src}
               className={clsx(
-                "transition-all duration-300 filter grayscale hover:grayscale-0",
-                isMainVideo ? "absolute top-0 left-0 w-full h-full object-contain" : "absolute inset-0 w-full h-full object-cover"
+                'transition-all duration-300 filter grayscale hover:grayscale-0',
+                isMainVideo ? 'absolute top-0 left-0 w-full h-full object-contain' : 'absolute inset-0 w-full h-full object-cover',
               )}
               autoPlay={isHovered || (!isMainVideo && isExpanded)}
               loop={!isMainVideo}
@@ -256,7 +256,7 @@ export function MediaItem({
       className={clsx(
         'rounded-lg overflow-hidden h-full group transition-colors duration-100 bg-black text-white',
         !isExpanded && 'border-t-8 border-l-8 border-r-8 border-b-0 border-black hover:bg-white hover:text-black hover:border-t-white hover:border-l-white hover:border-r-white',
-        isExpanded && 'p-2'
+        isExpanded && 'p-2',
       )}
       onClick={e => {
         // Não expandir se estamos clicando no botão Editar
@@ -272,7 +272,7 @@ export function MediaItem({
           ? hasLargeContent
             ? 'flex flex-col h-auto min-h-[550px] sm:min-h-[600px]'
             : 'flex flex-col h-auto min-h-[200px] sm:min-h-[450px]'
-          : 'min-h-[200px]'
+          : 'min-h-[200px]',
       )}>
         {!isExpanded && (
           <>
@@ -369,8 +369,8 @@ export function MediaItem({
                             </div>
                             {mainItem.tags && mainItem.tags.length > 0 && (
                               <div className={clsx(
-                                "flex flex-wrap gap-1 mt-1",
-                                showAllTags ? "max-h-none pb-2" : "min-h-[24px] max-h-[24px] overflow-hidden"
+                                'flex flex-wrap gap-1 mt-1',
+                                showAllTags ? 'max-h-none pb-2' : 'min-h-[24px] max-h-[24px] overflow-hidden',
                               )}>
                                 {(showAllTags ? mainItem.tags : mainItem.tags.slice(0, 3)).map(tag => (
                                   <span

@@ -38,7 +38,7 @@ export class HiveAuth {
         if (publicKey.toString() !== postingPubKey) {
           return null;
         }
-      } catch (e) {
+      } catch (_e) {
         return null;
       }
 
@@ -46,17 +46,17 @@ export class HiveAuth {
       try {
         const metadata = JSON.parse(account.posting_json_metadata);
         profile = metadata.profile || {};
-      } catch (e) {
+      } catch (_e) {
       }
 
       return {
         id: account.id.toString(),
         name: username,
         posting_json_metadata: account.posting_json_metadata,
-        profile
+        profile,
       };
 
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -68,21 +68,21 @@ export class HiveAuth {
 
       const posts = await this.client.database.call(
         'get_discussions_by_author_before_date',
-        [username, startPermlink, beforeDate, limit]
+        [username, startPermlink, beforeDate, limit],
       );
 
       const validPosts = posts.filter((post: any) => {
         try {
           const metadata = JSON.parse(post.json_metadata);
           return metadata && (metadata.image || metadata.images);
-        } catch (e) {
+        } catch (_e) {
           return false;
         }
       });
 
       return validPosts;
 
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }
@@ -98,10 +98,10 @@ export async function getPostsByAuthor(author: string, permlink?: string): Promi
 
     const posts = await client.database.getDiscussions('blog', {
       tag: author,
-      limit: 20
+      limit: 20,
     });
     return posts as Discussion[];
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }
@@ -115,8 +115,8 @@ export async function getPostsByPermlink(author: string, permlink: string) {
         jsonrpc: '2.0',
         method: 'condenser_api.get_content',
         params: [author, permlink],
-        id: 1
-      })
+        id: 1,
+      }),
     });
 
     const data = await response.json();
@@ -127,7 +127,7 @@ export async function getPostsByPermlink(author: string, permlink: string) {
     let jsonMetadata;
     try {
       jsonMetadata = JSON.parse(post.json_metadata);
-    } catch (e) {
+    } catch (_e) {
     }
 
     const imageUrls = new Set<string>();
@@ -142,7 +142,7 @@ export async function getPostsByPermlink(author: string, permlink: string) {
       /!\[.*?\]\((https?:\/\/[^)]+)\)/g,  // Markdown
       /<img[^>]+src=["'](https?:\/\/[^"']+)["']/g,  // HTML
       /https?:\/\/[^\s<>"']+?\.(?:jpg|jpeg|gif|png|webp)/g,  // URLs diretas
-      /https?:\/\/ipfs\.skatehive\.app\/ipfs\/[a-zA-Z0-9]+/g  // IPFS específico
+      /https?:\/\/ipfs\.skatehive\.app\/ipfs\/[a-zA-Z0-9]+/g,  // IPFS específico
     ];
 
     patterns.forEach(pattern => {
@@ -158,13 +158,13 @@ export async function getPostsByPermlink(author: string, permlink: string) {
       return {
         ipfsHash,
         title: post.title,
-        author: post.author
+        author: post.author,
       };
     });
 
     return medias;
 
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }
@@ -178,7 +178,7 @@ export async function getPost(author: string, permlink: string): Promise<Discuss
     }
 
     return post as Discussion;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -193,7 +193,7 @@ function extractImages(body: string): string[] {
   const patterns = [
     /https?:\/\/[^\s<>"']+?\.(?:jpg|jpeg|gif|png|webp)(?:\?[^\s<>"']*)?/gi,
     /!\[.*?\]\((.*?)\)/g,
-    /<img.*?src=["'](.*?)["']/g
+    /<img.*?src=["'](.*?)["']/g,
   ];
 
   const images = new Set<string>();
@@ -206,7 +206,7 @@ function extractImages(body: string): string[] {
         if (url.match(/\.(jpg|jpeg|gif|png|webp)(\?.*)?$/i)) {
           images.add(url);
         }
-      } catch (e) {
+      } catch (_e) {
       }
     }
   });
@@ -218,7 +218,7 @@ function extractVideos(body: string): string[] {
   const patterns = [
     /https?:\/\/(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/g,
     /https?:\/\/(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]+)/g,
-    /https?:\/\/(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]+)/g
+    /https?:\/\/(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]+)/g,
   ];
 
   const videoIds = new Set<string>();
@@ -247,7 +247,7 @@ export async function getPostsByBlog(username: string, limit = 20) {
     });
     const data = await response.json();
     return data.result || [];
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }

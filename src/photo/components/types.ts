@@ -1,4 +1,3 @@
-import { JSX } from "react";
 
 export interface HiveMetadata {
   author: string;

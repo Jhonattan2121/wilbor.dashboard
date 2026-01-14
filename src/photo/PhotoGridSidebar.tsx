@@ -13,8 +13,8 @@ export type Cameras = Array<{ camera: Camera; count: number }>;
 export type FilmSimulation = string;
 export type FilmSimulations = Array<{ simulation: FilmSimulation; count: number }>;
 
-const sortCamerasWithCount = (cameras: Cameras) => cameras;
-const sortFilmSimulationsWithCount = (simulations: FilmSimulations) => simulations;
+const _sortCamerasWithCount = (cameras: Cameras) => cameras;
+const _sortFilmSimulationsWithCount = (simulations: FilmSimulations) => simulations;
 import { useAppState } from '@/state/AppState';
 import { TAG_FAVS, TAG_HIDDEN, Tags, addHiddenToTags } from '@/tag';
 import HiddenTag from '@/tag/HiddenTag';
@@ -49,7 +49,7 @@ export default function PhotoGridSidebar({
 
   const tagsIncludingHidden = useMemo(() =>
     addHiddenToTags(tags, hiddenPhotosCount)
-    , [tags, hiddenPhotosCount]);
+  , [tags, hiddenPhotosCount]);
 
   return (
     <div className="space-y-2">
@@ -73,34 +73,34 @@ export default function PhotoGridSidebar({
         />}
         items={tagsIncludingHidden.map(({ tag, count }) => {
           switch (tag) {
-            case TAG_FAVS:
-              return <FavsTag
-                key={TAG_FAVS}
-                countOnHover={count}
-                type="icon-last"
-                prefetch={false}
-                contrast="low"
-                badged
-              />;
-            case TAG_HIDDEN:
-              return <HiddenTag
-                key={TAG_HIDDEN}
-                countOnHover={count}
-                type="icon-last"
-                prefetch={false}
-                contrast="low"
-                badged
-              />;
-            default:
-              return <PhotoTag
-                key={tag}
-                tag={tag}
-                type="text-only"
-                countOnHover={count}
-                prefetch={false}
-                contrast="low"
-                badged
-              />;
+          case TAG_FAVS:
+            return <FavsTag
+              key={TAG_FAVS}
+              countOnHover={count}
+              type="icon-last"
+              prefetch={false}
+              contrast="low"
+              badged
+            />;
+          case TAG_HIDDEN:
+            return <HiddenTag
+              key={TAG_HIDDEN}
+              countOnHover={count}
+              type="icon-last"
+              prefetch={false}
+              contrast="low"
+              badged
+            />;
+          default:
+            return <PhotoTag
+              key={tag}
+              tag={tag}
+              type="text-only"
+              countOnHover={count}
+              prefetch={false}
+              contrast="low"
+              badged
+            />;
           }
         })}
       />}

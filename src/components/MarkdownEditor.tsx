@@ -4,7 +4,7 @@ import React from 'react';
 // Importação dinâmica para evitar SSR issues
 const MDEditor = dynamic(
   () => import('@uiw/react-md-editor'),
-  { ssr: false }
+  { ssr: false },
 );
 
 interface MarkdownEditorProps {

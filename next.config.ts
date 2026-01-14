@@ -21,12 +21,12 @@ const HOSTNAME_AWS_S3 =
     : undefined;
 
 const generateRemotePattern = (hostname: string) =>
-({
-  protocol: 'https',
-  hostname: removeUrlProtocol(hostname)!,
-  port: '',
-  pathname: '/**',
-} as const);
+  ({
+    protocol: 'https',
+    hostname: removeUrlProtocol(hostname)!,
+    port: '',
+    pathname: '/**',
+  } as const);
 
 const remotePatterns: RemotePattern[] = [];
 
@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
   images: {
     domains: [
       'ipfs.skatehive.app',
-      'lime-useful-snake-714.mypinata.cloud'
+      'lime-useful-snake-714.mypinata.cloud',
     ],
     unoptimized: true,
     formats: ['image/avif', 'image/webp'],
@@ -64,24 +64,24 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'lime-useful-snake-714.mypinata.cloud',
         pathname: '/ipfs/**',
-      }
+      },
     ],
   },
   async rewrites() {
     return [
       {
         source: '/ipfs/:path*',
-        destination: 'https://ipfs.skatehive.app/ipfs/:path*'
+        destination: 'https://ipfs.skatehive.app/ipfs/:path*',
       },
       {
         source: '/pinata/:path*',
-        destination: 'https://lime-useful-snake-714.mypinata.cloud/ipfs/:path*'
-      }
+        destination: 'https://lime-useful-snake-714.mypinata.cloud/ipfs/:path*',
+      },
     ];
   },
   env: {
     PINATA_JWT: process.env.PINATA_JWT,
-  }
+  },
 };
 
 export default nextConfig;

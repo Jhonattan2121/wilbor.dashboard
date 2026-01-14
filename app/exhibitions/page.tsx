@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { useDynamicExhibitionsPost } from '../../src/app/exhibitions/useDynamicExhibitionsPost';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
-import JsonLd from '../components/JsonLd';
+import _JsonLd from '../components/JsonLd';
 import DashboardHeader from '../dashboard/DashboardHeader';
 import EditPostButton from '../dashboard/EditPostButton';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
@@ -19,15 +19,15 @@ export default function ExhibitionsPage() {
   const [username, setUsername] = useState<string | null>(null);
   const { permlink, markdown, title, images, videos, tags, loading, error } = useDynamicExhibitionsPost(username || HIVE_USERNAME);
   const [postingKey, setPostingKey] = useState<string | null>(null);
-  const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
-  const [fullscreenIndex, setFullscreenIndex] = useState(0);
+  const [_fullscreenImg, _setFullscreenImg] = useState<string | null>(null);
+  const [_fullscreenIndex, _setFullscreenIndex] = useState(0);
   const swiperRef = useRef<any>(null);
-  const goPrev = () => {
+  const _goPrev = () => {
     if (swiperRef.current) {
       swiperRef.current.slidePrev();
     }
   };
-  const goNext = () => {
+  const _goNext = () => {
     if (swiperRef.current) {
       swiperRef.current.slideNext();
     }
@@ -69,7 +69,7 @@ export default function ExhibitionsPage() {
               </div>
 
               <div className="prose dark:prose-invert max-w-none">
-                 <MarkdownRenderer>
+                <MarkdownRenderer>
                   {` ${title}\n${markdown.replace(/!\[[^\]]*\]\([^\)]+\)/g, '')}`}
                 </MarkdownRenderer>
               </div>

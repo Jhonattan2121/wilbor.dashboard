@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import PhotoGridPage from '@/photo/PhotoGridPage';
 import { useEffect, useState } from 'react';

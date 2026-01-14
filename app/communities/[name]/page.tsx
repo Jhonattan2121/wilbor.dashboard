@@ -68,7 +68,7 @@ export default function CommunityPage() {
 
     // Verificar se o usuário é membro
     if (username) {
-      fetch(`https://api.hive.blog`, {
+      fetch('https://api.hive.blog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -143,7 +143,7 @@ export default function CommunityPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className={clsx(
               'w-20 h-20 flex items-center justify-center text-white rounded-full font-bold text-2xl',
-              getCommunityColor(community.name)
+              getCommunityColor(community.name),
             )}>
               {community.title.substring(0, 2).toUpperCase()}
             </div>

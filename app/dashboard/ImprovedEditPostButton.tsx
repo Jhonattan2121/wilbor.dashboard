@@ -403,30 +403,30 @@ export default function ImprovedEditPostButton({
     e.preventDefault();
     
     if (!title.trim()) {
-      setError("Por favor, insira um título");
+      setError('Por favor, insira um título');
       return;
     }
     
     if (!content.trim()) {
-      setError("Por favor, adicione algum conteúdo ao post");
+      setError('Por favor, adicione algum conteúdo ao post');
       return;
     }
     
     if (!postingKey && !(window as any).hive_keychain) {
-      setError("Chave de postagem não fornecida ou Hive Keychain não instalado");
+      setError('Chave de postagem não fornecida ou Hive Keychain não instalado');
       return;
     }
     
     if (username.toLowerCase() !== author.toLowerCase()) {
-      setError("Você não tem permissão para editar este post");
+      setError('Você não tem permissão para editar este post');
       return;
     }
     
     setLoading(true);
-    setError("");
+    setError('');
     
     if (!permlink) {
-      setError("Permlink não fornecido.");
+      setError('Permlink não fornecido.');
       setLoading(false);
       return;
     }
@@ -434,7 +434,7 @@ export default function ImprovedEditPostButton({
     const safePermlink = ensureSafePermlink(permlink);
     const keychainTimeout = setTimeout(() => {
       setLoading(false);
-      setError("Operação expirada ou não confirmada no Keychain. Tente novamente.");
+      setError('Operação expirada ou não confirmada no Keychain. Tente novamente.');
     }, 15000);
     
     try {
@@ -470,7 +470,7 @@ export default function ImprovedEditPostButton({
       
       // Remove a imagem do thumbnail do conteúdo antes de enviar
       let postBody = newContent;
-      const { images: allImages, videos } = extractMediaLinksFromMarkdown(postBody);
+      const { images: allImages, videos: _videos } = extractMediaLinksFromMarkdown(postBody);
       
       // Remove a imagem do thumbnail do conteúdo se ela estiver lá
       if (thumbnailIndex >= 0 && thumbnailIndex < allImages.length) {
@@ -492,13 +492,13 @@ export default function ImprovedEditPostButton({
       
       const tagArray = tags
         .map((tag) => tag.trim().toLowerCase())
-        .filter((tag) => tag !== "");
+        .filter((tag) => tag !== '');
       
       const jsonMetadata = {
         tags: tagArray,
         image: orderedImages,
         video: finalVideos,
-        app: "wilbor.art/dashboard",
+        app: 'wilbor.art/dashboard',
       };
       
       let parentPermlink = tagArray.length > 0 ? tagArray[0] : '';
@@ -537,7 +537,7 @@ export default function ImprovedEditPostButton({
           );
         } catch (keychainError: any) {
           if (keychainError.isCancelled === true) {
-            setError("Operação cancelada pelo usuário");
+            setError('Operação cancelada pelo usuário');
             setLoading(false);
             clearTimeout(keychainTimeout);
             return;
@@ -549,7 +549,7 @@ export default function ImprovedEditPostButton({
       
       if (!updateSuccess) {
         clearTimeout(keychainTimeout);
-        throw new Error("Falha ao atualizar o post");
+        throw new Error('Falha ao atualizar o post');
       }
       
       clearTimeout(keychainTimeout);
@@ -568,7 +568,7 @@ export default function ImprovedEditPostButton({
       setUploadProgress(placeholderProgress);
     } catch (error: any) {
       clearTimeout(keychainTimeout);
-      setError("Falha ao atualizar o post: " + (error.message || "Erro desconhecido"));
+      setError('Falha ao atualizar o post: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }
@@ -583,8 +583,8 @@ export default function ImprovedEditPostButton({
     jsonMetadata: any,
   ): Promise<boolean> => {
     return new Promise((resolve, reject) => {
-      if (typeof window === "undefined" || !(window as any).hive_keychain) {
-        reject(new Error("Hive Keychain não está instalado"));
+      if (typeof window === 'undefined' || !(window as any).hive_keychain) {
+        reject(new Error('Hive Keychain não está instalado'));
         return;
       }
 
@@ -602,7 +602,7 @@ export default function ImprovedEditPostButton({
           title,
           body,
           json_metadata: JSON.stringify(jsonMetadata),
-        }
+        },
       ]];
       
       (window as any).hive_keychain.requestBroadcast(
@@ -614,21 +614,21 @@ export default function ImprovedEditPostButton({
             resolve(true);
           } else {
             if (
-              response.error === "user_cancel" ||
-              response.message?.toLowerCase().includes("cancel") ||
-              response.message?.toLowerCase().includes("cancelado") ||
-              response.message?.toLowerCase().includes("rejected") ||
-              response.message?.toLowerCase().includes("rejeitado") ||
-              response.error === "declined"
+              response.error === 'user_cancel' ||
+              response.message?.toLowerCase().includes('cancel') ||
+              response.message?.toLowerCase().includes('cancelado') ||
+              response.message?.toLowerCase().includes('rejected') ||
+              response.message?.toLowerCase().includes('rejeitado') ||
+              response.error === 'declined'
             ) {
-              const cancelError = new Error("Operação cancelada pelo usuário");
+              const cancelError = new Error('Operação cancelada pelo usuário');
               (cancelError as any).isCancelled = true;
               reject(cancelError);
             } else {
-              const errorMsg = response.message || "Erro ao atualizar com Keychain";
+              const errorMsg = response.message || 'Erro ao atualizar com Keychain';
               if (errorMsg.toLowerCase().includes('permlink is too long') || 
                   errorMsg.toLowerCase().includes('permlink muito longo')) {
-                const permlinkError = new Error(`Erro: Permlink muito longo. Por favor, tente novamente com um título mais curto.`);
+                const permlinkError = new Error('Erro: Permlink muito longo. Por favor, tente novamente com um título mais curto.');
                 reject(permlinkError);
               } else {
                 reject(new Error(errorMsg));
@@ -665,8 +665,8 @@ export default function ImprovedEditPostButton({
             title,
             body,
             json_metadata: JSON.stringify(jsonMetadata),
-          }
-        ]
+          },
+        ],
       ];
       
       await sendHiveOperation(encryptedPrivateKey, operations);
@@ -822,7 +822,7 @@ export default function ImprovedEditPostButton({
                     </svg>
                     <div className="flex-1">
                       <p className="text-sm text-gray-300">
-                        <strong className="text-green-400">Precisa de ajuda?</strong> Use os botões da toolbar para formatar automaticamente ou clique no botão <strong className="text-purple-400">"Ajuda"</strong> para ver exemplos completos de Markdown!
+                        <strong className="text-green-400">Precisa de ajuda?</strong> Use os botões da toolbar para formatar automaticamente ou clique no botão <strong className="text-purple-400">&quot;Ajuda&quot;</strong> para ver exemplos completos de Markdown!
                       </p>
                     </div>
                   </div>

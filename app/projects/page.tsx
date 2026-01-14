@@ -14,11 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return createMetadata({
     title: 'Projetos',
     description: 'Explore as exposições e exibições de Wilson Domingues "Wilbor", artista multifacetado que une skate, arte e audiovisual.',
-    path: '/dashboard'
+    path: '/dashboard',
   });
 }
 
-const getMediaType = (url: string, mediaType?: string) => {
+const getMediaType = (url: string, _mediaType?: string) => {
   if (url.includes('ipfs.skatehive.app/ipfs/')) {
     console.log('Encontrado URL do IPFS skatehive:', url);
     return 'iframe';
@@ -127,7 +127,7 @@ async function getHivePosts(username: string) {
           hiveMetadata: {
             author: post.author,
             permlink: post.permlink,
-            body: post.body
+            body: post.body,
           },
           author: post.author,
           permlink: post.permlink,
@@ -150,13 +150,13 @@ async function getHivePosts(username: string) {
 
     return {
       formattedPosts: uniquePosts,
-      originalPosts: posts
+      originalPosts: posts,
     };
   } catch (error) {
     console.error('Erro ao processar posts:', error);
     return {
       formattedPosts: [],
-      originalPosts: []
+      originalPosts: [],
     };
   }
 }
@@ -183,7 +183,7 @@ function extractAndCountTags(posts: Discussion[], paginatedPosts: Photo[]): Tags
   // Filter only posts from the current page
   const currentPagePermlinks = new Set(paginatedPosts.map(post => post.permlink));
   const currentPagePosts = posts.filter(post =>
-    currentPagePermlinks.has(post.permlink)
+    currentPagePermlinks.has(post.permlink),
   );
 
   currentPagePosts.forEach(post => {
@@ -208,7 +208,7 @@ function extractAndCountTags(posts: Discussion[], paginatedPosts: Photo[]): Tags
     .sort((a, b) => b.count - a.count);
 }
 
-export default async function GridPage(props: any) {
+export default async function GridPage(_props: any) {
   const username = process.env.NEXT_PUBLIC_HIVE_USERNAME;
 
   if (!username) {
@@ -226,7 +226,7 @@ export default async function GridPage(props: any) {
       ...post,
       type: post.src?.includes('ipfs.skatehive.app/ipfs/')
         ? 'iframe'
-        : post.type
+        : post.type,
     } as Photo;
   });
 

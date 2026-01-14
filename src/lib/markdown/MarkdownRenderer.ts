@@ -15,7 +15,7 @@ export class MarkdownRenderer {
     // New flexible regex pattern for IPFS skatehive iframes
     const skatehivePatterns = [
       /<iframe[^>]*src=["'](https?:\/\/ipfs\.skatehive\.app\/ipfs\/[^"']+)["'][^>]*>/i,
-      /<iframe[^>]*src=["']([^"']*ipfs\.skatehive\.app[^"']*)["'][^>]*>/i
+      /<iframe[^>]*src=["']([^"']*ipfs\.skatehive\.app[^"']*)["'][^>]*>/i,
     ];
 
     // Search for IPFS skatehive iframes
@@ -35,7 +35,7 @@ export class MarkdownRenderer {
               style="aspect-ratio: 1/1;"
               allow="autoplay; fullscreen"
               frameborder="0"
-            ></iframe>`
+            ></iframe>`,
           });
         }
       }

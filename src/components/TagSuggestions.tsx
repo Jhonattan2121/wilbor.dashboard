@@ -13,30 +13,30 @@ const POPULAR_HIVE_TAGS = {
   'Fotografia': [
     'photography', 'photo', 'photographer', 'photooftheday', 'portrait',
     'landscape', 'blackandwhite', 'streetphotography', 'naturephotography',
-    'mobilephotography', 'digitalphotography', 'analogphotography'
+    'mobilephotography', 'digitalphotography', 'analogphotography',
   ],
   'Arte & Criatividade': [
     'art', 'artist', 'artwork', 'drawing', 'painting', 'digitalart',
-    'sketch', 'illustration', 'creative', 'design', 'artgallery'
+    'sketch', 'illustration', 'creative', 'design', 'artgallery',
   ],
   'Tecnologia': [
     'technology', 'tech', 'programming', 'coding', 'developer', 'blockchain',
-    'crypto', 'ai', 'web3', 'software', 'hardware', 'gaming'
+    'crypto', 'ai', 'web3', 'software', 'hardware', 'gaming',
   ],
   'Lifestyle': [
     'lifestyle', 'life', 'blog', 'travel', 'food', 'health', 'fitness',
-    'nature', 'adventure', 'family', 'friends', 'daily', 'vlog'
+    'nature', 'adventure', 'family', 'friends', 'daily', 'vlog',
   ],
   'Comunidade Hive': [
     'hive', 'leofinance', 'proofofbrain', 'neoxian', 'palnet', 'creativecoin',
-    'archon', 'stem', 'sportstalk', 'ctp', 'vyb'
+    'archon', 'stem', 'sportstalk', 'ctp', 'vyb',
   ],
   'Conteúdo': [
     'blog', 'writing', 'story', 'poetry', 'tutorial', 'review', 'news',
-    'opinion', 'education', 'learning', 'howto', 'guide'
+    'opinion', 'education', 'learning', 'howto', 'guide',
   ],
   'Idiomas': [
-    'portuguese', 'english', 'spanish', 'brazil', 'pt', 'en', 'es'
+    'portuguese', 'english', 'spanish', 'brazil', 'pt', 'en', 'es',
   ],
 };
 
@@ -59,7 +59,7 @@ const TagSuggestions: React.FC<TagSuggestionsProps> = ({
     const allTags = Object.values(POPULAR_HIVE_TAGS).flat();
     const filtered = allTags.filter(tag => 
       tag.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !currentTags.includes(tag)
+      !currentTags.includes(tag),
     ).slice(0, 10);
 
     setFilteredTags(filtered);

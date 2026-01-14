@@ -1,7 +1,7 @@
 import { Client, Operation, PrivateKey } from '@hiveio/dhive';
 import { clsx } from 'clsx/lite';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter as _useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { sendHiveOperation } from '../../../lib/hive/server-functions';
 import { MarkdownRenderer } from '@/lib/markdown/MarkdownRenderer';
@@ -176,7 +176,7 @@ export function HiveCommunitiesSelector({
       } else {
         setUserCommunities([]);
       }
-    } catch (error) {
+    } catch (_error) {
       setUserCommunities([]);
     }
     setLoading(false);
@@ -213,7 +213,7 @@ export function HiveCommunitiesSelector({
               subscribers: c.subscribers,
               postsCount: c.num_posts,
               avatar_url: c.avatar_url,
-            }))
+            })),
           );
         } else {
           setAllCommunities([]);
@@ -249,7 +249,7 @@ export function HiveCommunitiesSelector({
   async function broadcastCommunityOperation(
     operations: Operation[],
     username: string,
-    postingKey?: string
+    postingKey?: string,
   ) {
     // Log de depuração para identificar o valor de postingKey e Keychain
     if (typeof window !== 'undefined') {
@@ -654,7 +654,7 @@ export function HiveCommunitiesSelector({
                       className={clsx(
                         'bg-neutral-900 rounded-lg border border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer',
                         isExpanded ? 'md:col-span-2 lg:col-span-3' : '',
-                        'hover:border-gray-600'
+                        'hover:border-gray-600',
                       )}
                       onClick={toggleExpand}
                     >
@@ -742,7 +742,7 @@ export function HiveCommunitiesSelector({
                                   month: '2-digit',
                                   year: 'numeric',
                                   hour: '2-digit',
-                                  minute: '2-digit'
+                                  minute: '2-digit',
                                 })}
                               </span>
                             </div>
@@ -871,7 +871,7 @@ export function HiveCommunitiesSelector({
               <div className="flex flex-col gap-3">
                 {allCommunities.filter(c =>
                   c.title.toLowerCase().includes(search.toLowerCase()) ||
-                  c.name.toLowerCase().includes(search.toLowerCase())
+                  c.name.toLowerCase().includes(search.toLowerCase()),
                 ).map((c) => {
                   const isMember = userCommunities.some(u => u.name === c.name && u.role === 'member');
                   const isGuest = userCommunities.some(u => u.name === c.name && u.role === 'guest');
@@ -1020,7 +1020,7 @@ export function HiveCommunitiesSelector({
                       className={clsx(
                         'bg-neutral-900 rounded-lg border border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer',
                         isExpanded ? 'md:col-span-2 lg:col-span-3' : '',
-                        'hover:border-gray-600'
+                        'hover:border-gray-600',
                       )}
                       onClick={toggleExpand}
                     >
@@ -1108,7 +1108,7 @@ export function HiveCommunitiesSelector({
                                   month: '2-digit',
                                   year: 'numeric',
                                   hour: '2-digit',
-                                  minute: '2-digit'
+                                  minute: '2-digit',
                                 })}
                               </span>
                             </div>

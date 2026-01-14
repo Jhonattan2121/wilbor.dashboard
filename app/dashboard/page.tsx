@@ -7,7 +7,7 @@ import { Discussion } from '@hiveio/dhive';
 import DashboardProjectsClient from './DashboardProjectsClient';
 import ViewSwitcher, { SwitcherSelection } from '@/app/ViewSwitcher';
 
-const getMediaType = (url: string, mediaType?: string) => {
+const getMediaType = (url: string, _mediaType?: string) => {
   if (url.includes('ipfs.skatehive.app/ipfs/')) {
     return 'iframe';
   }
@@ -49,7 +49,7 @@ async function getHivePosts(username: string) {
           if (post.category && !postTags.includes(post.category)) {
             postTags.unshift(post.category);
           }
-        } catch (e) {
+        } catch (_e) {
           postTags = post.category ? [post.category] : [];
         }
 
@@ -91,7 +91,7 @@ async function getHivePosts(username: string) {
           hiveMetadata: {
             author: post.author,
             permlink: post.permlink,
-            body: post.body
+            body: post.body,
           },
           author: post.author,
           permlink: post.permlink,
@@ -111,12 +111,12 @@ async function getHivePosts(username: string) {
 
     return {
       formattedPosts: uniquePosts,
-      originalPosts: posts
+      originalPosts: posts,
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       formattedPosts: [],
-      originalPosts: []
+      originalPosts: [],
     };
   }
 }
@@ -167,7 +167,7 @@ export default async function DashboardPage() {
       ...post,
       type: post.src?.includes('ipfs.skatehive.app/ipfs/')
         ? 'iframe'
-        : post.type
+        : post.type,
     } as Photo;
   });
   const postTags = extractAndCountTags(originalPosts, posts);

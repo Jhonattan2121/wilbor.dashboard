@@ -40,7 +40,7 @@ export default function SwitcherItem({
     active
       ? 'hover:text-[#c03131] dark:hover:text-[#c03131]'
       : 'hover:text-[#c03131] dark:hover:text-[#c03131]',
-);
+  );
 
   const renderIcon = () => noPadding
     ? icon

@@ -60,8 +60,8 @@ export function useDynamicExhibitionsPost(username: string) {
         const posts = await getPostsByBlog(username);
         const found = posts.find((post: any) =>
           post.title && TITLE_KEYWORDS.some(keyword =>
-            post.title.toLowerCase().includes(keyword)
-          )
+            post.title.toLowerCase().includes(keyword),
+          ),
         );
         if (found) {
           setPermlink(found.permlink);

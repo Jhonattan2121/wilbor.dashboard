@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getPostsByBlog } from '../../lib/hive/hive-client';
 
 const TITLE_KEYWORDS = [
-   'contato',
+  'contato',
   'contact',
   'fale conosco',
   'get in touch',
@@ -57,8 +57,8 @@ export function useDynamicContactPost(username: string) {
         const posts = await getPostsByBlog(username);
         const found = posts.find((post: any) =>
           post.title && TITLE_KEYWORDS.some(keyword =>
-            post.title.toLowerCase().includes(keyword)
-          )
+            post.title.toLowerCase().includes(keyword),
+          ),
         );
         if (found) {
           setPermlink(found.permlink);

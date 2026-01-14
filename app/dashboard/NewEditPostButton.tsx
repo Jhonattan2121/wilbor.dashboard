@@ -130,11 +130,11 @@ export default function NewEditPostButton({
     }
   }, [loading, error]);
 
-  const getIpfsGatewayUrl = (hash: string, _fileName?: string): string => {
+    const getIpfsGatewayUrl = (hash: string, _getIpfsPublicUrl?: string): string => {
     return `https://lime-useful-snake-714.mypinata.cloud/ipfs/${hash}?pinataGatewayToken=${PINATA_GATEWAY_TOKEN}`;
   };
 
-  const getIpfsPublicUrl = (hash: string, _fileName?: string): string => {
+  const _getIpfsPublicUrl = (hash: string, _fileName?: string): string => {
     return `https://lime-useful-snake-714.mypinata.cloud/ipfs/${hash}?pinataGatewayToken=${PINATA_GATEWAY_TOKEN}`;
   };
 
@@ -288,13 +288,13 @@ export default function NewEditPostButton({
         orderedImages = [thumb, ...orderedImages.filter((img, idx) => idx !== thumbnailIndex)];
       }
       
-      const tagArray = tags.map((tag) => tag.trim().toLowerCase()).filter((tag) => tag !== "");
+      const tagArray = tags.map((tag) => tag.trim().toLowerCase()).filter((tag) => tag !== '');
       
       const jsonMetadata = {
         tags: tagArray,
         image: orderedImages,
         video: videos,
-        app: "wilbor.art/dashboard",
+        app: 'wilbor.art/dashboard',
       };
       
       const parentPermlink = tagArray.length > 0 ? tagArray[0] : 'blog';
@@ -310,8 +310,8 @@ export default function NewEditPostButton({
             title: title,
             body: postBody,
             json_metadata: JSON.stringify(jsonMetadata),
-          }
-        ]
+          },
+        ],
       ];
 
       let updateSuccess = false;
@@ -320,8 +320,8 @@ export default function NewEditPostButton({
         updateSuccess = true;
       } else {
         updateSuccess = await new Promise((resolve, reject) => {
-          if (typeof window === "undefined" || !(window as any).hive_keychain) {
-            reject(new Error("Hive Keychain não está instalado"));
+          if (typeof window === 'undefined' || !(window as any).hive_keychain) {
+            reject(new Error('Hive Keychain não está instalado'));
             return;
           }
 
@@ -334,13 +334,13 @@ export default function NewEditPostButton({
                 resolve(true);
               } else {
                 if (
-                  response.error === "user_cancel" ||
-                  response.message?.toLowerCase().includes("cancel") ||
-                  response.message?.toLowerCase().includes("cancelado")
+                  response.error === 'user_cancel' ||
+                  response.message?.toLowerCase().includes('cancel') ||
+                  response.message?.toLowerCase().includes('cancelado')
                 ) {
-                  reject(new Error("Operação cancelada pelo usuário"));
+                  reject(new Error('Operação cancelada pelo usuário'));
                 } else {
-                  reject(new Error(response.message || "Erro ao atualizar com Keychain"));
+                  reject(new Error(response.message || 'Erro ao atualizar com Keychain'));
                 }
               }
             },
@@ -350,7 +350,7 @@ export default function NewEditPostButton({
 
       if (!updateSuccess) {
         clearTimeout(keychainTimeout);
-        throw new Error("Falha ao atualizar o post");
+        throw new Error('Falha ao atualizar o post');
       }
 
       clearTimeout(keychainTimeout);
@@ -361,7 +361,7 @@ export default function NewEditPostButton({
       }, 2000);
     } catch (error: any) {
       clearTimeout(keychainTimeout);
-      setError("Falha ao atualizar o post: " + (error.message || "Erro desconhecido"));
+      setError('Falha ao atualizar o post: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }
@@ -392,7 +392,7 @@ export default function NewEditPostButton({
             body.disable-hover [title] {
               pointer-events: none !important;
             }
-          `
+          `,
         }} />
       )}
       

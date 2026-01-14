@@ -1,7 +1,7 @@
 import {
   BASE_URL,
   SITE_DESCRIPTION,
-  SITE_TITLE
+  SITE_TITLE,
 } from '@/app/config';
 import { Metadata } from 'next/types';
 
@@ -44,16 +44,16 @@ export function createMetadata({
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: title
-        }
-      ]
+          alt: title,
+        },
+      ],
     },
     twitter: {
       title: fullTitle,
       description,
       card: 'summary_large_image',
       images: [imageUrl],
-      creator: '@wilborart'
+      creator: '@wilborart',
     },
     alternates: {
       canonical: canonicalUrl,

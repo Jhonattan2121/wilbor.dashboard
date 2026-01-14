@@ -132,11 +132,11 @@ const FORM_METADATA = (
   hidden: { label: 'hidden', type: 'checkbox' },
   src: {
     label: 'source',
-    validateStringMaxLength: STRING_MAX_LENGTH_SHORT
+    validateStringMaxLength: STRING_MAX_LENGTH_SHORT,
   },
   author: {
     label: 'author',
-    validateStringMaxLength: STRING_MAX_LENGTH_SHORT
+    validateStringMaxLength: STRING_MAX_LENGTH_SHORT,
   },
 });
 
@@ -182,18 +182,18 @@ export const convertPhotoToFormData = (
 ): PhotoFormData => {
   const valueForKey = (key: keyof Photo, value: any) => {
     switch (key) {
-      case 'tags':
-        return (value ?? [])
-          .filter((tag: string) => tag !== TAG_FAVS)
-          .join(', ');
-      case 'takenAt':
-        return value?.toISOString ? value.toISOString() : value;
-      case 'hidden':
-        return value ? 'true' : 'false';
-      default:
-        return value !== undefined && value !== null
-          ? value.toString()
-          : undefined;
+    case 'tags':
+      return (value ?? [])
+        .filter((tag: string) => tag !== TAG_FAVS)
+        .join(', ');
+    case 'takenAt':
+      return value?.toISOString ? value.toISOString() : value;
+    case 'hidden':
+      return value ? 'true' : 'false';
+    default:
+      return value !== undefined && value !== null
+        ? value.toString()
+        : undefined;
     }
   };
   return Object.entries(photo).reduce((photoForm, [key, value]) => ({

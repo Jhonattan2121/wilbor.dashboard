@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { useEffect, useState } from 'react';
 import { useDynamicContactPost } from '../../src/app/contact/useDynamicContactPost';
@@ -15,7 +15,7 @@ export default function ContactPage() {
   const [postingKey, setPostingKey] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const { permlink, markdown, title, images, tags, loading, error } = useDynamicContactPost(
-    username || HIVE_USERNAME
+    username || HIVE_USERNAME,
   );
 
   useEffect(() => {

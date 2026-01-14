@@ -31,7 +31,7 @@ function decryptPrivateKey(encryptedPrivateKey: string): string {
     decrypted += decipher.final('utf8');
     
     return decrypted;
-  } catch (error) {
+  } catch (_error) {
     throw new Error('Failed to decrypt the private key. Check the secret or the data.');
   }
 }

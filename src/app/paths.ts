@@ -8,16 +8,16 @@ export const PATH_ROOT = '/';
 export const PATH_GRID = '/dashboard';
 export const Path_Contact = '/contact';
 export const Path_Social_Media = '/social-media';
-export const Path_Exhibitions = 'exhibitions'
-export const Path_Partners = 'partners'
+export const Path_Exhibitions = 'exhibitions';
+export const Path_Partners = 'partners';
 export const PATH_FEED = '/about';
 export const PATH_ADMIN = '/admin';
 export const PATH_API = '/api';
 export const PATH_SIGN_IN = '/sign-in';
 export const PATH_OG = '/og';
-// eslint-disable-next-line max-len
+ 
 export const PATH_GRID_INFERRED = GRID_HOMEPAGE_ENABLED ? PATH_ROOT : PATH_GRID;
-// eslint-disable-next-line max-len
+ 
 export const PATH_FEED_INFERRED = GRID_HOMEPAGE_ENABLED ? PATH_FEED : PATH_ROOT;
 // Path prefixes
 export const PREFIX_PHOTO = '/p';
@@ -30,7 +30,7 @@ export const PREFIX_FOCAL_LENGTH = '/focal';
 const PATH_PHOTO_DYNAMIC = `${PREFIX_PHOTO}/[photoId]`;
 const PATH_TAG_DYNAMIC = `${PREFIX_TAG}/[tag]`;
 const PATH_CAMERA_DYNAMIC = `${PREFIX_CAMERA}/[make]/[model]`;
-// eslint-disable-next-line max-len
+ 
 const PATH_FILM_SIMULATION_DYNAMIC = `${PREFIX_FILM_SIMULATION}/[simulation]`;
 const PATH_FOCAL_LENGTH_DYNAMIC = `${PREFIX_FOCAL_LENGTH}/[focal]`;
 
@@ -122,7 +122,10 @@ export const pathForPhoto = ({
             : `${PREFIX_PHOTO}/${getPhotoId(photo)}`;
 
 export const pathForTag = (tag: string) =>
-  `${PREFIX_TAG}/${tag}`;
+  `${PREFIX_TAG}/${parameterize(tag)}`
+  .split('/')
+  .filter(Boolean)
+  .join('/');
 
 export const pathForCamera = ({ make, model }: { make: string; model: string }) =>
   `${PREFIX_CAMERA}/${parameterize(make, true)}/${parameterize(model, true)}`;
@@ -211,13 +214,13 @@ export const isPathContact = (pathname?: string) =>
   checkPathPrefix(pathname, Path_Contact);
 
 export const isPatchSocial_Media = (pathname?: string) => 
-  checkPathPrefix(pathname,Path_Social_Media)
+  checkPathPrefix(pathname,Path_Social_Media);
  
 export const isPathExhibitions = (pathname?: string) => 
-  checkPathPrefix(pathname, Path_Exhibitions)
+  checkPathPrefix(pathname, Path_Exhibitions);
 
 export const isPathPartners = (pathname?: string) => 
-  checkPathPrefix(pathname, Path_Partners)
+  checkPathPrefix(pathname, Path_Partners);
 
 export const isPathFeed = (pathname?: string) =>
   checkPathPrefix(pathname, PATH_FEED);

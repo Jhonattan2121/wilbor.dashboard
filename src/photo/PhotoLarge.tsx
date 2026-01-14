@@ -29,7 +29,7 @@ import {
   altTextForPhoto,
   doesPhotoNeedBlurCompatibility,
   shouldShowCameraDataForPhoto,
-  shouldShowExifDataForPhoto
+  shouldShowExifDataForPhoto,
 } from '.';
 import { RevalidatePhoto } from './InfinitePhotoScroll';
 import PhotoDate from './PhotoDate';
@@ -42,7 +42,7 @@ export default function PhotoLarge({
   priority,
   prefetch = SHOULD_PREFETCH_ALL_LINKS,
   prefetchRelatedLinks = SHOULD_PREFETCH_ALL_LINKS,
-  revalidatePhoto,
+  revalidatePhoto, // eslint-disable-line @typescript-eslint/no-unused-vars
   showTitle = true,
   showTitleAsH1,
   showCamera = true,
@@ -50,10 +50,10 @@ export default function PhotoLarge({
   showZoomControls: showZoomControlsProp = true,
   shouldZoomOnFKeydown = true,
   shouldShare = true,
-  shouldShareTag,
-  shouldShareCamera,
-  shouldShareSimulation,
-  shouldShareFocalLength,
+  shouldShareTag, // eslint-disable-line @typescript-eslint/no-unused-vars
+  shouldShareCamera, // eslint-disable-line @typescript-eslint/no-unused-vars
+  shouldShareSimulation, // eslint-disable-line @typescript-eslint/no-unused-vars
+  shouldShareFocalLength, // eslint-disable-line @typescript-eslint/no-unused-vars
   includeFavoriteInAdminMenu,
   onVisible,
 }: {
@@ -93,7 +93,7 @@ export default function PhotoLarge({
   const tags = sortTags(photo.tags, primaryTag);
 
   // Camera functionality removed - keeping stub for compatibility
-  const camera = photo.make && photo.model ? { make: photo.make, model: photo.model } : undefined;
+  const _camera = photo.make && photo.model ? { make: photo.make, model: photo.model } : undefined;
 
   const showCameraContent = false; // Disabled - camera routes removed
   const showTagsContent = tags.length > 0;

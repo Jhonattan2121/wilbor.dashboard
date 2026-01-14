@@ -21,34 +21,35 @@ export default function CollapsibleFooterTags({ tags }: { tags: string[] }) {
   };
 
   return (
-    <div className="sticky bottom-0 w-full bg-white/80 dark:bg-black/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800">
+    <div className="sticky bottom-0 w-full bg-white/80 dark:bg-black/80 backdrop-blur-sm
+                   border-t border-gray-200 dark:border-gray-800">
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="flex justify-center">
           <div
             className={clsx(
-              "bg-white dark:bg-black",
-              "shadow-md",
-              "overflow-hidden",
+              'bg-white dark:bg-black',
+              'shadow-md',
+              'overflow-hidden',
               isOpen
-                ? "min-w-fit rounded-t-lg transition-[width] duration-300 ease-in-out"
-                : "w-[120px] rounded-t-lg transition-[width] duration-300 ease-in-out",
-              "border border-gray-200 dark:border-gray-800 border-b-0"
+                ? 'min-w-fit rounded-t-lg transition-[width] duration-300 ease-in-out'
+                : 'w-[120px] rounded-t-lg transition-[width] duration-300 ease-in-out',
+              'border border-gray-200 dark:border-gray-800 border-b-0',
             )}
           >
             <button
               onClick={() => isTagPage ? handleBackToProjects() : setIsOpen(!isOpen)}
               className={clsx(
-                "flex items-center justify-center gap-2 px-6 py-3",
-                "text-gray-700 dark:text-gray-300",
-                "hover:bg-gray-50 dark:hover:bg-gray-900",
-                "rounded-lg",
-                "text-base font-medium",
-                "w-full",
-                "min-w-[120px]",
+                'flex items-center justify-center gap-2 px-6 py-3',
+                'text-gray-700 dark:text-gray-300',
+                'hover:bg-gray-50 dark:hover:bg-gray-900',
+                'rounded-lg',
+                'text-base font-medium',
+                'w-full',
+                'min-w-[120px]',
               )}
             >
               <span className="font-medium">
-                {isTagPage ? "Voltar" : "Tags"}
+                {isTagPage ? 'Voltar' : 'Tags'}
               </span>
               {!isTagPage && (
                 isOpen ? (
@@ -67,15 +68,15 @@ export default function CollapsibleFooterTags({ tags }: { tags: string[] }) {
                       key={tag}
                       onClick={() => handleTagClick(tag)}
                       className={clsx(
-                        "px-3 py-2",
-                        "text-gray-700 dark:text-gray-300",
-                        "text-sm",
-                        "rounded",
-                        "transition-all duration-200",
-                        "hover:bg-gray-100 dark:hover:bg-gray-800",
-                        "hover:shadow-sm",
-                        "whitespace-nowrap",
-                        "w-full text-center"
+                        'px-3 py-2',
+                        'text-gray-700 dark:text-gray-300',
+                        'text-sm',
+                        'rounded',
+                        'transition-all duration-200',
+                        'hover:bg-gray-100 dark:hover:bg-gray-800',
+                        'hover:shadow-sm',
+                        'whitespace-nowrap',
+                        'w-full text-center',
                       )}
                     >
                       {tag}

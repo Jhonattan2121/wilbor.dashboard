@@ -1,4 +1,4 @@
- 'use client';
+'use client';
 
 import { uploadFileToIPFS } from '@/utils/ipfs';
 import { uploadVideoToVimeo } from '@/utils/vimeo';
@@ -495,7 +495,7 @@ export default function ImprovedCreatePostButton({
 
   const postToHiveWithKey = async (
     operations: Operation[],
-    encryptedPrivateKey: string
+    encryptedPrivateKey: string,
   ) => {
     try {
       await sendHiveOperation(encryptedPrivateKey, operations);
@@ -508,7 +508,7 @@ export default function ImprovedCreatePostButton({
 
   const postToHiveWithKeychain = (
     operations: Operation[],
-    username: string
+    username: string,
   ): Promise<boolean> => {
     return new Promise((resolve, reject) => {
       if (typeof window === 'undefined' || !(window as any).hive_keychain) {
@@ -614,7 +614,7 @@ export default function ImprovedCreatePostButton({
                     }
                     return;
                   }
-                  if (confirm("Deseja cancelar a operação em andamento?")) {
+                  if (confirm('Deseja cancelar a operação em andamento?')) {
                     setLoading(false);
                     setError('');
                     resetForm();
@@ -712,7 +712,7 @@ export default function ImprovedCreatePostButton({
                     </svg>
                     <div className="flex-1">
                       <p className="text-sm text-gray-300">
-                        <strong className="text-blue-400">Novo no Markdown?</strong> Use os botões da toolbar para formatar automaticamente ou clique no botão <strong className="text-purple-400">"Ajuda"</strong> para ver exemplos completos e aprender a usar o Markdown!
+                        <strong className="text-blue-400">Novo no Markdown?</strong> Use os botões da toolbar para formatar automaticamente ou clique no botão <strong className="text-purple-400">&quot;Ajuda&quot;</strong> para ver exemplos completos e aprender a usar o Markdown!
                       </p>
                     </div>
                   </div>

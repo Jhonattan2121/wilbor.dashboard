@@ -17,7 +17,7 @@ export default function JsonLd({ type, data = {} }: JsonLdProps) {
       name: SITE_TITLE,
       description: SITE_DESCRIPTION,
       url: BASE_URL,
-      ...data
+      ...data,
     };
 
     return (
@@ -39,10 +39,10 @@ export default function JsonLd({ type, data = {} }: JsonLdProps) {
       sameAs: [
         'https://instagram.com/wilbor_domina',
         'https://vimeo.com/wilbor',
-        'https://odysee.com/@wilbor'
+        'https://odysee.com/@wilbor',
       ],
       jobTitle: 'Artista',
-      ...data
+      ...data,
     };
 
     return (
@@ -64,19 +64,19 @@ export default function JsonLd({ type, data = {} }: JsonLdProps) {
       author: {
         '@type': 'Person',
         name: 'Wilson Domingues',
-        url: `${BASE_URL}/about`
+        url: `${BASE_URL}/about`,
       },
       publisher: {
         '@type': 'Organization',
         name: 'Wilbor Art',
         logo: {
           '@type': 'ImageObject',
-          url: `${BASE_URL}/wilborPhotos/bannerWilbor.png`
-        }
+          url: `${BASE_URL}/wilborPhotos/bannerWilbor.png`,
+        },
       },
       datePublished: data.datePublished || new Date().toISOString(),
       dateModified: data.dateModified || new Date().toISOString(),
-      ...data
+      ...data,
     };
 
     return (
@@ -94,21 +94,21 @@ export default function JsonLd({ type, data = {} }: JsonLdProps) {
         '@type': 'ListItem',
         position: 1,
         name: 'Início',
-        item: BASE_URL
+        item: BASE_URL,
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: data.currentPage || 'Página atual',
-        item: `${BASE_URL}${data.path || ''}`
-      }
+        item: `${BASE_URL}${data.path || ''}`,
+      },
     ];
 
     const breadcrumbSchema = {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement,
-      ...data
+      ...data,
     };
 
     return (

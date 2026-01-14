@@ -9,8 +9,8 @@ export async function getHivePosts(username: string): Promise<Photo[]> {
     },
     [`hive-posts-${username}`],
     {
-      revalidate: 3600 
-    }
+      revalidate: 3600, 
+    },
   );
   return cachedFunction();
 }

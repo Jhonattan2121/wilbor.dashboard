@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       .slice(0, 255))
     : 'video-upload';
   const contentTypeHeader = request.headers.get('content-type');
-  const contentType = contentTypeHeader || 'application/octet-stream';
+  const _contentType = contentTypeHeader || 'application/octet-stream';
 
   try {
     const createResponse = await fetch('https://api.vimeo.com/me/videos', {

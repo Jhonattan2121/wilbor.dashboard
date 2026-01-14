@@ -162,9 +162,9 @@ export default function EditPostButton({
     if (thumbnailIndex !== previousThumbnailIndex) {
       // Restaura URL da thumbnail anterior
       if (previousThumbnailIndex >= 0 && previousThumbnailIndex < previews.length) {
-        const previousUrl = previews[previousThumbnailIndex];
+        const _previousUrl = previews[previousThumbnailIndex];
         const previousFile = files[previousThumbnailIndex];
-        const isPreviousVideo = previousFile && previousFile.type.startsWith('video/');
+        const _isPreviousVideo = previousFile && previousFile.type.startsWith('video/');
         
         // Se estava removida, restaura
         if (removedMediaPositions[previousThumbnailIndex]) {
@@ -173,7 +173,7 @@ export default function EditPostButton({
           const mediaLine = position.removedLine;
           
           // Insere na posição original (ajustando se houve mudanças)
-          let insertIndex = Math.min(position.lineIndex, linhas.length);
+          const insertIndex = Math.min(position.lineIndex, linhas.length);
           linhas.splice(insertIndex, 0, mediaLine);
           
           setContent(linhas.join('\n'));
@@ -188,7 +188,7 @@ export default function EditPostButton({
       
       // Remove URL da nova thumbnail
       const currentUrl = previews[thumbnailIndex];
-      const currentFile = files[thumbnailIndex];
+      const _currentFile = files[thumbnailIndex];
       
       // Procura e remove a URL do markdown
       const linhas = content.split('\n');
@@ -423,23 +423,23 @@ export default function EditPostButton({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) {
-      setError("Por favor, insira um título");
+      setError('Por favor, insira um título');
       return;
     }
     if (!postingKey && !(window as any).hive_keychain) {
       setError(
-        "Chave de postagem não fornecida ou Hive Keychain não instalado",
+        'Chave de postagem não fornecida ou Hive Keychain não instalado',
       );
       return;
     }
     if (username.toLowerCase() !== author.toLowerCase()) {
-      setError("Você não tem permissão para editar este post");
+      setError('Você não tem permissão para editar este post');
       return;
     }
     setLoading(true);
-    setError("");
+    setError('');
     if (!permlink) {
-      setError("Permlink não fornecido.");
+      setError('Permlink não fornecido.');
       setLoading(false);
       return;
     }
@@ -447,7 +447,7 @@ export default function EditPostButton({
     const keychainTimeout = setTimeout(() => {
       setLoading(false);
       setError(
-        "Operação expirada ou não confirmada no Keychain. Tente novamente.",
+        'Operação expirada ou não confirmada no Keychain. Tente novamente.',
       );
     }, 15000);
     try {
@@ -498,12 +498,12 @@ export default function EditPostButton({
       }
       const tagArray = tags
         .map((tag) => tag.trim().toLowerCase())
-        .filter((tag) => tag !== "");
+        .filter((tag) => tag !== '');
       const jsonMetadata = {
         tags: tagArray,
         image: orderedImages,
         video: videos,
-        app: "wilbor.art/dashboard",
+        app: 'wilbor.art/dashboard',
       };
       // Buscar parent_permlink
       let parentPermlink = tagArray.length > 0 ? tagArray[0] : '';
@@ -541,7 +541,7 @@ export default function EditPostButton({
           );
         } catch (keychainError: any) {
           if (keychainError.isCancelled === true) {
-            setError("Operação cancelada pelo usuário");
+            setError('Operação cancelada pelo usuário');
             setLoading(false);
             clearTimeout(keychainTimeout);
             return;
@@ -552,7 +552,7 @@ export default function EditPostButton({
       }
       if (!updateSuccess) {
         clearTimeout(keychainTimeout);
-        throw new Error("Falha ao atualizar o post");
+        throw new Error('Falha ao atualizar o post');
       }
       clearTimeout(keychainTimeout);
       setSuccess(true);
@@ -571,7 +571,7 @@ export default function EditPostButton({
     } catch (error: any) {
       clearTimeout(keychainTimeout);
       setError(
-        "Falha ao atualizar o post: " + (error.message || "Erro desconhecido"),
+        'Falha ao atualizar o post: ' + (error.message || 'Erro desconhecido'),
       );
     } finally {
       setLoading(false);
@@ -589,8 +589,8 @@ export default function EditPostButton({
     jsonMetadata: any,
   ): Promise<boolean> => {
     return new Promise((resolve, reject) => {
-      if (typeof window === "undefined" || !(window as any).hive_keychain) {
-        reject(new Error("Hive Keychain não está instalado"));
+      if (typeof window === 'undefined' || !(window as any).hive_keychain) {
+        reject(new Error('Hive Keychain não está instalado'));
         return;
       }
 
@@ -615,37 +615,37 @@ export default function EditPostButton({
           title,
           body,
           json_metadata: JSON.stringify(jsonMetadata),
-        }
+        },
       ]];
       // Usando formato de operations para transmitir via Keychain
-      console.log("Tentando editar post no Hive usando formato de operations via Keychain:", operations);
+      console.log('Tentando editar post no Hive usando formato de operations via Keychain:', operations);
       (window as any).hive_keychain.requestBroadcast(
         author,
         operations,
         'Posting',
         (response: any) => {
-          console.log("Resposta do Hive Keychain (edição):", response);
+          console.log('Resposta do Hive Keychain (edição):', response);
 
           if (response.success) {
             resolve(true);
           } else {
             if (
-              response.error === "user_cancel" ||
-              response.message?.toLowerCase().includes("cancel") ||
-              response.message?.toLowerCase().includes("cancelado") ||
-              response.message?.toLowerCase().includes("rejected") ||
-              response.message?.toLowerCase().includes("rejeitado") ||
-              response.error === "declined"
+              response.error === 'user_cancel' ||
+              response.message?.toLowerCase().includes('cancel') ||
+              response.message?.toLowerCase().includes('cancelado') ||
+              response.message?.toLowerCase().includes('rejected') ||
+              response.message?.toLowerCase().includes('rejeitado') ||
+              response.error === 'declined'
             ) {
-              const cancelError = new Error("Operação cancelada pelo usuário");
+              const cancelError = new Error('Operação cancelada pelo usuário');
               (cancelError as any).isCancelled = true;
               reject(cancelError);
             } else {
-              const errorMsg = response.message || "Erro ao atualizar com Keychain";
+              const errorMsg = response.message || 'Erro ao atualizar com Keychain';
               // Verificar se o erro é relacionado ao tamanho do permlink
               if (errorMsg.toLowerCase().includes('permlink is too long') || 
                   errorMsg.toLowerCase().includes('permlink muito longo')) {
-                const permlinkError = new Error(`Erro: Permlink muito longo. Por favor, tente novamente com um título mais curto ou entre em contato com o suporte.`);
+                const permlinkError = new Error('Erro: Permlink muito longo. Por favor, tente novamente com um título mais curto ou entre em contato com o suporte.');
                 reject(permlinkError);
               } else {
                 reject(new Error(errorMsg));
@@ -683,8 +683,8 @@ export default function EditPostButton({
             title,
             body,
             json_metadata: JSON.stringify(jsonMetadata),
-          }
-        ]
+          },
+        ],
       ];
       
       await sendHiveOperation(encryptedPrivateKey, operations);

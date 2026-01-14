@@ -144,22 +144,22 @@ const AdvancedMarkdownEditor: React.FC<AdvancedMarkdownEditorProps> = ({
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
-        case 'b':
-          e.preventDefault();
-          actions.bold();
-          break;
-        case 'i':
-          e.preventDefault();
-          actions.italic();
-          break;
-        case 'k':
-          e.preventDefault();
-          actions.link();
-          break;
-        case '`':
-          e.preventDefault();
-          actions.code();
-          break;
+      case 'b':
+        e.preventDefault();
+        actions.bold();
+        break;
+      case 'i':
+        e.preventDefault();
+        actions.italic();
+        break;
+      case 'k':
+        e.preventDefault();
+        actions.link();
+        break;
+      case '`':
+        e.preventDefault();
+        actions.code();
+        break;
       }
     }
 
@@ -186,85 +186,85 @@ const AdvancedMarkdownEditor: React.FC<AdvancedMarkdownEditorProps> = ({
       icon: <BoldIcon />, 
       title: 'Negrito: Deixa o texto em negrito. Selecione o texto e clique ou use Ctrl+B', 
       action: actions.bold, 
-      shortcut: 'Ctrl+B' 
+      shortcut: 'Ctrl+B', 
     },
     { 
       icon: <ItalicIcon />, 
       title: 'Itálico: Deixa o texto em itálico. Selecione o texto e clique ou use Ctrl+I', 
       action: actions.italic, 
-      shortcut: 'Ctrl+I' 
+      shortcut: 'Ctrl+I', 
     },
     { 
       icon: <StrikethroughIcon />, 
       title: 'Tachado: Risca o texto selecionado. Exemplo: ~~texto riscado~~', 
-      action: actions.strikethrough 
+      action: actions.strikethrough, 
     },
     { 
       icon: <H1Icon />, 
       title: 'Título Principal: Cria um título grande no início da linha. Exemplo: # Título', 
-      action: actions.h1 
+      action: actions.h1, 
     },
     { 
       icon: <H2Icon />, 
       title: 'Subtítulo: Cria um subtítulo médio. Exemplo: ## Subtítulo', 
-      action: actions.h2 
+      action: actions.h2, 
     },
     { 
       icon: <H3Icon />, 
       title: 'Sub-subtítulo: Cria um subtítulo menor. Exemplo: ### Sub-subtítulo', 
-      action: actions.h3 
+      action: actions.h3, 
     },
     { 
       icon: <QuoteIcon />, 
       title: 'Citação: Cria uma citação destacada. Exemplo: > Texto citado', 
-      action: actions.quote 
+      action: actions.quote, 
     },
     { 
       icon: <CodeIcon />, 
       title: 'Código Inline: Formata texto como código. Selecione e clique ou use Ctrl+`', 
       action: actions.code, 
-      shortcut: 'Ctrl+`' 
+      shortcut: 'Ctrl+`', 
     },
     { 
       icon: <CodeBlockIcon />, 
       title: 'Bloco de Código: Cria um bloco de código formatado com múltiplas linhas', 
-      action: actions.codeBlock 
+      action: actions.codeBlock, 
     },
     { 
       icon: <LinkIcon />, 
       title: 'Link: Adiciona um link clicável. Selecione o texto e clique ou use Ctrl+K', 
       action: actions.link, 
-      shortcut: 'Ctrl+K' 
+      shortcut: 'Ctrl+K', 
     },
     { 
       icon: <ImageIcon />, 
       title: 'Imagem: Insere uma imagem. Formato: ![descrição](url-da-imagem)', 
-      action: actions.image 
+      action: actions.image, 
     },
     { 
       icon: <VideoIcon />, 
       title: 'Vídeo: Insere um player de vídeo. Use a URL do vídeo', 
-      action: actions.video 
+      action: actions.video, 
     },
     { 
       icon: <UListIcon />, 
       title: 'Lista com Marcadores: Cria uma lista com pontos. Exemplo: - Item 1', 
-      action: actions.unorderedList 
+      action: actions.unorderedList, 
     },
     { 
       icon: <OListIcon />, 
       title: 'Lista Numerada: Cria uma lista numerada. Exemplo: 1. Primeiro item', 
-      action: actions.orderedList 
+      action: actions.orderedList, 
     },
     { 
       icon: <TableIcon />, 
       title: 'Tabela: Insere uma tabela formatada com colunas e linhas', 
-      action: actions.table 
+      action: actions.table, 
     },
     { 
       icon: <HRIcon />, 
       title: 'Linha Horizontal: Adiciona uma linha divisória no conteúdo', 
-      action: actions.hr 
+      action: actions.hr, 
     },
   ];
 
@@ -400,7 +400,7 @@ Este é um parágrafo com **texto em negrito** e *texto em itálico*.
 
         {/* Preview */}
         {showPreview && (
-          <div className={`flex-1 lg:w-1/2 border border-gray-700 rounded-b-lg lg:rounded-br-lg lg:rounded-tl-none p-4 bg-gray-900 overflow-y-auto`} style={{ height: `${height}px` }}>
+          <div className={'flex-1 lg:w-1/2 border border-gray-700 rounded-b-lg lg:rounded-br-lg lg:rounded-tl-none p-4 bg-gray-900 overflow-y-auto'} style={{ height: `${height}px` }}>
             <MarkdownRenderer>{value || '*Preview aparecerá aqui...*'}</MarkdownRenderer>
           </div>
         )}

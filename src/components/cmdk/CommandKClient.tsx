@@ -229,7 +229,7 @@ export default function CommandKClient({
 
   const tagsIncludingHidden = useMemo(() =>
     addHiddenToTags(tags, hiddenPhotosCount)
-    , [tags, hiddenPhotosCount]);
+  , [tags, hiddenPhotosCount]);
 
   const SECTION_TAGS: CommandKSection = {
     heading: 'Tags',

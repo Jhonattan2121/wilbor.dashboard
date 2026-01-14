@@ -82,8 +82,8 @@ export default function AppStateProvider({
       const timeout = setTimeout(() => {
         getPhotosHiddenMetaCachedAction()
           .then(({ count }) => setHiddenPhotosCount(count));
-          // getShouldShowInsightsIndicatorAction()
-          // .then(setInsightIndicatorStatus);
+        // getShouldShowInsightsIndicatorAction()
+        // .then(setInsightIndicatorStatus);
       }, 100);
       return () => clearTimeout(timeout);
     } else {
@@ -93,7 +93,7 @@ export default function AppStateProvider({
 
   const registerAdminUpdate = useCallback(() =>
     setAdminUpdateTimes(updates => [...updates, new Date()])
-    , []);
+  , []);
 
   useEffect(() => {
     setHasLoaded?.(true);

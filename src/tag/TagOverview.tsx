@@ -1,8 +1,8 @@
-"use client";
+'use client';
 import { Photo, PhotoDateRange } from '@/photo';
 import PhotoGridContainer from '@/photo/PhotoProjectsContainer';
-import TagHeader from './TagHeader';
 import { useState } from 'react';
+import TagHeader from './TagHeader';
 
 export default function TagOverview({
   tag,
@@ -35,8 +35,8 @@ export default function TagOverview({
         hiveMetadata: photo.hiveMetadata && {
           author: photo.hiveMetadata.author || '',
           permlink: photo.hiveMetadata.permlink || '',
-          body: photo.hiveMetadata.body || ''
-        }
+          body: photo.hiveMetadata.body || '',
+        },
       }))}
       header={
         <TagHeader

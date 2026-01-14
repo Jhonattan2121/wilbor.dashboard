@@ -16,7 +16,7 @@ export interface Camera {
 export type FilmSimulation = string;
 
 // Stub function for focal length formatting
-const formatFocalLength = (focal?: number) => focal ? `${focal}mm` : undefined;
+const _formatFocalLength = (focal?: number) => focal ? `${focal}mm` : undefined;
 import { formatDate, formatDateFromPostgresString } from '@/utility/date';
 import {
   formatAperture,

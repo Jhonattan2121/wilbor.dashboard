@@ -5,19 +5,19 @@ const HIVE_NODES = [
   'https://rpc.ecency.com',
   'https://hived.emre.sh',
   'https://api.hive.blog',
-  'https://api.hivekings.com'
+  'https://api.hivekings.com',
 ];
 
 const TIMEOUT = 5000; // 5 seconds timeout
 
-async function fetchWithTimeout(url: string, options = {}) {
+async function _fetchWithTimeout(url: string, options = {}) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), TIMEOUT);
   
   try {
     const response = await fetch(url, {
       ...options,
-      signal: controller.signal
+      signal: controller.signal,
     });
     clearTimeout(id);
     return response;
@@ -33,15 +33,15 @@ async function testNode(client: Client): Promise<boolean> {
   try {
     const startTime = Date.now();
     
-   // Quick connection test
-    const props = await Promise.race([
+    // Quick connection test
+    const _props = await Promise.race([
       client.database.getDynamicGlobalProperties(),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), TIMEOUT)
-      )
+        setTimeout(() => reject(new Error('Timeout')), TIMEOUT),
+      ),
     ]);
 
-   // If it took too long, consider it a failure
+    // If it took too long, consider it a failure
     if (Date.now() - startTime > TIMEOUT) {
       console.warn('Node very slow');
       return false;
@@ -51,17 +51,17 @@ async function testNode(client: Client): Promise<boolean> {
     const testResult = await Promise.race([
       client.database.getDiscussions('blog', {
         tag: 'hive',
-        limit: 1
+        limit: 1,
       }),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), TIMEOUT)
-      )
+        setTimeout(() => reject(new Error('Timeout')), TIMEOUT),
+      ),
     ]);
 
     return Array.isArray(testResult) && testResult.length > 0;
   } catch (error) {
     console.warn('Node test failed:', 
-      error instanceof Error ? error.message : 'Unknown error'
+      error instanceof Error ? error.message : 'Unknown error',
     );
     return false;
   }
@@ -79,7 +79,7 @@ export async function createWorkingClient(): Promise<Client> {
     }
   }
 
-// Shuffle the list of nodes to distribute the load
+  // Shuffle the list of nodes to distribute the load
   const shuffledNodes = [...HIVE_NODES].sort(() => Math.random() - 0.5);
 
   for (const node of shuffledNodes) {
@@ -96,7 +96,7 @@ export async function createWorkingClient(): Promise<Client> {
       console.warn(`❌  ${node} failed tests`);
     } catch (error) {
       console.warn(
-        `❌ Failed to connect to ${node}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `❌ Failed to connect to ${node}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -109,12 +109,12 @@ export async function getPostsByAuthor(username: string) {
   try {
     const posts = await client.database.getDiscussions('blog', {
       tag: username,
-    limit: 100,
+      limit: 100,
     });
     return posts;
   } catch (error) {
     console.error('Error fetching posts:', 
-      error instanceof Error ? error.message : 'Unknown error'
+      error instanceof Error ? error.message : 'Unknown error',
     );
     throw error;
   }

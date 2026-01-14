@@ -1,15 +1,15 @@
-"use client";
-import { IconX } from "@/components/IconX";
-import MarkdownRenderer from "@/components/MarkdownRenderer";
-import { useEffect, useRef, useState } from "react";
+'use client';
+import { IconX } from '@/components/IconX';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { useEffect, useRef, useState } from 'react';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import { Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { useDynamicAboutPost } from '../../src/app/about/useDynamicAboutPost';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
-import DashboardHeader from "../dashboard/DashboardHeader";
-import EditPostButton from "../dashboard/EditPostButton";
+import DashboardHeader from '../dashboard/DashboardHeader';
+import EditPostButton from '../dashboard/EditPostButton';
 
 const HIVE_USERNAME = process.env.NEXT_PUBLIC_HIVE_USERNAME || '';
 
@@ -164,7 +164,7 @@ export default function AboutPage() {
                 <div className="hidden sm:flex relative w-full h-full items-center justify-center">
                   <img
                     src={fullscreenImg}
-                    alt={`Imagem em tela cheia`}
+                    alt={'Imagem em tela cheia'}
                     className="object-contain max-h-[90vh] max-w-full w-auto h-auto select-none"
                     style={{ pointerEvents: 'none' }}
                   />

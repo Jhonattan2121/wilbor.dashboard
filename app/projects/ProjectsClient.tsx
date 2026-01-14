@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import ViewSwitcher from '@/app/ViewSwitcher';
 import PhotoGridPage from '@/photo/PhotoGridPage';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 export default function ProjectsClient({ posts, tags, photosCount, cameras, simulations }: any) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const _router = useRouter();
 
   useEffect(() => {
     const tagFromUrl = searchParams.get('tag');

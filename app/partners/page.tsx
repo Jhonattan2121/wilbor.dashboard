@@ -1,15 +1,15 @@
-"use client";
-import { IconX } from "@/components/IconX";
-import MarkdownRenderer from "@/components/MarkdownRenderer";
-import { useEffect, useRef, useState } from "react";
+'use client';
+import { IconX } from '@/components/IconX';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { useEffect, useRef, useState } from 'react';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import { Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
 import { useDynamicPartnersPost } from '../../src/app/partners/useDynamicPartnersPost';
-import DashboardHeader from "../dashboard/DashboardHeader";
-import EditPostButton from "../dashboard/EditPostButton";
+import DashboardHeader from '../dashboard/DashboardHeader';
+import EditPostButton from '../dashboard/EditPostButton';
 
 const HIVE_USERNAME = process.env.NEXT_PUBLIC_HIVE_USERNAME || '';
 

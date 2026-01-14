@@ -67,7 +67,7 @@ export default function PhotoGridContainer({
   const handleContentSizeChange = (permlink: string, isLarge: boolean) => {
     console.log(
       'Content size changed for permlink:', permlink,
-      'Is large:', isLarge
+      'Is large:', isLarge,
     );
     setHasLargeContentMap(prev => ({ ...prev, [permlink]: isLarge }));
   };

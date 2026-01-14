@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useState } from 'react';
 import { hiveServerLoginWithPassword } from '../../lib/hive/server-functions';
 

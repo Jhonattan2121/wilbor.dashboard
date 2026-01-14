@@ -30,7 +30,7 @@ export const enhanceMediaWithMetadata = (media: Media[]): Media[] => {
         }
       }
     } catch (error) {
-      console.error("Error processing JSON metadata:", error);
+      console.error('Error processing JSON metadata:', error);
     }
     if (!enhancedItem.thumbnailSrc && item.hiveMetadata.body) {
       const images = extractImagesFromMarkdown(item.hiveMetadata.body);
@@ -76,7 +76,7 @@ export const groupMediaByPermlink = (media: Media[]): Map<string, Media[]> => {
         body: mainItem.hiveMetadata?.body || '',
         author: mainItem.hiveMetadata?.author || '',
         permlink: permlink,
-        json_metadata: JSON.stringify({ image: [mainItem.src] })
+        json_metadata: JSON.stringify({ image: [mainItem.src] }),
       });
       extractedMedia.forEach(mediaContent => {
         if (!processedUrls.has(mediaContent.url)) {
@@ -89,7 +89,7 @@ export const groupMediaByPermlink = (media: Media[]): Map<string, Media[]> => {
             type: mediaContent.type === 'iframe' ? 'video' : 'photo',
             iframeHtml: mediaContent.iframeHtml,
             thumbnailSrc: mainItem.thumbnailSrc,
-            hiveMetadata: mainItem.hiveMetadata
+            hiveMetadata: mainItem.hiveMetadata,
           });
         }
       });

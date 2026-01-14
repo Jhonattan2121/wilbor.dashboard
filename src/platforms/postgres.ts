@@ -4,9 +4,9 @@ import { Pool, QueryResult, QueryResultRow } from 'pg';
 // Criando o pool apenas se houver uma URL de banco de dados configurada
 const pool = HAS_DATABASE 
   ? new Pool({
-      connectionString: process.env.POSTGRES_URL,
-      ...POSTGRES_SSL_ENABLED && { ssl: true },
-    })
+    connectionString: process.env.POSTGRES_URL,
+    ...POSTGRES_SSL_ENABLED && { ssl: true },
+  })
   : null;
 
 export type Primitive = string | number | boolean | undefined | null;
