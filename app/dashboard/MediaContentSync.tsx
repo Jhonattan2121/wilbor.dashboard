@@ -114,31 +114,63 @@ export default function MediaContentSync({
 
   // Detecta restauração de conteúdo (Ctrl+Z ou cola)
   const handleContentRestoration = (newContent: string) => {
-    console.log('🔍 Verificando conteúdo para restauração...');
-    console.log('Conteúdo atual length:', newContent.length);
-    console.log('Previews atuais:', previews.length);
-    console.log('Primeiros 500 chars do conteúdo:', newContent.substring(0, 500));
+    // Se já temos previews e o conteúdo não está vazio, não faz nada
+    // Isso evita limpar mídias quando o usuário apenas digita ou adiciona <br>
+    if (previews.length > 0 && newContent.trim() !== '') {
+      // Verifica se há mudança significativa (remoção de muitas imagens)
+      // Extrai URLs de imagens do conteúdo com regex mais flexível
+      const ipfsImagePattern = new RegExp(
+        '!\\[.*?\\]\\(https:\\/\\/[^)]*ipfs\\/[^)]*\\)',
+        'g',
+      );
+      const imageMatches = newContent.match(ipfsImagePattern) || [];
+      
+      // Extrai URLs de vídeos do conteúdo - versão mais flexível
+      const ipfsVideoPattern = /<video[^>]*src=["']([^"']*ipfs[^"']*)["'][^>]*>/g;
+      const videoMatches = [...newContent.matchAll(ipfsVideoPattern)];
+      
+      // Combina todas as URLs encontradas
+      const imageUrls = imageMatches.map(match => {
+        const urlMatch = match.match(/\(([^)]+)\)/);
+        return urlMatch ? urlMatch[1] : '';
+      }).filter(url => url !== '');
+      
+      const videoUrls = videoMatches.map(match => match[1])
+        .filter(url => url !== '');
+      
+      const allUrls = [...imageUrls, ...videoUrls];
+      
+      // Só sincroniza se houver uma diferença significativa (mais de 1 item)
+      // Isso evita limpar quando apenas adicionamos <br> ou pequenas mudanças
+      if (allUrls.length > 0 && Math.abs(allUrls.length - previews.length) > 1) {
+        // Define todos como 100% concluídos
+        const placeholderProgress = allUrls.map(() => 100);
+        
+        // Cria arquivos baseados no tipo de mídia
+        const placeholderFiles = allUrls.map((url, index) => {
+          // Verifica se esta URL é de um vídeo
+          const isVideo = index >= imageUrls.length;
+          return createPlaceholderFile(url, isVideo);
+        });
+        
+        onFilesChange(placeholderFiles);
+        onPreviewsChange(allUrls);
+        onUploadProgressChange(placeholderProgress);
+      }
+      // Não limpa se não encontrar URLs - mantém as previews existentes
+      return;
+    }
     
-    // Verifica se houve uma restauração com Ctrl+Z ou cola
-    // Extrai URLs de imagens do conteúdo
+    // Só processa restauração se não há previews ou conteúdo está vazio
     const ipfsImagePattern = new RegExp(
-      '!\\[image\\]\\(https:\\/\\/lime-useful-snake-714\\.mypinata\\.' +
-      'cloud\\/ipfs\\/[^)]*\\)',
+      '!\\[.*?\\]\\(https:\\/\\/[^)]*ipfs\\/[^)]*\\)',
       'g',
     );
     const imageMatches = newContent.match(ipfsImagePattern) || [];
-    console.log('🖼️ Imagens encontradas:', imageMatches);
     
-    // Extrai URLs de vídeos do conteúdo - versão mais flexível
-    const ipfsVideoPattern = /<video[^>]*src=["'](https:\/\/lime-useful-snake-714\.mypinata\.cloud\/ipfs\/[^"']*)["'][^>]*>/g;
+    const ipfsVideoPattern = /<video[^>]*src=["']([^"']*ipfs[^"']*)["'][^>]*>/g;
     const videoMatches = [...newContent.matchAll(ipfsVideoPattern)];
-    console.log('🎥 Vídeos regex matches:', videoMatches);
     
-    // Também tenta uma busca mais simples para debug
-    const simpleVideoSearch = newContent.includes('<video') && newContent.includes('lime-useful-snake-714');
-    console.log('🎥 Contém <video> e lime-useful-snake-714?', simpleVideoSearch);
-    
-    // Combina todas as URLs encontradas
     const imageUrls = imageMatches.map(match => {
       const urlMatch = match.match(/\(([^)]+)\)/);
       return urlMatch ? urlMatch[1] : '';
@@ -149,25 +181,10 @@ export default function MediaContentSync({
     
     const allUrls = [...imageUrls, ...videoUrls];
     
-    console.log('URLs encontradas no conteúdo:', {
-      imagens: imageUrls.length,
-      videos: videoUrls.length,
-      total: allUrls.length,
-      previewsAtuais: previews.length,
-      imageUrls: imageUrls,
-      videoUrls: videoUrls,
-    });
-    
-    // Se há URLs no texto, mas diferentes quantidades no preview, sincroniza
-    if (allUrls.length > 0 && allUrls.length !== previews.length) {
-      console.log('🔄 Restaurando mídia do conteúdo:', allUrls.length, 'itens');
-      
-      // Define todos como 100% concluídos
+    // Só sincroniza se houver URLs e não houver previews
+    if (allUrls.length > 0 && previews.length === 0) {
       const placeholderProgress = allUrls.map(() => 100);
-      
-      // Cria arquivos baseados no tipo de mídia
       const placeholderFiles = allUrls.map((url, index) => {
-        // Verifica se esta URL é de um vídeo
         const isVideo = index >= imageUrls.length;
         return createPlaceholderFile(url, isVideo);
       });
@@ -175,14 +192,6 @@ export default function MediaContentSync({
       onFilesChange(placeholderFiles);
       onPreviewsChange(allUrls);
       onUploadProgressChange(placeholderProgress);
-      
-      console.log('✅ Sincronização concluída!');
-    } else if (allUrls.length === 0 && previews.length > 0) {
-      console.log('🧹 Nenhuma URL encontrada, limpando previews...');
-      // Se não há URLs no conteúdo mas há previews, limpa tudo
-      onFilesChange([]);
-      onPreviewsChange([]);
-      onUploadProgressChange([]);
     }
   };
 
