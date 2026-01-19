@@ -250,10 +250,10 @@ export default function PinataMediaPostButton({
     if (!textarea) return;
     const start = textarea.selectionStart || 0;
     const end = textarea.selectionEnd || 0;
-    const next = content.slice(0, start) + '<br>\n' + content.slice(end);
+    const next = content.slice(0, start) + '\n<br>\n' + content.slice(end);
     setContent(next);
     requestAnimationFrame(() => {
-      const cursor = start + 5;
+      const cursor = start + 6;
       textarea.focus();
       textarea.setSelectionRange(cursor, cursor);
     });
