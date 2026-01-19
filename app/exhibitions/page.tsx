@@ -5,7 +5,7 @@ import { useDynamicExhibitionsPost } from '../../src/app/exhibitions/useDynamicE
 import ViewSwitcher from '../../src/app/ViewSwitcher';
 import _JsonLd from '../components/JsonLd';
 import DashboardHeader from '../dashboard/DashboardHeader';
-import EditPostButton from '../dashboard/EditPostButton';
+import PinataEditPostButton from '../dashboard/PinataEditPostButton';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 export const dynamic = 'force-static';
@@ -56,7 +56,7 @@ export default function ExhibitionsPage() {
                   <DashboardHeader username={username} />
 
                 </div>
-                <EditPostButton
+                <PinataEditPostButton
                   username={username || HIVE_USERNAME}
                   author={username || HIVE_USERNAME}
                   permlink={permlink || ''}

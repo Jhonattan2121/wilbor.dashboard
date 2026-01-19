@@ -7,8 +7,8 @@ import { sendHiveOperation } from '../../../lib/hive/server-functions';
 import { MarkdownRenderer } from '@/lib/markdown/MarkdownRenderer';
 import MarkdownRendererComponent from '@/components/MarkdownRenderer';
 
-const CreatePostButton = dynamic(
-  () => import('../../../app/dashboard/CreatePostButton'),
+const PinataMediaPostButton = dynamic(
+  () => import('../../../app/dashboard/PinataMediaPostButton'),
   { ssr: false },
 );
 
@@ -419,13 +419,15 @@ export function HiveCommunitiesSelector({
             </div>
 
             <div className="pt-2">
-              <CreatePostButton
-                username={username}
-                initialCommunity={selectedCommunityForPost}
-                onPostSuccess={() => {
-                  setShowPostModal(false);
-                }}
-              />
+              {username && (
+                <PinataMediaPostButton
+                  username={username}
+                  initialCommunity={selectedCommunityForPost}
+                  onPostSuccess={() => {
+                    setShowPostModal(false);
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>

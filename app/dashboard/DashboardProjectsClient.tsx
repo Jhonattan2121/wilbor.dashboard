@@ -2,7 +2,7 @@
 
 import PhotoGridPage from '@/photo/PhotoGridPage';
 import { useEffect, useState } from 'react';
-import CreatePostButton from './CreatePostButton';
+import PinataMediaPostButton from './PinataMediaPostButton';
 import HiveLogin from './HiveLogin';
 
 export default function DashboardProjectsClient({ posts, photosCount, cameras, simulations }: any) {
@@ -66,7 +66,7 @@ export default function DashboardProjectsClient({ posts, photosCount, cameras, s
       >
         <div className="flex flex-row items-center gap-2 md:gap-4">
           {loginUser && (
-            <CreatePostButton
+            <PinataMediaPostButton
               username={loginUser}
               postingKey={postingKey || undefined}
             />

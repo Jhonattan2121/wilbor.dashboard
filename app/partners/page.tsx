@@ -9,7 +9,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
 import { useDynamicPartnersPost } from '../../src/app/partners/useDynamicPartnersPost';
 import DashboardHeader from '../dashboard/DashboardHeader';
-import EditPostButton from '../dashboard/EditPostButton';
+import PinataEditPostButton from '../dashboard/PinataEditPostButton';
 
 const HIVE_USERNAME = process.env.NEXT_PUBLIC_HIVE_USERNAME || '';
 
@@ -63,7 +63,7 @@ export default function PartnersPage() {
                 <div className="flex items-center gap-2">
                   <DashboardHeader username={username} />
                 </div>
-                <EditPostButton
+                <PinataEditPostButton
                   username={username || HIVE_USERNAME}
                   author={username || HIVE_USERNAME}
                   permlink={permlink || ''}

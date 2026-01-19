@@ -4,7 +4,7 @@ import { IconX } from '@/components/IconX';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import EditPostButton from '../../../app/dashboard/EditPostButton';
+import PinataEditPostButton from '../../../app/dashboard/PinataEditPostButton';
 import { ImageGallery } from './ImageGallery';
 import { extractImagesFromMarkdown } from './markdownUtils';
 import { Media } from './types';
@@ -312,7 +312,7 @@ export function MediaItem({
                     {isEditMode && mainItem.hiveMetadata && username && (
                       <div className="absolute top-2 right-2 edit-post-btn" onClick={e => e.stopPropagation()}>
                         <div className="pointer-events-auto">
-                          <EditPostButton
+                          <PinataEditPostButton
                             username={username}
                             postingKey={postingKey || undefined}
                             permlink={mainItem.hiveMetadata.permlink}
@@ -321,6 +321,7 @@ export function MediaItem({
                             initialContent={mainItem.hiveMetadata.body || ''}
                             initialTags={mainItem.tags || []}
                             initialImages={extractImagesFromMarkdown(mainItem.hiveMetadata.body || '')}
+                            initialThumbnail={updatedThumbnail || thumbnailUrl || undefined}
                           />
                         </div>
                       </div>
@@ -370,7 +371,7 @@ export function MediaItem({
                             {isEditMode && mainItem.hiveMetadata && username && (
                               <div className="absolute top-2 right-2 edit-post-btn" onClick={e => e.stopPropagation()}>
                                 <div className="pointer-events-auto">
-                                  <EditPostButton
+                                  <PinataEditPostButton
                                     username={username}
                                     postingKey={postingKey || undefined}
                                     permlink={mainItem.hiveMetadata.permlink}
@@ -379,6 +380,7 @@ export function MediaItem({
                                     initialContent={mainItem.hiveMetadata.body || ''}
                                     initialTags={mainItem.tags || []}
                                     initialImages={extractImagesFromMarkdown(mainItem.hiveMetadata.body || '')}
+                                    initialThumbnail={updatedThumbnail || thumbnailUrl || undefined}
                                   />
                                 </div>
                               </div>
@@ -435,7 +437,7 @@ export function MediaItem({
                       {isEditMode && mainItem.hiveMetadata && username && (
                         <div className="absolute top-2 right-2 edit-post-btn" onClick={e => e.stopPropagation()}>
                           <div className="pointer-events-auto">
-                            <EditPostButton
+                            <PinataEditPostButton
                               username={username}
                               postingKey={postingKey || undefined}
                               permlink={mainItem.hiveMetadata.permlink}
@@ -444,6 +446,7 @@ export function MediaItem({
                               initialContent={mainItem.hiveMetadata.body || ''}
                               initialTags={mainItem.tags || []}
                               initialImages={extractImagesFromMarkdown(mainItem.hiveMetadata.body || '')}
+                              initialThumbnail={updatedThumbnail || thumbnailUrl || undefined}
                             />
                           </div>
                         </div>
