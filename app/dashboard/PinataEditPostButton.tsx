@@ -388,13 +388,19 @@ export default function PinataEditPostButton({
         selectedThumbnail = combinedImages[0];
       }
 
-      const mediaEntriesForBody = uploaded.filter(entry => entry.url !== selectedThumbnail);
+      const mediaEntriesForBody = uploaded.filter(
+        entry => entry.url !== selectedThumbnail,
+      );
       const enrichedContent = transformExternalMedia(content.trim());
-      const mediaEntriesMissing = mediaEntriesForBody.filter(entry => !enrichedContent.includes(entry.url));
-      let mediaMarkdown = mediaEntriesMissing
-        .map(entry => entry.isVideo
-          ? `<video src="${entry.url}" controls></video>`
-          : `![image](${entry.url})`)
+      const mediaEntriesMissing = mediaEntriesForBody.filter(
+        entry => !enrichedContent.includes(entry.url),
+      );
+      const mediaMarkdown = mediaEntriesMissing
+        .map(entry =>
+          entry.isVideo
+            ? `<video src="${entry.url}" controls></video>`
+            : `![image](${entry.url})`,
+        )
         .join('\n\n');
 
       const body = [enrichedContent, mediaMarkdown].filter(Boolean).join('\n\n');
@@ -545,10 +551,31 @@ export default function PinataEditPostButton({
                           <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white font-bold" onClick={() => applyMarkdown('bold')} title="Bold">B</button>
                           <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white italic" onClick={() => applyMarkdown('italic')} title="Italic">I</button>
                           <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white line-through" onClick={() => applyMarkdown('strike')} title="Strike">S</button>
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('code')} title="Code">{"</>"}</button>
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('codeblock')} title="Code block">{'{}'}</button>
+                          <button
+                            type="button"
+                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
+                            onClick={() => applyMarkdown('code')}
+                            title="Code"
+                          >
+                            {`</>`}
+                          </button>
+                          <button
+                            type="button"
+                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
+                            onClick={() => applyMarkdown('codeblock')}
+                            title="Code block"
+                          >
+                            {'{}'} 
+                          </button>
                           <span className="h-4 w-px bg-zinc-700 mx-1" aria-hidden="true" />
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('quote')} title="Quote">"</button>
+                          <button
+                            type="button"
+                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
+                            onClick={() => applyMarkdown('quote')}
+                            title="Quote"
+                          >
+                            &quot;
+                          </button>
                           <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('ul')} title="List">*</button>
                           <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('ol')} title="Numbered list">1.</button>
                           <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('link')} title="Link">[ ]( )</button>
