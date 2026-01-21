@@ -99,9 +99,7 @@ export default function PinataMediaPostButton({
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tagInput, setTagInput] = useState('');
-  const [tags, setTags] = useState<string[]>(
-    initialCommunity ? [initialCommunity] : [],
-  );
+  const [tags, setTags] = useState<string[]>([]);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
@@ -148,14 +146,6 @@ export default function PinataMediaPostButton({
       isVideo: file.type.startsWith('video/'),
     }));
   }, [mediaFiles, mediaPreviews]);
-
-  useEffect(() => {
-    if (!initialCommunity) return;
-    setTags(prev => {
-      if (prev.includes(initialCommunity)) return prev;
-      return [initialCommunity, ...prev];
-    });
-  }, [initialCommunity]);
 
   function addTagsFromInput(raw: string) {
     const pieces = raw.split(/[,\s]+/g).map(p => p.trim()).filter(Boolean);
@@ -449,7 +439,7 @@ export default function PinataMediaPostButton({
       setIsOpen(false);
       setTitle('');
       setContent('');
-      setTags(initialCommunity ? [initialCommunity] : []);
+      setTags([]);
       setTagInput('');
       mediaPreviews.forEach(preview => {
         if (preview.startsWith('blob:')) URL.revokeObjectURL(preview);
@@ -508,7 +498,7 @@ export default function PinataMediaPostButton({
                             title="Imagem"
                           >
                             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden="true">
-                              <path fill="currentColor" d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2ZM8.5 9.5A1.5 1.5 0 1 1 10 8a1.5 1.5 0 0 1-1.5 1.5ZM5 19l4.5-6 3.5 4.5 2.5-3L19 19Z"/>
+                              <path fill="currentColor" d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2ZM8.5 9.5A1.5 1.5 0 1 1 10 8a1.5 1.5 0 0 1-1.5 1.5ZM5 19l4.5-6 3.5 4.5 2.5-3L19 19Z" />
                             </svg>
                           </button>
                           <button
@@ -519,7 +509,7 @@ export default function PinataMediaPostButton({
                             title="Video"
                           >
                             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden="true">
-                              <path fill="currentColor" d="M17 10.5V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3.5l4 4v-11Z"/>
+                              <path fill="currentColor" d="M17 10.5V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3.5l4 4v-11Z" />
                             </svg>
                           </button>
                           <button
@@ -530,211 +520,210 @@ export default function PinataMediaPostButton({
                             title="GIF"
                           >
                             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden="true">
-                              <path fill="currentColor" d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm3.5 6.5v3h2.5v-1h-1.5v-.5h1.5v-1h-2.5Zm4 0v3h1v-1h1.5a1 1 0 0 0 0-2H11.5Zm1 1h1.5v-.5H12.5v.5ZM16.5 11.5v3h1v-3h-1Z"/>
+                              <path fill="currentColor" d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm3.5 6.5v3h2.5v-1h-1.5v-.5h1.5v-1h-2.5Zm4 0v3h1v-1h1.5a1 1 0 0 0 0-2H11.5Zm1 1h1.5v-.5H12.5v.5ZM16.5 11.5v3h1v-3h-1Z" />
                             </svg>
                           </button>
-                        <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('h1')} title="Heading">H</button>
-                        <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white font-bold" onClick={() => applyMarkdown('bold')} title="Bold">B</button>
-                        <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white italic" onClick={() => applyMarkdown('italic')} title="Italic">I</button>
-                        <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white line-through" onClick={() => applyMarkdown('strike')} title="Strike">S</button>
-                        <button
-                           type="button"
-                           className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
-                           onClick={() => applyMarkdown('code')}
-                           title="Code"
-                         >
-                           {`</>`}
-                         </button>
-                         <button
-                           type="button"
-                           className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
-                           onClick={() => applyMarkdown('codeblock')}
-                           title="Code block"
-                         >
-                           {'{}'}
-                         </button>
-                         <span className="h-4 w-px bg-zinc-700 mx-1" aria-hidden="true" />
-                         <button
-                           type="button"
-                           className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
-                           onClick={() => applyMarkdown('quote')}
-                           title="Quote"
-                         >
-                           &quot;
-                         </button>
-                        <button
-                          type="button"
-                          className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
-                          onClick={() => applyMarkdown('ul')}
-                          title="List"
-                        >
-                          *
-                        </button>
-                        <button
-                          type="button"
-                          className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
-                          onClick={() => applyMarkdown('ol')}
-                          title="Numbered list"
-                        >
-                          1.
-                        </button>
-                        <button
-                          type="button"
-                          className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
-                          onClick={() => applyMarkdown('link')}
-                          title="Link"
-                        >
-                          [ ]( )
-                        </button>
-                        <button
-                          type="button"
-                          className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
-                          onClick={() => applyMarkdown('hr')}
-                          title="Divider"
-                        >
-                          --
-                        </button>
-                        <span className="ml-auto h-4 w-px bg-zinc-700" aria-hidden="true" />
-                        </div>
-                        <textarea
-                        ref={contentRef}
-                        value={content}
-                        onChange={event => setContent(event.target.value)}
-                        onKeyDown={handleContentKeyDown}
-                        placeholder="Conteudo"
-                        rows={8}
-                        className="w-full flex-1 resize-none bg-transparent px-3 py-3 text-sm text-white outline-none"
-                        />
-                        </div>
-                        <input {...imageDropzone.getInputProps({ className: 'hidden' })} />
-                        <input {...videoDropzone.getInputProps({ className: 'hidden' })} />
-                        <input {...gifDropzone.getInputProps({ className: 'hidden' })} />
-                        </div>
-
-                        <div>
-                        <label className="sr-only">Tags</label>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                        {tags.map(tag => (
-                        <span
-                          key={tag}
-                          className="text-xs bg-zinc-800/80 border border-zinc-700 text-zinc-200 px-2 py-1 rounded-md"
-                        >
-                          {tag}
+                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('h1')} title="Heading">H</button>
+                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white font-bold" onClick={() => applyMarkdown('bold')} title="Bold">B</button>
+                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white italic" onClick={() => applyMarkdown('italic')} title="Italic">I</button>
+                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white line-through" onClick={() => applyMarkdown('strike')} title="Strike">S</button>
                           <button
                             type="button"
-                            className="ml-1 text-zinc-400 hover:text-white"
-                            onClick={() => removeTag(tag)}
+                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
+                            onClick={() => applyMarkdown('code')}
+                            title="Code"
                           >
-                            ×
+                            {`</>`}
                           </button>
-                        </span>
-                        ))}
+                          <button
+                            type="button"
+                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
+                            onClick={() => applyMarkdown('codeblock')}
+                            title="Code block"
+                          >
+                            {'{}'}
+                          </button>
+                          <span className="h-4 w-px bg-zinc-700 mx-1" aria-hidden="true" />
+                          <button
+                            type="button"
+                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
+                            onClick={() => applyMarkdown('quote')}
+                            title="Quote"
+                          >
+                            &quot;
+                          </button>
+                          <button
+                            type="button"
+                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
+                            onClick={() => applyMarkdown('ul')}
+                            title="List"
+                          >
+                            *
+                          </button>
+                          <button
+                            type="button"
+                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
+                            onClick={() => applyMarkdown('ol')}
+                            title="Numbered list"
+                          >
+                            1.
+                          </button>
+                          <button
+                            type="button"
+                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
+                            onClick={() => applyMarkdown('link')}
+                            title="Link"
+                          >
+                            [ ]( )
+                          </button>
+                          <button
+                            type="button"
+                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
+                            onClick={() => applyMarkdown('hr')}
+                            title="Divider"
+                          >
+                            --
+                          </button>
+                          <span className="ml-auto h-4 w-px bg-zinc-700" aria-hidden="true" />
                         </div>
-                        <input
+                        <textarea
+                          ref={contentRef}
+                          value={content}
+                          onChange={event => setContent(event.target.value)}
+                          onKeyDown={handleContentKeyDown}
+                          placeholder="Conteudo"
+                          rows={8}
+                          className="w-full flex-1 resize-none bg-transparent px-3 py-3 text-sm text-white outline-none"
+                        />
+                      </div>
+                      <input {...imageDropzone.getInputProps({ className: 'hidden' })} />
+                      <input {...videoDropzone.getInputProps({ className: 'hidden' })} />
+                      <input {...gifDropzone.getInputProps({ className: 'hidden' })} />
+                    </div>
+
+                    <div>
+                      <label className="sr-only">Tags</label>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {tags.map(tag => (
+                          <span
+                            key={tag}
+                            className="text-xs bg-zinc-800/80 border border-zinc-700 text-zinc-200 px-2 py-1 rounded-md"
+                          >
+                            {tag}
+                            <button
+                              type="button"
+                              className="ml-1 text-zinc-400 hover:text-white"
+                              onClick={() => removeTag(tag)}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      <input
                         value={tagInput}
                         onChange={event => setTagInput(event.target.value)}
                         onKeyDown={handleTagKeyDown}
                         onBlur={() => addTagsFromInput(tagInput)}
                         placeholder="Digite tags e pressione Enter"
                         className="w-full h-11 rounded-lg bg-zinc-800/80 border border-zinc-700 px-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-                        />
-                        </div>
-                        </div>
+                      />
+                    </div>
+                  </div>
 
-                        {showPreview && (
-                        <div className="space-y-4">
-                        <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 overflow-hidden h-[68vh] min-h-[420px] flex flex-col">
+                  {showPreview && (
+                    <div className="space-y-4">
+                      <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 overflow-hidden h-[68vh] min-h-[420px] flex flex-col">
                         <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
-                        <span className="text-[11px] uppercase tracking-wide text-zinc-500">
-                          Preview
-                        </span>
+                          <span className="text-[11px] uppercase tracking-wide text-zinc-500">
+                            Preview
+                          </span>
                         </div>
                         <div className="flex-1 overflow-auto px-3 py-3 text-sm text-zinc-200">
-                        <div className="prose prose-invert max-w-none break-words">
-                          <MarkdownRenderer>
-                            {transformExternalMedia(content) || 'Nada para mostrar.'}
-                          </MarkdownRenderer>
+                          <div className="prose prose-invert max-w-none break-words">
+                            <MarkdownRenderer>
+                              {transformExternalMedia(content) || 'Nada para mostrar.'}
+                            </MarkdownRenderer>
+                          </div>
                         </div>
-                        </div>
-                        </div>
+                      </div>
 
-                        {thumbnailItems.length > 0 && (
+                      {thumbnailItems.length > 0 && (
                         <div>
-                        <p className="text-[11px] uppercase tracking-wide text-zinc-500 mb-2">
-                          Thumbnail pequena
-                        </p>
-                        <div className="flex flex-wrap gap-0.5">
-                          {thumbnailItems.map(item => (
-                            <button
-                              key={item.preview}
-                              type="button"
-                              onClick={() => setThumbnailIndex(item.index)}
-                              className={
-                                `relative h-14 w-14 rounded border ` +
-                                `${
-                                  thumbnailIndex === item.index
+                          <p className="text-[11px] uppercase tracking-wide text-zinc-500 mb-2">
+                            Thumbnail pequena
+                          </p>
+                          <div className="flex flex-wrap gap-0.5">
+                            {thumbnailItems.map(item => (
+                              <button
+                                key={item.preview}
+                                type="button"
+                                onClick={() => setThumbnailIndex(item.index)}
+                                className={
+                                  `relative h-14 w-14 rounded border ` +
+                                  `${thumbnailIndex === item.index
                                     ? 'border-green-400'
                                     : 'border-zinc-700'
-                                }`
-                              }
-                            >
-                              {item.isVideo ? (
-                                <video
-                                  src={item.preview}
-                                  className="h-full w-full object-cover rounded"
-                                />
-                              ) : (
-                                <img
-                                  src={item.preview}
-                                  alt=""
-                                  className="h-full w-full object-cover rounded"
-                                />
-                              )}
-                            </button>
-                          ))}
+                                  }`
+                                }
+                              >
+                                {item.isVideo ? (
+                                  <video
+                                    src={item.preview}
+                                    className="h-full w-full object-cover rounded"
+                                  />
+                                ) : (
+                                  <img
+                                    src={item.preview}
+                                    alt=""
+                                    className="h-full w-full object-cover rounded"
+                                  />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {thumbnailItems.map(item => (
+                              <button
+                                key={`remove-${item.preview}`}
+                                type="button"
+                                onClick={() => removeMedia(item.index)}
+                                className="text-xs text-red-400 hover:text-red-300"
+                              >
+                                Remover {item.index + 1}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {thumbnailItems.map(item => (
-                            <button
-                              key={`remove-${item.preview}`}
-                              type="button"
-                              onClick={() => removeMedia(item.index)}
-                              className="text-xs text-red-400 hover:text-red-300"
-                            >
-                              Remover {item.index + 1}
-                            </button>
-                          ))}
-                        </div>
-                        </div>
-                        )}
-                        </div>
-                        )}
-                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
-                        {error && <div className="text-xs text-red-400">{error}</div>}
-                        </div>
-                        </div>
+                {error && <div className="text-xs text-red-400">{error}</div>}
+              </div>
+            </div>
 
-                        <div className="px-4 md:px-5 py-4 border-t border-zinc-800 flex-shrink-0 flex justify-end gap-2">
-                        <button
-                        type="button"
-                        onClick={() => setIsOpen(false)}
-                        className="px-3 py-2 text-sm text-zinc-300 hover:text-white"
-                        >
-                        Cancelar
-                        </button>
-                        <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium hover:bg-green-500 disabled:opacity-60"
-                        >
-                        {isSubmitting ? 'Publicando...' : 'Publicar'}
-                        </button>
-                        </div>
-                        </div>
-                        </div>
-                        )}
+            <div className="px-4 md:px-5 py-4 border-t border-zinc-800 flex-shrink-0 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="px-3 py-2 text-sm text-zinc-300 hover:text-white"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium hover:bg-green-500 disabled:opacity-60"
+              >
+                {isSubmitting ? 'Publicando...' : 'Publicar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

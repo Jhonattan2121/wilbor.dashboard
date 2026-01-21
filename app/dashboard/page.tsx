@@ -46,11 +46,8 @@ async function getHivePosts(username: string) {
         try {
           const metadata = JSON.parse(post.json_metadata || '{}');
           postTags = metadata.tags || [];
-          if (post.category && !postTags.includes(post.category)) {
-            postTags.unshift(post.category);
-          }
         } catch (_e) {
-          postTags = post.category ? [post.category] : [];
+          postTags = [];
         }
 
         const extractIpfsHash = (url: string): string => {

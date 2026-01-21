@@ -187,7 +187,6 @@ export default function PinataEditPostButton({
   function removeTag(tagToRemove: string) {
     setTags(prev => prev.filter(tag => tag !== tagToRemove));
   }
-
   function applyMarkdown(type: string) {
     const textarea = contentRef.current;
     const current = content;
@@ -412,11 +411,12 @@ export default function PinataEditPostButton({
         ? [selectedThumbnail, ...combinedImages.filter(url => url != selectedThumbnail)]
         : combinedImages;
 
-      const normalizedTags = normalizeTags(tags);
+     const normalizedTags = normalizeTags(tags);
       if (normalizedTags.length === 0) {
         setError('Adicione pelo menos 1 tag antes de atualizar.');
         return;
       }
+      
       const parentPermlink = normalizedTags[0];
 
       const metadata = {
@@ -603,7 +603,7 @@ export default function PinataEditPostButton({
                     <div>
                       <label className="sr-only">Tags</label>
                       <div className="flex flex-wrap gap-2 mb-2">
-                        {tags.map(tag => (
+                       {tags.map(tag => (
                           <span key={tag} className="text-xs bg-zinc-800/80 border border-zinc-700 text-zinc-200 px-2 py-1 rounded-md">
                             {tag}
                             <button
