@@ -15,7 +15,6 @@ interface PinataMediaPostButtonProps {
 }
 
 const PINATA_GATEWAY = 'https://ipfs.skatehive.app/ipfs';
-const DEFAULT_PARENT_PERMLINK = 'hive';
 
 function buildPinataUrl(hash: string) {
   return `${PINATA_GATEWAY}/${hash}`;
@@ -398,8 +397,12 @@ export default function PinataMediaPostButton({
         ? [selectedThumbnail, ...imageUrls.filter(url => url != selectedThumbnail)]
         : imageUrls;
 
-      const normalizedTags = tags.length > 0 ? normalizeTags(tags) : [DEFAULT_PARENT_PERMLINK];
-      const parentPermlink = normalizedTags[0] || DEFAULT_PARENT_PERMLINK;
+      const normalizedTags = normalizeTags(tags);
+      if (normalizedTags.length === 0) {
+        setError('Adicione pelo menos 1 tag antes de publicar.');
+        return;
+      }
+      const parentPermlink = normalizedTags[0];
 
       const metadata = {
         app: 'wilbor.dashboard',
