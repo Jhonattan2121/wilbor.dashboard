@@ -1,11 +1,11 @@
 'use client';
 
+import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { uploadFileToIPFS } from '@/utils/ipfs';
+import type { Operation } from '@hiveio/dhive';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import type { Operation } from '@hiveio/dhive';
-import { uploadFileToIPFS } from '@/utils/ipfs';
 import { sendHiveOperation } from '../../lib/hive/server-functions';
-import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 interface PinataEditPostButtonProps {
   username: string;
@@ -493,8 +493,11 @@ export default function PinataEditPostButton({
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="relative w-screen h-screen max-w-none flex flex-col bg-zinc-900/95 border border-zinc-700/70 shadow-2xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="relative w-screen max-w-none max-h-screen flex flex-col bg-zinc-900/95 border border-zinc-700/70 shadow-2xl">
             <div className="px-4 md:px-5 pt-4 md:pt-5 pb-0 flex-shrink-0">
               <div>
                 <label className="sr-only">Titulo</label>
