@@ -1,12 +1,13 @@
 import {
   Path_Contact,
   Path_Exhibitions,
+  Path_Footer,
   PATH_FEED_INFERRED,
   Path_Partners,
 } from '@/app/paths';
 
 export type SwitcherSelection = 
-  'projects' | 'about' | 'exhibitions' | 'partners' | 'contact'; 
+  'projects' | 'about' | 'exhibitions' | 'partners' | 'contact' | 'footer'; 
 
 export default function ViewSwitcher({
   currentSelection,
@@ -54,6 +55,12 @@ export default function ViewSwitcher({
       mobileText: 'contato',
       href: Path_Contact,
       active: currentSelection === 'contact',
+    },
+    {
+      text: 'footer',
+      mobileText: 'footer',
+      href: Path_Footer,
+      active: currentSelection === 'footer',
     },
   ];
 
