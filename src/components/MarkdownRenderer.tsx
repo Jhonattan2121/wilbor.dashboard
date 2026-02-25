@@ -4,6 +4,7 @@ import ReactMarkdown, { Components } from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import { normalizeMarkdownForDisplay } from '@/utility/markdown';
 
 const markdownComponents: Components = {
   h1: ({ ...props }) => (
@@ -24,7 +25,7 @@ const markdownComponents: Components = {
       {...props}
     />
   ),
-  p: ({ ...props }) => <p className="leading-relaxed mb-4 text-gray-800 dark:text-gray-300" {...props} />, 
+  p: ({ ...props }) => <p className="leading-relaxed mb-4 whitespace-pre-line text-gray-800 dark:text-gray-300" {...props} />, 
   a: ({ ...props }) => (
     <a
       className="flex items-center gap-2 text-blue-600 underline hover:text-blue-800 dark:text-blue-400"
@@ -96,6 +97,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   children,
   className = '',
 }) => {
+  const normalizedContent = normalizeMarkdownForDisplay(children);
+
   return (
     <div className={`max-w-none ${className}`}>
       <ReactMarkdown
@@ -103,7 +106,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight, rehypeRaw]}
       >
-        {children}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   );

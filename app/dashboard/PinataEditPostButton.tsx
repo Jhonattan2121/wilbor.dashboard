@@ -254,22 +254,6 @@ export default function PinataEditPostButton({
     }
   }
 
-  function handleContentKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key !== 'Enter' || event.shiftKey) return;
-    event.preventDefault();
-    const textarea = contentRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart || 0;
-    const end = textarea.selectionEnd || 0;
-    const next = content.slice(0, start) + '\n<br>\n' + content.slice(end);
-    setContent(next);
-    requestAnimationFrame(() => {
-      const cursor = start + 6;
-      textarea.focus();
-      textarea.setSelectionRange(cursor, cursor);
-    });
-  }
-
   async function processSelectedFiles(selected: File[]) {
     if (selected.length === 0) return;
     const previews = selected.map(file => URL.createObjectURL(file));
@@ -293,6 +277,22 @@ export default function PinataEditPostButton({
     } catch (_error) {
       setError('Falha ao enviar mídia para o Pinata.');
     }
+  }
+
+  function handleContentKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    const textarea = contentRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart || 0;
+    const end = textarea.selectionEnd || 0;
+    const next = content.slice(0, start) + '\n---\n' + content.slice(end);
+    setContent(next);
+    requestAnimationFrame(() => {
+      const cursor = start + 5;
+      textarea.focus();
+      textarea.setSelectionRange(cursor, cursor);
+    });
   }
 
   async function handleFilesChange(event: React.ChangeEvent<HTMLInputElement>) {

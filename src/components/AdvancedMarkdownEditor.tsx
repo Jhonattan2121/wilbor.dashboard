@@ -164,31 +164,6 @@ const AdvancedMarkdownEditor: React.FC<AdvancedMarkdownEditorProps> = ({
       return;
     }
 
-    // Enter para quebra de linha automática com <br>
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      
-      // Insere <br> na posição do cursor
-      const newValue = 
-        value.substring(0, start) + 
-        '<br>\n' + 
-        value.substring(end);
-      
-      onChange(newValue);
-
-      // Reposiciona o cursor após o <br>
-      setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(start + 5, start + 5);
-      }, 0);
-      return;
-    }
-
     // Tab para indentação
     if (e.key === 'Tab') {
       e.preventDefault();
