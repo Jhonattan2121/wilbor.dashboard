@@ -70,7 +70,7 @@ export default function ExhibitionsPage() {
 
               <div className="prose dark:prose-invert max-w-none">
                 <MarkdownRenderer>
-                  {` ${title}\n${markdown.replace(/!\[[^\]]*\]\([^\)]+\)/g, '')}`}
+                  {markdown.replace(/!\[[^\]]*\]\([^\)]+\)/g, '')}
                 </MarkdownRenderer>
               </div>
               {media.length > 0 && (

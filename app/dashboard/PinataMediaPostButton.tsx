@@ -225,7 +225,7 @@ export default function PinataMediaPostButton({
         wrap('\n```\n', '\n```\n');
         break;
       case 'hr':
-        insertLine('\n---\n');
+        insertLine('\n\n---\n\n');
         break;
       default:
         break;
@@ -262,16 +262,22 @@ export default function PinataMediaPostButton({
   }
 
   function handleContentKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key !== 'Enter' || event.shiftKey) return;
-    event.preventDefault();
+    if (event.key !== 'Enter') return;
+    if (!event.ctrlKey && !event.metaKey) return;
+
     const textarea = contentRef.current;
     if (!textarea) return;
+
+    event.preventDefault();
     const start = textarea.selectionStart || 0;
     const end = textarea.selectionEnd || 0;
-    const next = content.slice(0, start) + '\n---\n' + content.slice(end);
+    const insertText = '\n\n---\n\n';
+    const value = textarea.value;
+    const next = value.slice(0, start) + insertText + value.slice(end);
     setContent(next);
+
     requestAnimationFrame(() => {
-      const cursor = start + 5;
+      const cursor = start + insertText.length;
       textarea.focus();
       textarea.setSelectionRange(cursor, cursor);
     });
