@@ -429,7 +429,14 @@ export default function PinataEditPostButton({
 
             <div className="flex-1 overflow-y-auto">
               <div className="px-4 md:px-5 py-4">
-                <div className="grid gap-4 md:grid-cols-[1fr_1fr] items-start">
+                <div
+                  className={
+                    'grid gap-4 items-start ' +
+                    (thumbnailCandidates.length > 0
+                      ? 'md:grid-cols-[1fr_420px]'
+                      : 'md:grid-cols-1')
+                  }
+                >
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -490,13 +497,13 @@ export default function PinataEditPostButton({
                           />
                         </div>
 
-                        {/* Preview (EXATO como no site blog) */}
-                        <div className="rounded-xl border border-zinc-800 overflow-hidden shadow-inner flex flex-col" style={{ backgroundColor: '#1a1a1a' }}>
+                        {/* Preview (render 1:1 do site) */}
+                        <div className="rounded-xl border border-zinc-800 bg-transparent overflow-hidden shadow-inner flex flex-col">
                           <div className="border-b border-zinc-800 px-3 py-2 flex items-center justify-between">
                             <span className="text-xs uppercase tracking-wide text-zinc-500 font-semibold">Preview (como aparece no site)</span>
                           </div>
-                          <div className="flex-1 overflow-auto px-4 py-3 markdown-preview-blog">
-                            <Markdown>
+                          <div className="flex-1 overflow-auto px-4 py-3">
+                            <Markdown className="exhibition-content" removeMedia>
                               {content || '*Nada para mostrar ainda*'}
                             </Markdown>
                           </div>

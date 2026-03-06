@@ -338,105 +338,46 @@
 
 @layer components {
   .component-surface {
-    @apply
-      bg-content rounded-lg
+    @apply bg-content rounded-lg;
   }
 }
 
 /* ============================================= */
-/* PREVIEW MARKDOWN - IDÊNTICO AO SITE BLOG      */
-/* Referência: screenshot do site wilbor.studio   */
+/* Markdown styles — copied from wilbor-art-blog  */
+/* Keep renderer output 1:1 with the blog site    */
 /* ============================================= */
-.markdown-preview-blog {
-  background: #1a1a1a !important;
-  padding: 1rem !important;
-}
-
-.markdown-preview-blog,
-.markdown-preview-blog *,
-.markdown-preview-blog p,
-.markdown-preview-blog span,
-.markdown-preview-blog div,
-.markdown-preview-blog li,
-.markdown-preview-blog strong,
-.markdown-preview-blog b,
-.markdown-preview-blog em,
-.markdown-preview-blog i,
-.markdown-preview-blog a,
-.markdown-preview-blog h1,
-.markdown-preview-blog h2,
-.markdown-preview-blog h3,
-.markdown-preview-blog h4,
-.markdown-preview-blog h5,
-.markdown-preview-blog h6 {
+.markdown-content-custom,
+.markdown-content-custom *,
+.markdown-content-custom p,
+.markdown-content-custom span,
+.markdown-content-custom div,
+.markdown-content-custom a,
+.markdown-content-custom a:visited,
+.markdown-content-custom a:link,
+.markdown-content-custom a:active,
+.markdown-content-custom strong,
+.markdown-content-custom em,
+.markdown-content-custom b,
+.markdown-content-custom i,
+.markdown-content-custom li,
+.markdown-content-custom ul,
+.markdown-content-custom ol,
+.markdown-content-custom h1,
+.markdown-content-custom h2,
+.markdown-content-custom h3,
+.markdown-content-custom h4,
+.markdown-content-custom h5,
+.markdown-content-custom h6 {
   color: #888888 !important;
-  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
-  line-height: 1.5 !important;
 }
 
-/* Headings - mesmo tamanho, só negrito, sem borda, compacto */
-.markdown-preview-blog h1 {
-  font-size: 0.875rem !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.025em !important;
-  margin-top: 0 !important;
-  margin-bottom: 0.125rem !important;
-}
-
-.markdown-preview-blog h2 {
-  font-size: 0.875rem !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.025em !important;
-  margin-top: 0.75rem !important;
-  margin-bottom: 0.125rem !important;
-}
-
-.markdown-preview-blog h3 {
-  font-size: 0.875rem !important;
-  font-weight: 700 !important;
-  margin-top: 0.75rem !important;
-  margin-bottom: 0.125rem !important;
-}
-
-/* Parágrafos - compactos */
-.markdown-preview-blog p {
-  margin-top: 0 !important;
-  margin-bottom: 0.25rem !important;
-  font-size: 0.875rem !important;
-}
-
-/* Datas (renderizadas como p logo após h2) */
-.markdown-preview-blog .exhibition-date {
-  font-size: 0.75rem !important;
-  margin-bottom: 0.25rem !important;
-}
-
-.markdown-preview-blog a {
+.markdown-content-custom a {
   text-decoration: none !important;
 }
 
-.markdown-preview-blog hr {
-  border-color: #333 !important;
-  margin: 1rem 0 !important;
+.markdown-content-custom a:hover {
+  text-decoration: underline !important;
+  color: inherit !important;
 }
 
-.markdown-preview-blog blockquote {
-  border-left: 3px solid #444 !important;
-  padding-left: 0.75rem !important;
-  font-style: italic !important;
-}
 
-.markdown-preview-blog code {
-  background: #111 !important;
-  padding: 0.125rem 0.25rem !important;
-  border-radius: 0.25rem !important;
-}
-
-.markdown-preview-blog pre {
-  background: #111 !important;
-  padding: 0.75rem !important;
-  border-radius: 0.25rem !important;
-  overflow-x: auto !important;
-}
