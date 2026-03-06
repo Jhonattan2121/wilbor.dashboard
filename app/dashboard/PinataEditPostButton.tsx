@@ -6,14 +6,7 @@ import type { Operation } from '@hiveio/dhive';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { sendHiveOperation } from '../../lib/hive/server-functions';
-import dynamic from 'next/dynamic';
-import '@uiw/react-md-editor/markdown-editor.css';
-import '@uiw/react-markdown-preview/markdown.css';
 
-const MDEditor = dynamic(
-  () => import('@uiw/react-md-editor'),
-  { ssr: false }
-);
 
 interface PinataEditPostButtonProps {
   username: string;
@@ -128,6 +121,7 @@ export default function PinataEditPostButton({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageAccept = useMemo(() => ({
     'image/*': ['.png', '.gif', '.jpeg', '.jpg', '.webp'],
   }), []);
@@ -473,18 +467,40 @@ export default function PinataEditPostButton({
                           GIF
                         </button>
                       </div>
-                      <div className="rounded-xl border border-zinc-800 overflow-hidden shadow-inner h-[68vh] min-h-[420px]" data-color-mode="dark">
-                        <MDEditor
-                          value={content}
-                          onChange={(val) => setContent(val || '')}
-                          preview="live"
-                          height="100%"
-                          visibleDragbar={false}
-                          highlightEnable={true}
-                          textareaProps={{
-                            placeholder: 'Escreva seu conteúdo em Markdown...'
-                          }}
-                        />
+                      
+                      <div className="grid grid-cols-2 gap-4 h-[68vh] min-h-[420px]">
+                        {/* Editor */}
+                        <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 overflow-hidden shadow-inner flex flex-col">
+                          <div className="border-b border-zinc-800 px-3 py-2 flex items-center justify-between">
+                            <span className="text-xs uppercase tracking-wide text-zinc-500 font-semibold">Editor</span>
+                          </div>
+                          <textarea
+                            ref={contentRef}
+                            value={content}
+                            onChange={e => setContent(e.target.value)}
+                            placeholder="Escreva seu conteúdo em Markdown...
+
+# Título
+## Subtítulo
+**Negrito** *Itálico*
+
+- Lista
+- Item 2"
+                            className="flex-1 w-full resize-none bg-transparent px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-none font-mono"
+                          />
+                        </div>
+
+                        {/* Preview (usando MarkdownRenderer do site) */}
+                        <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 overflow-hidden shadow-inner flex flex-col">
+                          <div className="border-b border-zinc-800 px-3 py-2 flex items-center justify-between">
+                            <span className="text-xs uppercase tracking-wide text-zinc-500 font-semibold">Preview (como aparece no site)</span>
+                          </div>
+                          <div className="flex-1 overflow-auto px-4 py-3">
+                            <MarkdownRenderer>
+                              {content || '*Nada para mostrar ainda*'}
+                            </MarkdownRenderer>
+                          </div>
+                        </div>
                       </div>
                       <input {...imageDropzone.getInputProps({ className: 'hidden' })} />
                       <input {...videoDropzone.getInputProps({ className: 'hidden' })} />
