@@ -116,6 +116,22 @@ export default function HiveLogin({
             {error}
           </div>
         )}
+        {process.env.NODE_ENV === 'development' && (
+          <>
+            <div className="w-full flex items-center gap-2 my-2">
+              <div className="flex-1 h-px bg-neutral-700" />
+              <span className="text-xs text-neutral-400">dev only</span>
+              <div className="flex-1 h-px bg-neutral-700" />
+            </div>
+            <button
+              className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 
+                         rounded w-full font-medium transition"
+              onClick={() => onLogin(username, 'keychain')}
+            >
+              🔓 Dev Bypass
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
