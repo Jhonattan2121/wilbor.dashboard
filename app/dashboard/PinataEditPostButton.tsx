@@ -6,6 +6,14 @@ import type { Operation } from '@hiveio/dhive';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { sendHiveOperation } from '../../lib/hive/server-functions';
+import dynamic from 'next/dynamic';
+import '@uiw/react-md-editor/markdown-editor.css';
+import '@uiw/react-markdown-preview/markdown.css';
+
+const MDEditor = dynamic(
+  () => import('@uiw/react-md-editor'),
+  { ssr: false }
+);
 
 interface PinataEditPostButtonProps {
   username: string;
@@ -120,8 +128,6 @@ export default function PinataEditPostButton({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const showPreview = true;
-  const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageAccept = useMemo(() => ({
     'image/*': ['.png', '.gif', '.jpeg', '.jpg', '.webp'],
   }), []);
@@ -187,73 +193,6 @@ export default function PinataEditPostButton({
   function removeTag(tagToRemove: string) {
     setTags(prev => prev.filter(tag => tag !== tagToRemove));
   }
-  function applyMarkdown(type: string) {
-    const textarea = contentRef.current;
-    const current = content;
-    if (!textarea) return;
-    const start = textarea.selectionStart || 0;
-    const end = textarea.selectionEnd || 0;
-    const selected = current.slice(start, end);
-
-    const wrap = (before: string, after: string = before) => {
-      const next = current.slice(0, start) + before + selected + after + current.slice(end);
-      setContent(next);
-      requestAnimationFrame(() => {
-        const cursor = start + before.length + selected.length;
-        textarea.focus();
-        textarea.setSelectionRange(cursor, cursor);
-      });
-    };
-
-    const insertLine = (prefix: string) => {
-      const next = current.slice(0, start) + prefix + selected + current.slice(end);
-      setContent(next);
-      requestAnimationFrame(() => {
-        const cursor = start + prefix.length + selected.length;
-        textarea.focus();
-        textarea.setSelectionRange(cursor, cursor);
-      });
-    };
-
-    switch (type) {
-      case 'h1':
-        insertLine('# ');
-        break;
-      case 'bold':
-        wrap('**');
-        break;
-      case 'italic':
-        wrap('*');
-        break;
-      case 'strike':
-        wrap('~~');
-        break;
-      case 'code':
-        wrap('`');
-        break;
-      case 'quote':
-        insertLine('> ');
-        break;
-      case 'ul':
-        insertLine('- ');
-        break;
-      case 'ol':
-        insertLine('1. ');
-        break;
-      case 'link':
-        wrap('[', '](url)');
-        break;
-      case 'codeblock':
-        wrap('\n```\n', '\n```\n');
-        break;
-      case 'hr':
-        insertLine('\n\n---\n\n');
-        break;
-      default:
-        break;
-    }
-  }
-
   async function processSelectedFiles(selected: File[]) {
     if (selected.length === 0) return;
     const previews = selected.map(file => URL.createObjectURL(file));
@@ -277,28 +216,6 @@ export default function PinataEditPostButton({
     } catch (_error) {
       setError('Falha ao enviar mídia para o Pinata.');
     }
-  }
-
-  function handleContentKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key !== 'Enter') return;
-    if (!event.ctrlKey && !event.metaKey) return;
-
-    const textarea = contentRef.current;
-    if (!textarea) return;
-
-    event.preventDefault();
-    const start = textarea.selectionStart || 0;
-    const end = textarea.selectionEnd || 0;
-    const insertText = '\n\n---\n\n';
-    const value = textarea.value;
-    const next = value.slice(0, start) + insertText + value.slice(end);
-    setContent(next);
-
-    requestAnimationFrame(() => {
-      const cursor = start + insertText.length;
-      textarea.focus();
-      textarea.setSelectionRange(cursor, cursor);
-    });
   }
 
   async function handleFilesChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -524,84 +441,49 @@ export default function PinataEditPostButton({
                       <div className="flex items-center justify-between mb-2">
                         <label className="sr-only">Conteudo</label>
                       </div>
-                      <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 overflow-hidden shadow-inner h-[68vh] min-h-[420px] flex flex-col">
-                        <div className="flex flex-wrap items-center gap-1 border-b border-zinc-800/80 px-2 py-1.5">
-                          <button
-                            type="button"
-                            className="inline-flex items-center justify-center rounded px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800"
-                            onClick={() => imageDropzone.open()}
-                            aria-label="Inserir imagem"
-                            title="Imagem"
-                          >
-                            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden="true">
-                              <path fill="currentColor" d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2ZM8.5 9.5A1.5 1.5 0 1 1 10 8a1.5 1.5 0 0 1-1.5 1.5ZM5 19l4.5-6 3.5 4.5 2.5-3L19 19Z"/>
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            className="inline-flex items-center justify-center rounded px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800"
-                            onClick={() => videoDropzone.open()}
-                            aria-label="Inserir video"
-                            title="Video"
-                          >
-                            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden="true">
-                              <path fill="currentColor" d="M17 10.5V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3.5l4 4v-11Z"/>
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            className="inline-flex items-center justify-center rounded px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800"
-                            onClick={() => gifDropzone.open()}
-                            aria-label="Inserir GIF"
-                            title="GIF"
-                          >
-                            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden="true">
-                              <path fill="currentColor" d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm3.5 6.5v3h2.5v-1h-1.5v-.5h1.5v-1h-2.5Zm4 0v3h1v-1h1.5a1 1 0 0 0 0-2H11.5Zm1 1h1.5v-.5H12.5v.5ZM16.5 11.5v3h1v-3h-1Z"/>
-                            </svg>
-                          </button>
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('h1')} title="Heading">H</button>
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white font-bold" onClick={() => applyMarkdown('bold')} title="Bold">B</button>
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white italic" onClick={() => applyMarkdown('italic')} title="Italic">I</button>
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white line-through" onClick={() => applyMarkdown('strike')} title="Strike">S</button>
-                          <button
-                            type="button"
-                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
-                            onClick={() => applyMarkdown('code')}
-                            title="Code"
-                          >
-                            {`</>`}
-                          </button>
-                          <button
-                            type="button"
-                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
-                            onClick={() => applyMarkdown('codeblock')}
-                            title="Code block"
-                          >
-                            {'{}'} 
-                          </button>
-                          <span className="h-4 w-px bg-zinc-700 mx-1" aria-hidden="true" />
-                          <button
-                            type="button"
-                            className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white"
-                            onClick={() => applyMarkdown('quote')}
-                            title="Quote"
-                          >
-                            &quot;
-                          </button>
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('ul')} title="List">*</button>
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('ol')} title="Numbered list">1.</button>
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('link')} title="Link">[ ]( )</button>
-                          <button type="button" className="text-xs text-zinc-200 px-1.5 py-0.5 hover:text-white" onClick={() => applyMarkdown('hr')} title="Divider">--</button>
-                          <span className="ml-auto h-4 w-px bg-zinc-700" aria-hidden="true" />
-                        </div>
-                        <textarea
-                          ref={contentRef}
+                      <div className="flex flex-wrap items-center gap-2 mb-2 px-2 py-2 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium text-zinc-200 bg-zinc-800 hover:bg-zinc-700 transition"
+                          onClick={() => imageDropzone.open()}
+                        >
+                          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                            <path fill="currentColor" d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2ZM8.5 9.5A1.5 1.5 0 1 1 10 8a1.5 1.5 0 0 1-1.5 1.5ZM5 19l4.5-6 3.5 4.5 2.5-3L19 19Z"/>
+                          </svg>
+                          Imagem
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium text-zinc-200 bg-zinc-800 hover:bg-zinc-700 transition"
+                          onClick={() => videoDropzone.open()}
+                        >
+                          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                            <path fill="currentColor" d="M17 10.5V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3.5l4 4v-11Z"/>
+                          </svg>
+                          Vídeo
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium text-zinc-200 bg-zinc-800 hover:bg-zinc-700 transition"
+                          onClick={() => gifDropzone.open()}
+                        >
+                          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                            <path fill="currentColor" d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm3.5 6.5v3h2.5v-1h-1.5v-.5h1.5v-1h-2.5Zm4 0v3h1v-1h1.5a1 1 0 0 0 0-2H11.5Zm1 1h1.5v-.5H12.5v.5ZM16.5 11.5v3h1v-3h-1Z"/>
+                          </svg>
+                          GIF
+                        </button>
+                      </div>
+                      <div className="rounded-xl border border-zinc-800 overflow-hidden shadow-inner h-[68vh] min-h-[420px]" data-color-mode="dark">
+                        <MDEditor
                           value={content}
-                          onChange={event => setContent(event.target.value)}
-                          onKeyDown={handleContentKeyDown}
-                          placeholder="Conteudo"
-                          rows={8}
-                          className="w-full flex-1 resize-none bg-transparent px-3 py-3 text-sm text-white outline-none"
+                          onChange={(val) => setContent(val || '')}
+                          preview="live"
+                          height="100%"
+                          visibleDragbar={false}
+                          highlightEnable={true}
+                          textareaProps={{
+                            placeholder: 'Escreva seu conteúdo em Markdown...'
+                          }}
                         />
                       </div>
                       <input {...imageDropzone.getInputProps({ className: 'hidden' })} />
@@ -636,46 +518,31 @@ export default function PinataEditPostButton({
                     </div>
                   </div>
 
-                  {showPreview && (
+                  {thumbnailCandidates.length > 0 && (
                     <div className="space-y-4">
-                      <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 overflow-hidden h-[68vh] min-h-[420px] flex flex-col">
-                        <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
-                          <span className="text-[11px] uppercase tracking-wide text-zinc-500">Preview</span>
-                        </div>
-                        <div className="flex-1 overflow-auto px-3 py-3 text-sm text-zinc-200">
-                          <div className="prose prose-invert max-w-none break-words">
-                            <MarkdownRenderer>
-                              {transformExternalMedia(content) || 'Nada para mostrar.'}
-                            </MarkdownRenderer>
-                          </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide text-zinc-500 mb-2">Thumbnail da capa</p>
+                        <div className="flex flex-wrap gap-2">
+                          {thumbnailCandidates.map(candidate => {
+                            const isSelected =
+                              thumbnailChoice?.source === candidate.choice?.source &&
+                              thumbnailChoice?.index === candidate.choice?.index;
+                            return (
+                              <button
+                                key={candidate.key}
+                                type="button"
+                                onClick={() => setThumbnailChoice(candidate.choice)}
+                                className={
+                                  `relative h-20 w-20 rounded-lg border-2 transition ` +
+                                  `${isSelected ? 'border-green-400 ring-2 ring-green-400/30' : 'border-zinc-700 hover:border-zinc-600'}`
+                                }
+                              >
+                                <img src={candidate.preview} alt="" className="h-full w-full object-cover rounded-md" />
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
-
-                      {thumbnailCandidates.length > 0 && (
-                        <div>
-                          <p className="text-[11px] uppercase tracking-wide text-zinc-500 mb-2">Thumbnail pequena</p>
-                          <div className="flex flex-wrap gap-0.5">
-                            {thumbnailCandidates.map(candidate => {
-                              const isSelected =
-                                thumbnailChoice?.source === candidate.choice?.source &&
-                                thumbnailChoice?.index === candidate.choice?.index;
-                              return (
-                                <button
-                                  key={candidate.key}
-                                  type="button"
-                                  onClick={() => setThumbnailChoice(candidate.choice)}
-                                  className={
-                                    `relative h-14 w-14 rounded border ` +
-                                    `${isSelected ? 'border-green-400' : 'border-zinc-700'}`
-                                  }
-                                >
-                                  <img src={candidate.preview} alt="" className="h-full w-full object-cover rounded" />
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
