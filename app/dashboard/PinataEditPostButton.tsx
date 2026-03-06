@@ -1,6 +1,6 @@
 'use client';
 
-import MarkdownRenderer from '@/components/MarkdownRenderer';
+import Markdown from '@/components/Markdown';
 import { uploadFileToIPFS } from '@/utils/ipfs';
 import type { Operation } from '@hiveio/dhive';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -490,15 +490,15 @@ export default function PinataEditPostButton({
                           />
                         </div>
 
-                        {/* Preview (usando MarkdownRenderer do site) */}
-                        <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 overflow-hidden shadow-inner flex flex-col">
+                        {/* Preview (EXATO como no site blog) */}
+                        <div className="rounded-xl border border-zinc-800 overflow-hidden shadow-inner flex flex-col" style={{ backgroundColor: '#1a1a1a' }}>
                           <div className="border-b border-zinc-800 px-3 py-2 flex items-center justify-between">
                             <span className="text-xs uppercase tracking-wide text-zinc-500 font-semibold">Preview (como aparece no site)</span>
                           </div>
-                          <div className="flex-1 overflow-auto px-4 py-3">
-                            <MarkdownRenderer>
+                          <div className="flex-1 overflow-auto px-4 py-3 markdown-preview-blog">
+                            <Markdown>
                               {content || '*Nada para mostrar ainda*'}
-                            </MarkdownRenderer>
+                            </Markdown>
                           </div>
                         </div>
                       </div>
