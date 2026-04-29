@@ -3,12 +3,24 @@ import { getPostsByBlog } from '../../lib/hive/hive-client';
 
 const TITLE_KEYWORDS = [
   'sobre mim',
-  'about',
-  'me',
-  'sobre',
   'about me',
   'sobre wilbor',
+  'biografia',
+  'perfil',
 ];
+
+function normalizeText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function isAboutPost(post: any) {
+  const normalizedTitle = normalizeText(post.title || '');
+  return TITLE_KEYWORDS.some(keyword => normalizedTitle.includes(normalizeText(keyword)));
+}
 
 function extractMediaFromPost(post: any) {
   const images: string[] = [];
@@ -55,11 +67,7 @@ export function useDynamicAboutPost(username: string) {
     (async () => {
       try {
         const posts = await getPostsByBlog(username);
-        const found = posts.find((post: any) =>
-          post.title && TITLE_KEYWORDS.some(keyword =>
-            post.title.toLowerCase().includes(keyword),
-          ),
-        );
+        const found = posts.find((post: any) => isAboutPost(post));
         if (found) {
           setPermlink(found.permlink);
           setTitle(found.title);

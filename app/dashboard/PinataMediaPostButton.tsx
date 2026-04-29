@@ -370,9 +370,8 @@ export default function PinataMediaPostButton({
       const selectedThumbnail = selectedEntry && !selectedEntry.isVideo
         ? selectedEntry.url
         : imageUrls[0];
-      const mediaEntriesForBody = uploaded.filter(entry => entry.url !== selectedThumbnail);
       const enrichedContent = transformExternalMedia(content.trim());
-      const mediaEntriesMissing = mediaEntriesForBody.filter(
+      const mediaEntriesMissing = uploaded.filter(
         entry => !enrichedContent.includes(entry.url),
       );
       const mediaMarkdown = mediaEntriesMissing
@@ -383,12 +382,7 @@ export default function PinataMediaPostButton({
         )
         .join('\n\n');
 
-      const body = [enrichedContent, mediaMarkdown].filter(Boolean).join('\n\n');
-      const shouldRemoveThumbnailFromBody = mediaEntriesForBody.length > 0;
-      const sanitizedBody = selectedThumbnail
-        ? removeUrlFromMarkdown(body, selectedThumbnail)
-        : body;
-      const finalBody = sanitizedBody;
+      const finalBody = [enrichedContent, mediaMarkdown].filter(Boolean).join('\n\n');
       const orderedImages = selectedThumbnail
         ? [selectedThumbnail, ...imageUrls.filter(url => url != selectedThumbnail)]
         : imageUrls;
