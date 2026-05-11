@@ -88,8 +88,12 @@ const markdownComponents: Components = {
   td: ({ ...props }) => (
     <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-800 dark:text-gray-300" {...props} />
   ),
-  img: ({ ...props }) => (
-    <img className="rounded-lg max-w-full h-auto my-4 border border-gray-200 dark:border-gray-700" {...props} />
+  img: ({ alt, ...props }) => (
+    <img
+      alt={alt ?? ''}
+      className="rounded-lg max-w-full h-auto my-4 border border-gray-200 dark:border-gray-700"
+      {...props}
+    />
   ),
   iframe: ({ ...props }) => (
     <div className="my-4 w-full overflow-hidden rounded-lg bg-black">

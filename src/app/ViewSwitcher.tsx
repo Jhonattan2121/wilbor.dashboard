@@ -1,3 +1,6 @@
+'use client';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import {
   Path_Contact,
   Path_Exhibitions,
@@ -6,8 +9,17 @@ import {
   Path_Partners,
 } from '@/app/paths';
 
-export type SwitcherSelection = 
-  'projects' | 'about' | 'exhibitions' | 'partners' | 'contact' | 'footer'; 
+export type SwitcherSelection =
+  'projects' | 'about' | 'exhibitions' | 'partners' | 'contact' | 'footer';
+
+const NAV_ITEMS = [
+  { label: 'dashboard',  short: 'dashboard',  href: '/dashboard',       key: 'projects'    },
+  { label: 'sobre',      short: 'sobre',      href: PATH_FEED_INFERRED, key: 'about'       },
+  { label: 'exposições', short: 'expo',       href: Path_Exhibitions,   key: 'exhibitions' },
+  { label: 'parceiros',  short: 'parceiros',  href: Path_Partners,      key: 'partners'    },
+  { label: 'contato',    short: 'contato',    href: Path_Contact,       key: 'contact'     },
+  { label: 'footer',     short: 'footer',     href: Path_Footer,        key: 'footer'      },
+] as const;
 
 export default function ViewSwitcher({
   currentSelection,
@@ -16,99 +28,165 @@ export default function ViewSwitcher({
   tags: _tags,
 }: {
   currentSelection?: SwitcherSelection
-  tags?: any
+  tags?: unknown
   showAdmin?: boolean
   drawerTagsProps?: {
-    tags: string[];
-    selectedTag: string | null;
-    setSelectedTag?: (tag: string | null) => void;
+    tags: string[]
+    selectedTag: string | null
+    setSelectedTag?: (tag: string | null) => void
   }
 }) {
-  
-  const menuItems = [
-    {
-      text: 'dashboard',
-      mobileText: 'dashboard',
-      href: '/dashboard',
-      active: currentSelection === 'projects',
-    },
-    {
-      text: 'sobre',
-      mobileText: 'sobre',
-      href: PATH_FEED_INFERRED,
-      active: currentSelection === 'about',
-    },
-    {
-      text: 'exposições/exibições',
-      mobileText: 'expo',
-      href: Path_Exhibitions,
-      active: currentSelection === 'exhibitions',
-    },
-    {
-      text: 'parceiros',
-      mobileText: 'parceiros',
-      href: Path_Partners,
-      active: currentSelection === 'partners',
-    },
-    {
-      text: 'contato',
-      mobileText: 'contato',
-      href: Path_Contact,
-      active: currentSelection === 'contact',
-    },
-    {
-      text: 'footer',
-      mobileText: 'footer',
-      href: Path_Footer,
-      active: currentSelection === 'footer',
-    },
-  ];
+  const [open, setOpen] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUsername(localStorage.getItem('dashboard_loginUser'));
+  }, []);
+
+  function handleLogout() {
+    localStorage.removeItem('dashboard_loggedIn');
+    localStorage.removeItem('dashboard_loginUser');
+    localStorage.removeItem('dashboard_postingKey');
+    window.location.href = '/dashboard';
+  }
 
   return (
-    <>
-      {/* Mobile Version - Visible only on small screens */}
-      <div className="block sm:hidden w-full mb-4 px-2"> 
-        <div className="flex items-center justify-center gap-2 py-2 
-          overflow-x-auto">
-          {menuItems.map((item, index) => (
-            <a
-              key={index}
-              href={item.href}
-              className={`flex-shrink-0 px-3 py-2 text-center text-sm 
-                transition-colors rounded-md hover:bg-gray-100 
-                dark:hover:bg-gray-800 font-sans 
-                ${item.active 
-              ? 'text-red-500 bg-red-50 dark:bg-red-900/20' 
-              : 'text-gray-600 dark:text-gray-400'
-            }`}
+    <header className="sticky top-0 z-40 w-full">
+      {/* Glass bar */}
+      <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800/50" />
+
+      {/* Main row */}
+      <div className="relative flex items-center justify-between h-14 px-4 sm:px-6 lg:px-10">
+
+        {/* Logo */}
+        <a
+          href="/"
+          className="flex items-center gap-2.5 shrink-0 group"
+          aria-label="Wilbor — página inicial"
+        >
+          <Image
+            src="/favicons/FAVCOM_WILBOR.png"
+            alt=""
+            width={30}
+            height={30}
+            className="rounded-xl transition-opacity group-hover:opacity-80"
+          />
+          <span className="font-mono text-sm font-semibold text-white tracking-tight hidden xs:block select-none">
+            wilbor.art
+          </span>
+        </a>
+
+        {/* Desktop links */}
+        <nav aria-label="Navegação principal" className="hidden sm:flex items-center gap-0.5">
+          {NAV_ITEMS.map(({ label, href, key }) => {
+            const active = currentSelection === key;
+            return (
+              <a
+                key={key}
+                href={href}
+                aria-current={active ? 'page' : undefined}
+                className={[
+                  'relative px-3.5 py-1.5 rounded-lg text-sm font-mono tracking-tight transition-all duration-150',
+                  active
+                    ? 'text-white bg-zinc-800'
+                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50',
+                ].join(' ')}
+              >
+                {label}
+                {active && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[1px] w-4 h-[2px] rounded-full bg-white/60" />
+                )}
+              </a>
+            );
+          })}
+        </nav>
+
+        {/* Desktop user section */}
+        {username && (
+          <div className="hidden sm:flex items-center gap-2.5 pl-4 ml-1 border-l border-zinc-800">
+            <span className="text-xs font-mono text-zinc-400 select-none">
+              <span className="text-zinc-600">@</span>{username}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="text-xs font-mono px-2 py-1 rounded-md text-zinc-500
+                         hover:text-red-400 hover:bg-red-950/40 transition-all duration-150"
             >
-              {item.mobileText}
-            </a>
-          ))}
-        </div>
+              sair
+            </button>
+          </div>
+        )}
+
+        {/* Mobile toggle */}
+        <button
+          className="sm:hidden flex items-center justify-center w-9 h-9 rounded-lg
+                     text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all"
+          onClick={() => setOpen(v => !v)}
+          aria-expanded={open}
+          aria-controls="mobile-nav"
+          aria-label={open ? 'Fechar menu' : 'Abrir menu'}
+        >
+          {open ? (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          )}
+        </button>
       </div>
 
-      {/* Desktop Version - Visible only on medium screens and up */}
-      <div className="hidden sm:flex items-center gap-4 w-full mt-4 mb-4 
-        px-4 lg:px-14">
-        <div className="flex flex-row gap-6 flex-1 items-center">
-          {menuItems.map((item, index) => (
-            <a
-              key={index}
-              href={item.href}
-              className={`px-3 py-2 text-center text-base whitespace-nowrap 
-                transition-colors rounded-md hover:bg-gray-100 
-                dark:hover:bg-gray-800 font-sans 
-                ${item.active 
-              ? 'text-red-500 bg-red-50 dark:bg-red-900/20' 
-              : 'text-gray-600 dark:text-gray-400'
-            }`}
-            >
-              {item.text}
-            </a>
-          ))}
-        </div>
-      </div>
-    </>
+      {/* Mobile drawer */}
+      {open && (
+        <nav
+          id="mobile-nav"
+          aria-label="Navegação móvel"
+          className="relative sm:hidden border-t border-zinc-800/50 bg-zinc-950/95 backdrop-blur-md"
+        >
+          <ul className="flex flex-col py-1.5">
+            {NAV_ITEMS.map(({ label, short, href, key }) => {
+              const active = currentSelection === key;
+              return (
+                <li key={key}>
+                  <a
+                    href={href}
+                    aria-current={active ? 'page' : undefined}
+                    onClick={() => setOpen(false)}
+                    className={[
+                      'flex items-center gap-3 px-5 py-3 text-sm font-mono tracking-tight',
+                      'border-l-2 transition-all duration-150',
+                      active
+                        ? 'border-white text-white bg-zinc-800/40'
+                        : 'border-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/25 hover:border-zinc-600',
+                    ].join(' ')}
+                  >
+                    <span className="sm:hidden">{short}</span>
+                    <span className="hidden sm:inline">{label}</span>
+                  </a>
+                </li>
+              );
+            })}
+            {/* Mobile user row */}
+            {username && (
+              <li className="border-t border-zinc-800/50 mt-1">
+                <div className="flex items-center justify-between px-5 py-3">
+                  <span className="text-xs font-mono text-zinc-500 select-none">
+                    <span className="text-zinc-700">@</span>{username}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-xs font-mono text-zinc-500 hover:text-red-400 transition-colors duration-150"
+                  >
+                    sair
+                  </button>
+                </div>
+              </li>
+            )}
+          </ul>
+        </nav>
+      )}
+    </header>
   );
 }

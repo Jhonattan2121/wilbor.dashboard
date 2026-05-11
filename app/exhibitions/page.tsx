@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useDynamicExhibitionsPost } from '../../src/app/exhibitions/useDynamicExhibitionsPost';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
 import _JsonLd from '../components/JsonLd';
-import DashboardHeader from '../dashboard/DashboardHeader';
 import PinataEditPostButton from '../dashboard/PinataEditPostButton';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 
@@ -52,10 +51,6 @@ export default function ExhibitionsPage() {
           {markdown && (
             <>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                <div className="flex items-center gap-2">
-                  <DashboardHeader username={username} />
-
-                </div>
                 <PinataEditPostButton
                   username={username || HIVE_USERNAME}
                   author={username || HIVE_USERNAME}
