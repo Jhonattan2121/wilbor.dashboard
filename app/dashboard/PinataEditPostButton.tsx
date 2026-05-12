@@ -403,7 +403,7 @@ export default function PinataEditPostButton({
     <div>
       <button
         type="button"
-        className="px-3 py-1.5 rounded-md bg-green-600 text-white text-xs font-semibold hover:bg-green-500 transition"
+        className="px-2.5 py-1 rounded font-mono text-xs border border-zinc-600 text-zinc-300 hover:border-white hover:text-white bg-black/80 backdrop-blur-sm transition-all duration-150"
         onClick={() => setIsOpen(true)}
       >
         Editar

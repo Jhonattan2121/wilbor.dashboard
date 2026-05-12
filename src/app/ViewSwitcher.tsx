@@ -1,6 +1,36 @@
 'use client';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+const ASCII_CHARS = '!<>-_\\/[]{}=+*^?#@$%&';
+
+function ScrambleText({ text, className }: { text: string; className?: string }) {
+  const [display, setDisplay] = useState(text);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function handleMouseEnter() {
+    let iteration = 0;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setDisplay(
+        text.split('').map((char, index) => {
+          if (char === '.' || char === ' ') return char;
+          if (index < Math.floor(iteration)) return char;
+          return ASCII_CHARS[Math.floor(Math.random() * ASCII_CHARS.length)];
+        }).join('')
+      );
+      iteration += 0.4;
+      if (iteration >= text.length) {
+        clearInterval(intervalRef.current!);
+        setDisplay(text);
+      }
+    }, 40);
+  }
+
+  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
+
+  return <span className={className} onMouseEnter={handleMouseEnter}>{display}</span>;
+}
 import {
   Path_Contact,
   Path_Exhibitions,
@@ -41,6 +71,9 @@ export default function ViewSwitcher({
 
   useEffect(() => {
     setUsername(localStorage.getItem('dashboard_loginUser'));
+    const sync = () => setUsername(localStorage.getItem('dashboard_loginUser'));
+    window.addEventListener('dashboard_auth_changed', sync);
+    return () => window.removeEventListener('dashboard_auth_changed', sync);
   }, []);
 
   function handleLogout() {
@@ -71,9 +104,10 @@ export default function ViewSwitcher({
             height={30}
             className="rounded-xl transition-opacity group-hover:opacity-80"
           />
-          <span className="font-mono text-sm font-semibold text-white tracking-tight hidden xs:block select-none">
-            wilbor.art
-          </span>
+          <ScrambleText
+            text="wilbor.art"
+            className="font-mono text-sm font-semibold text-white tracking-tight hidden xs:block select-none"
+          />
         </a>
 
         {/* Desktop links */}
