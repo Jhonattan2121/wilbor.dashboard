@@ -43,15 +43,9 @@ export default function MediaContentSync({
   ): string => {
     if (!currentContent) return currentContent;
     
-    console.log('Removendo mídia do conteúdo');
-    console.log('URL a remover:', urlToRemove);
-    console.log('Conteúdo antes:', currentContent);
-    
     let novoConteudo = currentContent;
-    
-    // Se a URL for blob, precisa encontrar a URL IPFS correspondente 
+
     if (urlToRemove && urlToRemove.startsWith('blob:')) {
-      console.log('É uma URL blob, procurando por URLs IPFS no conteúdo...');
       
       // Divide o conteúdo em linhas
       const linhas = currentContent.split('\n');
@@ -71,7 +65,6 @@ export default function MediaContentSync({
           
         if (linha.includes(pinataImagePattern) || 
             (linha.includes('<video') && linha.includes(pinataVideoPattern))) {
-          console.log('Removendo linha com mídia IPFS:', linha);
           midiaRemovida = true;
           return false;
         }
@@ -89,15 +82,12 @@ export default function MediaContentSync({
       novoConteudo = linhasFiltradas.join('\n').trim();
     }
     
-    console.log('Conteúdo depois:', novoConteudo);
     return novoConteudo;
   };
 
   // Detecta quando conteúdo foi limpo e sincroniza mídias
   const handleContentCleared = (newContent: string) => {
     if (newContent.trim() === '') {
-      console.log('Conteúdo limpo, removendo todas as mídias');
-      
       // Revoga URLs blob para liberar memória
       previews.forEach(preview => {
         if (preview.startsWith('blob:')) {
@@ -223,7 +213,6 @@ export default function MediaContentSync({
 
     // Pega a URL que será removida ANTES de remover da lista
     const urlToRemove = newPreviews[index];
-    console.log('Removendo mídia com URL:', urlToRemove);
 
     // Revoga a URL de objeto para liberar memória
     if (urlToRemove && urlToRemove.startsWith('blob:')) {
@@ -244,7 +233,6 @@ export default function MediaContentSync({
     onPreviewsChange(newPreviews);
     onUploadProgressChange(newProgress);
     
-    console.log('Mídia removida com sucesso!');
   };
 
   // Retorna as funções que o componente pai pode usar
