@@ -67,6 +67,7 @@ export default function SplashCursor({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const canvasEl = canvas;
     let isActive = true;
 
     const config = {
@@ -264,7 +265,7 @@ export default function SplashCursor({
     let displayUniforms: Record<string, WebGLUniformLocation> = {};
 
     function bindDisplayMaterial(keywords: string[]) {
-      let hash = keywords.reduce((h, k) => { for (let i = 0; i < k.length; i++) h = ((h << 5) - h + k.charCodeAt(i)) | 0; return h; }, 0);
+      const hash = keywords.reduce((h, k) => { for (let i = 0; i < k.length; i++) h = ((h << 5) - h + k.charCodeAt(i)) | 0; return h; }, 0);
       if (!displayPrograms[hash]) {
         const fs = compileShader(gl.FRAGMENT_SHADER, displayFSSrc, keywords);
         displayPrograms[hash] = createProgram(baseVS, fs);
@@ -452,16 +453,16 @@ export default function SplashCursor({
 
     // ── Splat helpers ──────────────────────────────────────────────────────────
     function correctRadius(r: number) {
-      const ar = canvas.width/canvas.height;
+      const ar = canvasEl.width/canvasEl.height;
       return ar > 1 ? r*ar : r;
     }
-    function correctDeltaX(d: number) { const ar = canvas.width/canvas.height; return ar < 1 ? d*ar : d; }
-    function correctDeltaY(d: number) { const ar = canvas.width/canvas.height; return ar > 1 ? d/ar : d; }
+    function correctDeltaX(d: number) { const ar = canvasEl.width/canvasEl.height; return ar < 1 ? d*ar : d; }
+    function correctDeltaY(d: number) { const ar = canvasEl.width/canvasEl.height; return ar > 1 ? d/ar : d; }
 
     function splat(x: number, y: number, dx: number, dy: number, color: { r:number; g:number; b:number }) {
       splatProg.bind();
       gl.uniform1i(splatProg.u.uTarget, velocity.read.attach(0));
-      gl.uniform1f(splatProg.u.aspectRatio, canvas.width/canvas.height);
+      gl.uniform1f(splatProg.u.aspectRatio, canvasEl.width/canvasEl.height);
       gl.uniform2f(splatProg.u.point, x, y);
       gl.uniform3f(splatProg.u.color, dx, dy, 0);
       gl.uniform1f(splatProg.u.radius, correctRadius(config.SPLAT_RADIUS/100));
@@ -483,14 +484,14 @@ export default function SplashCursor({
 
     function updatePointerDown(p: PointerData, id: number, posX: number, posY: number) {
       p.id=id; p.down=true; p.moved=false;
-      p.texcoordX=posX/canvas.width; p.texcoordY=1-(posY/canvas.height);
+      p.texcoordX=posX/canvasEl.width; p.texcoordY=1-(posY/canvasEl.height);
       p.prevTexcoordX=p.texcoordX; p.prevTexcoordY=p.texcoordY;
       p.deltaX=0; p.deltaY=0; p.color=generateColor();
     }
 
     function updatePointerMove(p: PointerData, posX: number, posY: number) {
       p.prevTexcoordX=p.texcoordX; p.prevTexcoordY=p.texcoordY;
-      p.texcoordX=posX/canvas.width; p.texcoordY=1-(posY/canvas.height);
+      p.texcoordX=posX/canvasEl.width; p.texcoordY=1-(posY/canvasEl.height);
       p.deltaX=correctDeltaX(p.texcoordX-p.prevTexcoordX);
       p.deltaY=correctDeltaY(p.texcoordY-p.prevTexcoordY);
       p.moved=Math.abs(p.deltaX)>0||Math.abs(p.deltaY)>0;
@@ -503,9 +504,9 @@ export default function SplashCursor({
     let colorTimer = 0;
 
     function resizeCanvas() {
-      const w = scaleByPixelRatio(canvas.clientWidth);
-      const h = scaleByPixelRatio(canvas.clientHeight);
-      if (canvas.width!==w||canvas.height!==h) { canvas.width=w; canvas.height=h; return true; }
+      const w = scaleByPixelRatio(canvasEl.clientWidth);
+      const h = scaleByPixelRatio(canvasEl.clientHeight);
+      if (canvasEl.width!==w||canvasEl.height!==h) { canvasEl.width=w; canvasEl.height=h; return true; }
       return false;
     }
 

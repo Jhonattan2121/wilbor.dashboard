@@ -15,7 +15,8 @@ const config: Config = {
   // camelcase-keys and its deps (map-obj, quick-lru) are ESM-only; exclude them
   // from the ignore list so Jest/SWC transforms them to CommonJS.
   transformIgnorePatterns: [
-    '/node_modules/(?!(camelcase-keys|map-obj|quick-lru)/)',
+    '<rootDir>/node_modules/.pnpm/(?!(camelcase-keys|map-obj|quick-lru)@)',
+    '/node_modules/(?!.pnpm|camelcase-keys|map-obj|quick-lru)',
   ],
 };
  

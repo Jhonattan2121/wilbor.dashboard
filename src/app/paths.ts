@@ -122,10 +122,7 @@ export const pathForPhoto = ({
             : `${PREFIX_PHOTO}/${getPhotoId(photo)}`;
 
 export const pathForTag = (tag: string) =>
-  `${PREFIX_TAG}/${parameterize(tag)}`
-  .split('/')
-  .filter(Boolean)
-  .join('/');
+  `${PREFIX_TAG}/${parameterize(tag)}`;
 
 export const pathForCamera = ({ make, model }: { make: string; model: string }) =>
   `${PREFIX_CAMERA}/${parameterize(make, true)}/${parameterize(model, true)}`;

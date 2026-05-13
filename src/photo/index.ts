@@ -25,7 +25,7 @@ import {
   formatIso,
 } from '@/utility/exif';
 import { parameterize } from '@/utility/string';
-import camelcaseKeys from 'camelcase-keys';
+import { camelcaseKeys } from '@/utility/camelcase';
 import { isBefore } from 'date-fns';
 import type { Metadata } from 'next';
 
