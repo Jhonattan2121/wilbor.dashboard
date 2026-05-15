@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const VIMEO_ACCESS_TOKEN = process.env.VIMEO_ACCESS_TOKEN;
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '0mb',
-    },
-  },
-};
 
 export async function POST(request: NextRequest) {
   if (!VIMEO_ACCESS_TOKEN) {

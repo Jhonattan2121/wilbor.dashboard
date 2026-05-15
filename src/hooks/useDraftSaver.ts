@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface DraftData {
   title: string;
@@ -36,48 +36,23 @@ export const useDraftSaver = ({
     setHasDraft(!!savedDraft);
   }, [draftKey]);
 
-  // Auto-save
-  useEffect(() => {
+  const saveDraft = useCallback(() => {
     if (typeof window === 'undefined') return;
-
-    // Limpar timeout anterior
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    // Só salva se tiver conteúdo
-    if (!title && !content && tags.length === 0) {
-      return;
-    }
-
-    // Configurar novo timeout
-    timeoutRef.current = setTimeout(() => {
-      saveDraft();
-    }, autoSaveInterval);
-
-    // Cleanup
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [title, content, tags, autoSaveInterval, draftKey]);
-
-  // Salvar rascunho
-  const saveDraft = () => {
-    if (typeof window === 'undefined') return;
-
-    const draft: DraftData = {
-      title,
-      content,
-      tags,
-      timestamp: Date.now(),
-    };
-
+    const draft: DraftData = { title, content, tags, timestamp: Date.now() };
     localStorage.setItem(draftKey, JSON.stringify(draft));
     setLastSaved(new Date());
     setHasDraft(true);
-  };
+  }, [title, content, tags, draftKey]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (!title && !content && tags.length === 0) return;
+    timeoutRef.current = setTimeout(saveDraft, autoSaveInterval);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [title, content, tags, autoSaveInterval, saveDraft]);
 
   // Carregar rascunho
   const loadDraft = (): DraftData | null => {
@@ -103,13 +78,8 @@ export const useDraftSaver = ({
     setLastSaved(null);
   };
 
-  // Salvar manualmente
-  const saveNow = () => {
-    saveDraft();
-  };
-
   return {
-    saveDraft: saveNow,
+    saveDraft,
     loadDraft,
     deleteDraft,
     hasDraft,

@@ -42,10 +42,6 @@ export default function PhotoGridPage({
 }) {
   const { setSelectedPhotoIds } = useAppState();
 
-  useEffect(() => {
-    console.log('Tags recebidas:', tags);
-  }, [tags]);
-
   useEffect(
     () => () => setSelectedPhotoIds?.(undefined),
     [setSelectedPhotoIds],

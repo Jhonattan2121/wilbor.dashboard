@@ -3,7 +3,6 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { useEffect, useState } from 'react';
 import { useDynamicContactPost } from '../../src/app/contact/useDynamicContactPost';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
-import DashboardHeader from '../dashboard/DashboardHeader';
 import PinataEditPostButton from '../dashboard/PinataEditPostButton';
 
 const HIVE_USERNAME = process.env.NEXT_PUBLIC_HIVE_USERNAME || '';
@@ -35,9 +34,6 @@ export default function ContactPage() {
           {markdown && (
             <>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                <div className="flex items-center gap-2">
-                  <DashboardHeader username={username} />
-                </div>
                 <PinataEditPostButton
                   username={username || HIVE_USERNAME}
                   author={username || HIVE_USERNAME}

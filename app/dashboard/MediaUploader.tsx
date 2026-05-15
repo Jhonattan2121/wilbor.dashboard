@@ -151,14 +151,6 @@ export default function MediaUploader({
                       const globalIndex = pageIndex * 2 + imageIndex;
                       const file = files[globalIndex];
                       const isVideo = file && file.type.startsWith('video/');
-                      console.log('Renderizando mídia:', { 
-                        globalIndex, 
-                        preview, 
-                        isVideo, 
-                        fileType: file?.type, 
-                        fileSize: file?.size, 
-                      });
-                      
                       return (
                         <div 
                           key={globalIndex} 
@@ -166,7 +158,6 @@ export default function MediaUploader({
                           onClick={(e) => {
                             e.preventDefault();
                             onThumbnailChange(globalIndex);
-                            console.log('Thumbnail selecionada:', { globalIndex, preview });
                           }}
                           title=""
                         >

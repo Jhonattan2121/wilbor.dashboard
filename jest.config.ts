@@ -12,6 +12,12 @@ const config: Config = {
   coverageProvider: 'v8',
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  // camelcase-keys and its deps (map-obj, quick-lru) are ESM-only; exclude them
+  // from the ignore list so Jest/SWC transforms them to CommonJS.
+  transformIgnorePatterns: [
+    '<rootDir>/node_modules/.pnpm/(?!(camelcase-keys|map-obj|quick-lru)@)',
+    '/node_modules/(?!.pnpm|camelcase-keys|map-obj|quick-lru)',
+  ],
 };
  
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

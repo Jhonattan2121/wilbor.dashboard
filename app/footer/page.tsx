@@ -4,7 +4,6 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { useEffect, useState } from 'react';
 import { useDynamicFooterPost } from '../../src/app/footer/useDynamicFooterPost';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
-import DashboardHeader from '../dashboard/DashboardHeader';
 import PinataEditPostButton from '../dashboard/PinataEditPostButton';
 import PinataMediaPostButton from '../dashboard/PinataMediaPostButton';
 
@@ -36,9 +35,6 @@ export default function FooterPage() {
           {loading && <p>Carregando conteúdo...</p>}
           {error && <p className="text-red-500">{error}</p>}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-            <div className="flex items-center gap-2">
-              <DashboardHeader username={username} />
-            </div>
             {markdown && permlink ? (
               <PinataEditPostButton
                 username={username || HIVE_USERNAME}
