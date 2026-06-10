@@ -72,6 +72,8 @@ export default function PhotoGridContainer({
     window.history.pushState({}, '', url.toString());
     setSelectedTag(newTag);
     setExpandedPermlinks([]);
+    // Sobe para o topo para o usuário ver a barra de filtro e os resultados
+    if (newTag) window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [selectedTag, setSelectedTag]);
 
   const handleContentSizeChange = useCallback((permlink: string, isLarge: boolean) => {
@@ -93,6 +95,28 @@ export default function PhotoGridContainer({
           />
         )}
         {header}
+
+        {/* Barra de filtro ativo por tag */}
+        {selectedTag && (
+          <div className="flex items-center gap-3 flex-wrap mb-6">
+            <span className="font-mono text-xs uppercase tracking-wide text-zinc-500">
+              Filtrando por
+            </span>
+            <button
+              onClick={() => handleTagClick(selectedTag)}
+              className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full font-mono text-sm bg-white text-black border border-white hover:bg-zinc-200 active:bg-zinc-300 active:scale-[0.98] transition-all duration-150 touch-manipulation"
+              aria-label={`Remover filtro ${selectedTag}`}
+            >
+              #{selectedTag}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <span className="font-mono text-xs text-zinc-500">
+              {mediaGroups.length === 1 ? '1 projeto' : `${mediaGroups.length} projetos`}
+            </span>
+          </div>
+        )}
 
         <div className={clsx(
           'grid',
@@ -134,6 +158,7 @@ export default function PhotoGridContainer({
                   username={username}
                   postingKey={postingKey}
                   isEditMode={isEditMode}
+                  selectedTag={selectedTag}
                 />
               </div>
             );

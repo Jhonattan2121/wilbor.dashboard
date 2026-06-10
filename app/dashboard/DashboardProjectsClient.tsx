@@ -2,7 +2,6 @@
 
 import PhotoGridPage from '@/photo/PhotoGridPage';
 import { useEffect, useState } from 'react';
-import PinataMediaPostButton from './PinataMediaPostButton';
 import HiveLogin from './HiveLogin';
 
 export default function DashboardProjectsClient({ posts, photosCount, cameras, simulations }: any) {
@@ -53,15 +52,6 @@ export default function DashboardProjectsClient({ posts, photosCount, cameras, s
 
   return (
     <div>
-      <div className="p-4 md:px-8 md:py-6">
-        {loginUser && (
-          <PinataMediaPostButton
-            username={loginUser}
-            postingKey={postingKey || undefined}
-          />
-        )}
-      </div>
-   
       <PhotoGridPage
         photos={posts}
         photosCount={photosCount}

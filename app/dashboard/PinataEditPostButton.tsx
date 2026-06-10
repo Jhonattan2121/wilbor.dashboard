@@ -415,6 +415,7 @@ export default function PinataEditPostButton({
 
       {isOpen && (
         <div
+          data-edit-modal="open"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
