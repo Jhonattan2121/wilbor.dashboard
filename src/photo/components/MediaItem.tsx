@@ -3,9 +3,9 @@
 import { IconX } from '@/components/IconX';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Markdown from '@/components/Markdown';
 import PinataEditPostButton from '../../../app/dashboard/PinataEditPostButton';
-import { ImageGallery } from './ImageGallery';
 import { extractImagesFromMarkdown } from './markdownUtils';
 import { Media } from './types';
 
@@ -13,6 +13,11 @@ const SKATEHIVE_URL = 'ipfs.skatehive.app/ipfs';
 
 interface MediaItemProps {
   items: Media[];
+  isExpanded: boolean;
+  onExpand: () => void;
+  onContentSizeChange: (isLarge: boolean) => void;
+  onTagClick: (tag: string) => void;
+  hasLargeContent?: boolean;
   username?: string | null;
   postingKey?: string | null;
   isEditMode?: boolean;
@@ -20,32 +25,27 @@ interface MediaItemProps {
 
 export function MediaItem({
   items,
+  isExpanded,
+  onExpand,
+  onContentSizeChange,
+  onTagClick,
+  hasLargeContent = false,
   username,
   postingKey,
   isEditMode = false,
 }: MediaItemProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showAllTags, setShowAllTags] = useState(false);
   const [updatedThumbnail, setUpdatedThumbnail] = useState<string | null>(null);
 
-  function handleClose() {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsExpanded(false);
-      setIsClosing(false);
-    }, 160);
-  }
-
   useEffect(() => {
     if (!isExpanded) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') handleClose();
+      if (e.key === 'Escape') onExpand();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [isExpanded]);
+  }, [isExpanded, onExpand]);
 
   useEffect(() => {
     if (!items || items.length === 0) { setUpdatedThumbnail(null); return; }
@@ -68,20 +68,28 @@ export function MediaItem({
     }).catch(() => setUpdatedThumbnail(getThumbnailUrl(mainItem)));
   }, [items]);
 
+  const lastReportedSize = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (!items || items.length === 0) return;
+    const mainItem = items[0];
+    let isLarge = false;
+    if (isExpanded && mainItem.hiveMetadata?.body) {
+      const imgs = extractImagesFromMarkdown(mainItem.hiveMetadata.body);
+      const textLength = mainItem.hiveMetadata.body.length;
+      isLarge = imgs.length > 1 || textLength > 300 || (imgs.length > 0 && textLength > 200);
+    } else if (isExpanded && mainItem.src?.includes(SKATEHIVE_URL)) {
+      isLarge = true;
+    }
+    if (lastReportedSize.current !== isLarge) {
+      lastReportedSize.current = isLarge;
+      onContentSizeChange(isLarge);
+    }
+  }, [isExpanded, items, onContentSizeChange]);
+
   if (!items || items.length === 0) return null;
 
   const mainItem = items[0];
-  const images = extractImagesFromMarkdown(mainItem.hiveMetadata?.body || '');
   const thumbnailUrl = getThumbnailUrl(mainItem);
-
-  const videoSrcs: string[] = [];
-  if (mainItem.hiveMetadata?.body) {
-    const videoRegex = /<video[^>]*src=["']([^"'>]+)["'][^>]*>/g;
-    let match;
-    while ((match = videoRegex.exec(mainItem.hiveMetadata.body)) !== null) {
-      videoSrcs.push(match[1]);
-    }
-  }
 
   function getThumbnailUrl(item: Media): string | null {
     try {
@@ -172,7 +180,11 @@ export function MediaItem({
             {media.tags && media.tags.length > 0 && (
               <div className="mt-1 flex flex-wrap justify-start gap-x-2 gap-y-0.5">
                 {media.tags.map(tag => (
-                  <span key={tag} className="text-xs text-gray-400 px-1.5 py-0.5 rounded transition-colors duration-100 group-hover:text-black">
+                  <span
+                    key={tag}
+                    className="text-xs text-gray-400 px-1.5 py-0.5 rounded transition-colors duration-100 group-hover:text-black cursor-pointer hover:underline"
+                    onClick={e => { e.stopPropagation(); onTagClick(tag); }}
+                  >
                     {tag}
                   </span>
                 ))}
@@ -186,7 +198,7 @@ export function MediaItem({
 
   const editBtn = mainItem.hiveMetadata && username ? (
     <div
-      className="absolute top-2 right-2 edit-post-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+      className="absolute top-2 right-2 edit-post-btn edit-btn-attention"
       onClick={e => e.stopPropagation()}
     >
       <PinataEditPostButton
@@ -204,99 +216,53 @@ export function MediaItem({
   ) : null;
 
   return (
-    <>
-      {/* Compact card */}
-      <div
-        className="rounded-lg overflow-hidden h-full group transition-colors duration-100 bg-black text-white border-t-8 border-l-8 border-r-8 border-b-0 border-black hover:bg-white hover:text-black hover:border-t-white hover:border-l-white hover:border-r-white cursor-pointer"
-        onClick={e => {
-          if (!(e.target as HTMLElement).closest('.edit-post-btn')) setIsExpanded(true);
-        }}
-      >
-        <div className="w-full h-full min-h-[200px]">
+    <div
+      className={clsx(
+        'rounded-lg overflow-hidden h-full group transition-colors duration-100',
+        !isExpanded && 'bg-black text-white border-t-8 border-l-8 border-r-8 border-b-0 border-black hover:bg-white hover:text-black hover:border-t-white hover:border-l-white hover:border-r-white cursor-pointer',
+        isExpanded && 'p-0 sm:p-2',
+      )}
+      onClick={e => {
+        if (!isExpanded && !(e.target as HTMLElement).closest('.edit-post-btn')) onExpand();
+      }}
+    >
+      <div className={clsx(
+        'w-full',
+        isExpanded ? 'flex flex-col h-auto transition-all duration-300' : 'min-h-[200px]',
+      )}>
 
-          {/* Mobile */}
-          <div className="sm:hidden w-full">
-            {mainItem.hiveMetadata?.body && updatedThumbnail ? (
-              <div className="flex flex-col h-full w-full">
-                <div className="relative w-full aspect-[4/3]">
-                  <Image
-                    src={updatedThumbnail}
-                    alt={mainItem.title || ''}
-                    fill
-                    className="object-cover filter grayscale group-hover:grayscale-0 rounded-t-lg"
-                    sizes="100vw"
-                  />
-                  {isEditMode && editBtn}
-                </div>
-                <div className="bg-black flex flex-col justify-center items-start px-4 py-6 w-full rounded-b-lg group-hover:bg-white transition-colors duration-100">
-                  <div className="text-gray-400 text-xl font-bold line-clamp-2 text-left group-hover:text-black transition-colors duration-100">
-                    {mainItem.title}
-                  </div>
-                  {mainItem.tags && mainItem.tags.length > 0 && (
-                    <div className="mt-1 flex flex-wrap justify-start gap-x-2 gap-y-0.5">
-                      {mainItem.tags.map(tag => (
-                        <span key={tag} className="text-xs text-gray-400 px-1.5 py-0.5 rounded transition-colors duration-100 group-hover:text-black">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 relative group h-full">
-                {renderMedia(mainItem)}
-              </div>
-            )}
-          </div>
-
-          {/* Desktop */}
-          <div className="hidden sm:flex flex-row h-full w-full">
-            {mainItem.hiveMetadata?.body ? (
-              updatedThumbnail ? (
+        {/* Compact card */}
+        {!isExpanded && (
+          <>
+            {/* Mobile */}
+            <div className="sm:hidden w-full">
+              {mainItem.hiveMetadata?.body && updatedThumbnail ? (
                 <div className="flex flex-col h-full w-full">
-                  <div className="flex-1 relative group" style={{ minHeight: '200px' }}>
+                  <div className="relative w-full aspect-[4/3]">
                     <Image
                       src={updatedThumbnail}
                       alt={mainItem.title || ''}
                       fill
-                      className="object-cover filter grayscale group-hover:grayscale-0"
-                      sizes="(max-width: 768px) 50vw, 33vw"
-                      quality={85}
-                      unoptimized
+                      className="object-cover filter grayscale group-hover:grayscale-0 rounded-t-lg"
+                      sizes="100vw"
                     />
                     {isEditMode && editBtn}
                   </div>
-                  <div className="bg-black flex flex-col justify-center px-2 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-3 group-hover:bg-white transition-colors duration-100">
-                    <div className="text-gray-400 text-xs sm:text-sm md:text-base font-medium line-clamp-1 group-hover:text-black transition-colors duration-100">
+                  <div className="bg-black flex flex-col justify-center items-start px-4 py-6 w-full rounded-b-lg group-hover:bg-white transition-colors duration-100">
+                    <div className="text-gray-400 text-xl font-bold line-clamp-2 text-left group-hover:text-black transition-colors duration-100">
                       {mainItem.title}
                     </div>
                     {mainItem.tags && mainItem.tags.length > 0 && (
-                      <div className={clsx(
-                        'flex flex-wrap gap-1 mt-1',
-                        showAllTags ? 'max-h-none pb-2' : 'min-h-[24px] max-h-[24px] overflow-hidden',
-                      )}>
-                        {(showAllTags ? mainItem.tags : mainItem.tags.slice(0, 3)).map(tag => (
-                          <span key={tag} className="text-xs text-gray-400 px-1.5 py-0.5 rounded transition-colors duration-100 group-hover:text-black">
+                      <div className="mt-1 flex flex-wrap justify-start gap-x-2 gap-y-0.5">
+                        {mainItem.tags.map(tag => (
+                          <span
+                            key={tag}
+                            className="text-xs text-gray-400 px-1.5 py-0.5 rounded transition-colors duration-100 group-hover:text-black cursor-pointer hover:underline"
+                            onClick={e => { e.stopPropagation(); onTagClick(tag); }}
+                          >
                             {tag}
                           </span>
                         ))}
-                        {!showAllTags && mainItem.tags.length > 3 && (
-                          <span
-                            className="text-xs text-gray-400 px-1.5 py-0.5 rounded cursor-pointer hover:bg-gray-700"
-                            onClick={e => { e.stopPropagation(); setShowAllTags(true); }}
-                          >
-                            +{mainItem.tags.length - 3}
-                          </span>
-                        )}
-                        {showAllTags && (
-                          <span
-                            className="text-xs text-gray-400 px-1.5 py-0.5 rounded cursor-pointer hover:bg-gray-700"
-                            onClick={e => { e.stopPropagation(); setShowAllTags(false); }}
-                          >
-                            Menos
-                          </span>
-                        )}
                       </div>
                     )}
                   </div>
@@ -304,78 +270,133 @@ export function MediaItem({
               ) : (
                 <div className="flex-1 relative group h-full">
                   {renderMedia(mainItem)}
-                  {isEditMode && editBtn}
-                </div>
-              )
-            ) : (
-              <div className="flex-1 relative group h-full">
-                {renderMedia(mainItem)}
-              </div>
-            )}
-          </div>
-
-        </div>
-      </div>
-
-      {/* Modal */}
-      {isExpanded && (
-        <div
-          className={`fixed inset-0 z-50 bg-zinc-950/95 backdrop-blur-md flex flex-col ${isClosing ? 'animate-modal-out' : 'animate-modal-in'}`}
-          role="dialog"
-          aria-modal="true"
-        >
-          {/* Header */}
-          <div className="flex-shrink-0 flex items-start justify-between px-5 py-4 border-b border-zinc-800 bg-zinc-950">
-            <div className="flex-1 min-w-0 pr-4">
-              <h2 className="font-mono text-base sm:text-xl font-semibold text-white tracking-tight">
-                {mainItem.title}
-              </h2>
-              {mainItem.tags && mainItem.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {mainItem.tags.map(tag => (
-                    <span key={tag} className="font-mono text-[10px] text-zinc-500 px-1.5 py-0.5 rounded border border-zinc-800">
-                      {tag}
-                    </span>
-                  ))}
                 </div>
               )}
             </div>
-            <button
-              onClick={handleClose}
-              className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800 hover:border-zinc-500 transition-all"
-              aria-label="Fechar"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto overscroll-contain">
-            <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-              {videoSrcs.length > 0 && (
-                <div className="mb-8 space-y-4">
-                  {videoSrcs.map((src, idx) => (
-                    <video key={src + idx} src={src} controls className="w-full rounded-lg" />
-                  ))}
+            {/* Desktop */}
+            <div className="hidden sm:flex flex-row h-full w-full">
+              {mainItem.hiveMetadata?.body ? (
+                updatedThumbnail ? (
+                  <div className="flex flex-col h-full w-full">
+                    <div className="flex-1 relative group" style={{ minHeight: '200px' }}>
+                      <Image
+                        src={updatedThumbnail}
+                        alt={mainItem.title || ''}
+                        fill
+                        className="object-cover filter grayscale group-hover:grayscale-0"
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                        quality={85}
+                        unoptimized
+                      />
+                      {isEditMode && editBtn}
+                    </div>
+                    <div className="bg-black flex flex-col justify-center px-2 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-3 group-hover:bg-white transition-colors duration-100">
+                      <div className="text-gray-400 text-xs sm:text-sm md:text-base font-medium line-clamp-1 group-hover:text-black transition-colors duration-100">
+                        {mainItem.title}
+                      </div>
+                      {mainItem.tags && mainItem.tags.length > 0 && (
+                        <div className={clsx(
+                          'flex flex-wrap gap-1 mt-1',
+                          showAllTags ? 'max-h-none pb-2' : 'min-h-[24px] max-h-[24px] overflow-hidden',
+                        )}>
+                          {(showAllTags ? mainItem.tags : mainItem.tags.slice(0, 3)).map(tag => (
+                            <span
+                              key={tag}
+                              className="text-xs text-gray-400 px-1.5 py-0.5 rounded transition-colors duration-100 group-hover:text-black cursor-pointer hover:underline"
+                              onClick={e => { e.stopPropagation(); onTagClick(tag); }}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {!showAllTags && mainItem.tags.length > 3 && (
+                            <span
+                              className="text-xs text-gray-400 px-1.5 py-0.5 rounded cursor-pointer hover:bg-gray-700"
+                              onClick={e => { e.stopPropagation(); setShowAllTags(true); }}
+                            >
+                              +{mainItem.tags.length - 3}
+                            </span>
+                          )}
+                          {showAllTags && (
+                            <span
+                              className="text-xs text-gray-400 px-1.5 py-0.5 rounded cursor-pointer hover:bg-gray-700"
+                              onClick={e => { e.stopPropagation(); setShowAllTags(false); }}
+                            >
+                              Menos
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 relative group h-full">
+                    {renderMedia(mainItem)}
+                    {isEditMode && editBtn}
+                  </div>
+                )
+              ) : (
+                <div className="flex-1 relative group h-full">
+                  {renderMedia(mainItem)}
                 </div>
               )}
-              {images.length > 0 && <ImageGallery images={images} />}
-              {videoSrcs.length === 0 && images.length === 0 && updatedThumbnail && (
-                <div className="flex justify-center">
+            </div>
+          </>
+        )}
+
+        {/* Expanded inline content */}
+        {isExpanded && (
+          <div className="flex flex-col w-full">
+            <div className="flex items-start justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="flex-1 min-w-0 pr-4">
+                <h2 className="font-mono text-base sm:text-xl font-semibold tracking-tight">
+                  {mainItem.title}
+                </h2>
+                {mainItem.tags && mainItem.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {mainItem.tags.map(tag => (
+                      <span
+                        key={tag}
+                        className="font-mono text-[10px] px-1.5 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 cursor-pointer hover:underline"
+                        onClick={e => { e.stopPropagation(); onTagClick(tag); }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={e => { e.stopPropagation(); onExpand(); }}
+                className="flex-shrink-0 p-1.5 sm:p-2 bg-transparent border-none shadow-none rounded-full transition-colors flex items-center justify-center focus:outline-none hover:bg-transparent"
+                aria-label="Fechar"
+              >
+                <IconX size={35} />
+              </button>
+            </div>
+
+            <div className="flex flex-col items-start w-full px-4 sm:px-8 py-6">
+              {mainItem.hiveMetadata?.body ? (
+                <Markdown
+                  inExpandedCard
+                  videoPoster={updatedThumbnail || thumbnailUrl || undefined}
+                >
+                  {mainItem.hiveMetadata.body}
+                </Markdown>
+              ) : updatedThumbnail ? (
+                <div className="flex justify-center w-full">
                   <img
                     src={updatedThumbnail}
                     alt={mainItem.title || ''}
                     className="max-w-full max-h-[65vh] object-contain rounded-md"
                   />
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
-        </div>
-      )}
-    </>
+        )}
+
+      </div>
+    </div>
   );
 }

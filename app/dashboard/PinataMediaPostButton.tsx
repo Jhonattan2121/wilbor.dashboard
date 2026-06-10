@@ -12,6 +12,8 @@ interface PinataMediaPostButtonProps {
   postingKey?: string;
   initialCommunity?: string | null;
   onPostSuccess?: () => void;
+  triggerLabel?: string;
+  triggerClassName?: string;
 }
 
 const PINATA_GATEWAY = 'https://ipfs.skatehive.app/ipfs';
@@ -94,6 +96,8 @@ export default function PinataMediaPostButton({
   postingKey,
   initialCommunity,
   onPostSuccess,
+  triggerLabel = '+ Criar post',
+  triggerClassName = 'px-3 py-1.5 rounded-md font-mono text-xs border border-zinc-600 text-zinc-300 hover:border-white hover:text-white bg-transparent transition-all duration-150',
 }: PinataMediaPostButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -459,10 +463,10 @@ export default function PinataMediaPostButton({
     <div>
       <button
         type="button"
-        className="px-3 py-1.5 rounded-md font-mono text-xs border border-zinc-600 text-zinc-300 hover:border-white hover:text-white bg-transparent transition-all duration-150"
+        className={triggerClassName}
         onClick={() => setIsOpen(true)}
       >
-        + Criar post
+        {triggerLabel}
       </button>
 
       {isOpen && (

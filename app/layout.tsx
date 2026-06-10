@@ -4,6 +4,7 @@ import {
 import AppStateProvider from '@/state/AppStateProvider';
 import SwrConfigClient from '@/state/SwrConfigClient';
 import ToasterWithThemes from '@/toast/ToasterWithThemes';
+import SiteFooter from '@/app/SiteFooter';
 import { ThemeProvider } from 'next-themes';
 import { headers } from 'next/headers';
 import '../tailwind.css';
@@ -30,7 +31,12 @@ export default async function RootLayout({
         <AppStateProvider>
           <ThemeProvider attribute="class" defaultTheme={DEFAULT_THEME}>
             <SwrConfigClient>
-              {isDashboard ? <DashboardPage /> : children}
+              <div className="flex min-h-screen flex-col">
+                <div className="flex-1">
+                  {isDashboard ? <DashboardPage /> : children}
+                </div>
+                <SiteFooter />
+              </div>
             </SwrConfigClient>
             <ToasterWithThemes />
             <JsonLd type="website" />

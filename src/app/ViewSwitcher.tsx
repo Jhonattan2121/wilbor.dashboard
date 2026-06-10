@@ -34,13 +34,12 @@ function ScrambleText({ text, className }: { text: string; className?: string })
 import {
   Path_Contact,
   Path_Exhibitions,
-  Path_Footer,
   PATH_FEED_INFERRED,
   Path_Partners,
 } from '@/app/paths';
 
 export type SwitcherSelection =
-  'projects' | 'about' | 'exhibitions' | 'partners' | 'contact' | 'footer';
+  'projects' | 'about' | 'exhibitions' | 'partners' | 'contact';
 
 const NAV_ITEMS = [
   { label: 'dashboard',  short: 'dashboard',  href: '/dashboard',       key: 'projects'    },
@@ -48,7 +47,6 @@ const NAV_ITEMS = [
   { label: 'exposições', short: 'expo',       href: Path_Exhibitions,   key: 'exhibitions' },
   { label: 'parceiros',  short: 'parceiros',  href: Path_Partners,      key: 'partners'    },
   { label: 'contato',    short: 'contato',    href: Path_Contact,       key: 'contact'     },
-  { label: 'footer',     short: 'footer',     href: Path_Footer,        key: 'footer'      },
 ] as const;
 
 export default function ViewSwitcher({
@@ -96,6 +94,7 @@ export default function ViewSwitcher({
           href="/"
           className="flex items-center gap-2.5 shrink-0 group"
           aria-label="Wilbor — página inicial"
+          suppressHydrationWarning
         >
           <Image
             src="/favicons/FAVCOM_WILBOR.png"
@@ -111,7 +110,7 @@ export default function ViewSwitcher({
         </a>
 
         {/* Desktop links */}
-        <nav aria-label="Navegação principal" className="hidden sm:flex items-center gap-0.5">
+        <nav aria-label="Navegação principal" className="hidden sm:flex items-center gap-1.5">
           {NAV_ITEMS.map(({ label, href, key }) => {
             const active = currentSelection === key;
             return (
@@ -119,11 +118,12 @@ export default function ViewSwitcher({
                 key={key}
                 href={href}
                 aria-current={active ? 'page' : undefined}
+                suppressHydrationWarning
                 className={[
-                  'relative px-3.5 py-1.5 rounded-lg text-sm font-mono tracking-tight transition-all duration-150',
+                  'relative flex items-center min-h-[44px] px-4 rounded-lg text-sm font-mono tracking-tight transition-all duration-150',
                   active
-                    ? 'text-white bg-zinc-800'
-                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50',
+                    ? 'text-white bg-zinc-800 active:bg-zinc-700'
+                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 active:text-white active:bg-zinc-700/60',
                 ].join(' ')}
               >
                 {label}
@@ -137,14 +137,16 @@ export default function ViewSwitcher({
 
         {/* Desktop user section */}
         {username && (
-          <div className="hidden sm:flex items-center gap-2.5 pl-4 ml-1 border-l border-zinc-800">
+          <div className="hidden sm:flex items-center gap-3 pl-4 ml-1 border-l border-zinc-800">
             <span className="text-xs font-mono text-zinc-400 select-none">
               <span className="text-zinc-600">@</span>{username}
             </span>
             <button
               onClick={handleLogout}
-              className="text-xs font-mono px-2 py-1 rounded-md text-zinc-500
-                         hover:text-red-400 hover:bg-red-950/40 transition-all duration-150"
+              className="text-sm font-mono flex items-center min-h-[40px] px-3 rounded-lg
+                         text-zinc-400 border border-zinc-800
+                         hover:text-red-400 hover:bg-red-950/40 hover:border-red-900/50
+                         active:text-red-400 active:bg-red-950/60 transition-all duration-150"
             >
               sair
             </button>
@@ -153,8 +155,9 @@ export default function ViewSwitcher({
 
         {/* Mobile toggle */}
         <button
-          className="sm:hidden flex items-center justify-center w-9 h-9 rounded-lg
-                     text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all"
+          className="sm:hidden flex items-center justify-center w-11 h-11 rounded-lg
+                     text-zinc-400 hover:text-white hover:bg-zinc-800/60
+                     active:text-white active:bg-zinc-700/60 transition-all"
           onClick={() => setOpen(v => !v)}
           aria-expanded={open}
           aria-controls="mobile-nav"
@@ -188,12 +191,13 @@ export default function ViewSwitcher({
                     href={href}
                     aria-current={active ? 'page' : undefined}
                     onClick={() => setOpen(false)}
+                    suppressHydrationWarning
                     className={[
-                      'flex items-center gap-3 px-5 py-3 text-sm font-mono tracking-tight',
+                      'flex items-center gap-3 px-5 py-3.5 text-sm font-mono tracking-tight',
                       'border-l-2 transition-all duration-150',
                       active
                         ? 'border-white text-white bg-zinc-800/40'
-                        : 'border-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/25 hover:border-zinc-600',
+                        : 'border-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/25 hover:border-zinc-600 active:text-white active:bg-zinc-800/40 active:border-zinc-500',
                     ].join(' ')}
                   >
                     <span className="sm:hidden">{short}</span>
@@ -211,7 +215,9 @@ export default function ViewSwitcher({
                   </span>
                   <button
                     onClick={handleLogout}
-                    className="text-xs font-mono text-zinc-500 hover:text-red-400 transition-colors duration-150"
+                    className="text-sm font-mono flex items-center min-h-[44px] px-4 -mr-2 rounded-lg
+                               text-zinc-400 hover:text-red-400
+                               active:text-red-400 active:bg-red-950/40 transition-colors duration-150"
                   >
                     sair
                   </button>
