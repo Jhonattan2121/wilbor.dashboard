@@ -1,36 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
-
-const ASCII_CHARS = '!<>-_\\/[]{}=+*^?#@$%&';
-
-function ScrambleText({ text, className }: { text: string; className?: string }) {
-  const [display, setDisplay] = useState(text);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  function handleMouseEnter() {
-    let iteration = 0;
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setDisplay(
-        text.split('').map((char, index) => {
-          if (char === '.' || char === ' ') return char;
-          if (index < Math.floor(iteration)) return char;
-          return ASCII_CHARS[Math.floor(Math.random() * ASCII_CHARS.length)];
-        }).join('')
-      );
-      iteration += 0.4;
-      if (iteration >= text.length) {
-        clearInterval(intervalRef.current!);
-        setDisplay(text);
-      }
-    }, 40);
-  }
-
-  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
-
-  return <span className={className} onMouseEnter={handleMouseEnter}>{display}</span>;
-}
+import { useEffect, useState } from 'react';
 import {
   Path_Contact,
   Path_Exhibitions,
@@ -86,26 +56,35 @@ export default function ViewSwitcher({
       {/* Glass bar */}
       <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800/50" />
 
+      {/* Grafite Wilbor ao fundo, alinhado à direita (decoração do banner) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
+        <Image
+          src="/wilborPhotos/fundo-header-escuro-2.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-contain object-right opacity-40"
+        />
+      </div>
+
       {/* Main row */}
       <div className="relative flex items-center justify-between h-14 px-4 sm:px-6 lg:px-10">
 
-        {/* Logo */}
+        {/* Logo / assinatura Wilbor.studio */}
         <a
           href="/"
-          className="flex items-center gap-2.5 shrink-0 group"
+          className="flex items-center shrink-0 group"
           aria-label="Wilbor — página inicial"
           suppressHydrationWarning
         >
           <Image
-            src="/favicons/FAVCOM_WILBOR.png"
-            alt=""
-            width={30}
-            height={30}
-            className="rounded-xl transition-opacity group-hover:opacity-80"
-          />
-          <ScrambleText
-            text="wilbor.art"
-            className="font-mono text-sm font-semibold text-white tracking-tight hidden xs:block select-none"
+            src="/wilborPhotos/assinatura-clara.png"
+            alt="Wilbor Studio"
+            width={576}
+            height={265}
+            priority
+            className="h-8 sm:h-9 w-auto object-contain transition-opacity group-hover:opacity-80"
           />
         </a>
 
