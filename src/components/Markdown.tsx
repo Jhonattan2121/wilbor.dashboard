@@ -1,7 +1,6 @@
 import ReactMarkdown, { type Components } from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
-import ImageCarousel from './ImageCarousel';
 
 interface MarkdownProps {
     children: string;
@@ -461,16 +460,26 @@ export default function Markdown({ children, className = '', removeMedia = false
         >
             {blocks.map((block, idx) => {
                 if (block.type === 'carousel' && block.images && block.images.length > 0) {
+                    // Imagens empilhadas verticalmente (estilo PeakD), sem carousel
                     return (
                         <div
                             key={idx}
                             className={
                                 inExpandedCard
-                                    ? "my-0 w-full px-0"
-                                    : "my-6 first:mt-0 last:mb-0"
+                                    ? "my-0 w-full px-0 flex flex-col gap-4"
+                                    : "my-6 first:mt-0 last:mb-0 flex flex-col gap-4"
                             }
                         >
-                            <ImageCarousel images={block.images} inExpandedCard={inExpandedCard} hasLittleContent={hasLittleContent} />
+                            {block.images.map((image, imageIdx) => (
+                                <img
+                                    key={image.src + imageIdx}
+                                    src={image.src}
+                                    alt={image.alt || ''}
+                                    loading="lazy"
+                                    className="!rounded-lg w-full max-w-full h-auto block"
+                                    style={{ borderRadius: '0.5rem' }}
+                                />
+                            ))}
                         </div>
                     );
                 }

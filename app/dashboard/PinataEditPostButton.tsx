@@ -18,6 +18,8 @@ interface PinataEditPostButtonProps {
   initialTags: string[];
   initialImages: string[];
   initialThumbnail?: string;
+  triggerLabel?: string;
+  triggerClassName?: string;
 }
 
 const PINATA_GATEWAY = 'https://ipfs.skatehive.app/ipfs';
@@ -100,6 +102,8 @@ export default function PinataEditPostButton({
   initialTags,
   initialImages,
   initialThumbnail,
+  triggerLabel = 'Editar',
+  triggerClassName = 'px-2.5 py-1 rounded font-mono text-xs border border-zinc-600 text-zinc-300 hover:border-white hover:text-white bg-black/80 backdrop-blur-sm transition-all duration-150',
 }: PinataEditPostButtonProps) {
   const initialImagesWithThumbnail = useMemo(() => {
     if (initialThumbnail && !initialImages.includes(initialThumbnail)) {
@@ -403,14 +407,15 @@ export default function PinataEditPostButton({
     <div>
       <button
         type="button"
-        className="px-2.5 py-1 rounded font-mono text-xs border border-zinc-600 text-zinc-300 hover:border-white hover:text-white bg-black/80 backdrop-blur-sm transition-all duration-150"
+        className={triggerClassName}
         onClick={() => setIsOpen(true)}
       >
-        Editar
+        {triggerLabel}
       </button>
 
       {isOpen && (
         <div
+          data-edit-modal="open"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >

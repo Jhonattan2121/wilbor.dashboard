@@ -1,6 +1,16 @@
-import { Client, Discussion, PrivateKey } from '@hiveio/dhive';
+import { Discussion, PrivateKey } from '@hiveio/dhive';
 
-const client = new Client(['https://api.hive.blog']);
+const HIVE_API = 'https://api.hive.blog';
+
+async function hiveCall(method: string, params: unknown[]) {
+  const response = await fetch(HIVE_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 }),
+  });
+  const data = await response.json();
+  return data.result;
+}
 
 interface HiveUser {
   id: string;
@@ -17,15 +27,10 @@ interface HiveUser {
 }
 
 export class HiveAuth {
-  private client: Client;
-
-  constructor() {
-    this.client = new Client(['https://api.hive.blog']);
-  }
-
   async authenticateUser(username: string, postingKey: string): Promise<HiveUser | null> {
     try {
-      const [account] = await this.client.database.getAccounts([username]);
+      const accounts = await hiveCall('condenser_api.get_accounts', [[username]]);
+      const [account] = accounts ?? [];
 
       if (!account) {
         return null;
@@ -66,10 +71,9 @@ export class HiveAuth {
       const startPermlink = '';
       const beforeDate = new Date().toISOString().split('.')[0];
 
-      const posts = await this.client.database.call(
-        'get_discussions_by_author_before_date',
-        [username, startPermlink, beforeDate, limit],
-      );
+      const posts = await hiveCall('condenser_api.get_discussions_by_author_before_date', [
+        username, startPermlink, beforeDate, limit,
+      ]);
 
       const validPosts = posts.filter((post: any) => {
         try {
@@ -92,15 +96,12 @@ export class HiveAuth {
 export async function getPostsByAuthor(author: string, permlink?: string): Promise<Discussion[]> {
   try {
     if (permlink) {
-      const post = await client.database.call('get_content', [author, permlink]);
+      const post = await hiveCall('condenser_api.get_content', [author, permlink]);
       return [post as Discussion];
     }
 
-    const posts = await client.database.getDiscussions('blog', {
-      tag: author,
-      limit: 20,
-    });
-    return posts as Discussion[];
+    const posts = await hiveCall('condenser_api.get_discussions_by_blog', [{ tag: author, limit: 20 }]);
+    return (posts ?? []) as Discussion[];
   } catch (_error) {
     return [];
   }
@@ -171,7 +172,7 @@ export async function getPostsByPermlink(author: string, permlink: string) {
 
 export async function getPost(author: string, permlink: string): Promise<Discussion | null> {
   try {
-    const post = await client.database.call('get_content', [author, permlink]);
+    const post = await hiveCall('condenser_api.get_content', [author, permlink]);
 
     if (!post || !post.body) {
       return null;

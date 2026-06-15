@@ -10,6 +10,26 @@ body {
   background-color: inherit !important;
 }
 
+/* Chama atenção para o botão de editar ao entrar no modo de edição:
+   fade-in + dois pulsos suaves, depois fica estático */
+@keyframes edit-btn-attention {
+  0% { opacity: 0; transform: scale(0.85); }
+  25% { opacity: 1; transform: scale(1.1); }
+  45% { transform: scale(1); }
+  65% { transform: scale(1.07); }
+  85%, 100% { opacity: 1; transform: scale(1); }
+}
+
+.edit-btn-attention {
+  animation: edit-btn-attention 1.1s ease-out 1 both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edit-btn-attention {
+    animation: none;
+  }
+}
+
 .markdown-content {
   @apply text-gray-200;
 }

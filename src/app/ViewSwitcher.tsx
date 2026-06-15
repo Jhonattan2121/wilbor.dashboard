@@ -1,46 +1,15 @@
 'use client';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
-
-const ASCII_CHARS = '!<>-_\\/[]{}=+*^?#@$%&';
-
-function ScrambleText({ text, className }: { text: string; className?: string }) {
-  const [display, setDisplay] = useState(text);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  function handleMouseEnter() {
-    let iteration = 0;
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setDisplay(
-        text.split('').map((char, index) => {
-          if (char === '.' || char === ' ') return char;
-          if (index < Math.floor(iteration)) return char;
-          return ASCII_CHARS[Math.floor(Math.random() * ASCII_CHARS.length)];
-        }).join('')
-      );
-      iteration += 0.4;
-      if (iteration >= text.length) {
-        clearInterval(intervalRef.current!);
-        setDisplay(text);
-      }
-    }, 40);
-  }
-
-  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
-
-  return <span className={className} onMouseEnter={handleMouseEnter}>{display}</span>;
-}
+import { useEffect, useState } from 'react';
 import {
   Path_Contact,
   Path_Exhibitions,
-  Path_Footer,
   PATH_FEED_INFERRED,
   Path_Partners,
 } from '@/app/paths';
 
 export type SwitcherSelection =
-  'projects' | 'about' | 'exhibitions' | 'partners' | 'contact' | 'footer';
+  'projects' | 'about' | 'exhibitions' | 'partners' | 'contact';
 
 const NAV_ITEMS = [
   { label: 'dashboard',  short: 'dashboard',  href: '/dashboard',       key: 'projects'    },
@@ -48,7 +17,6 @@ const NAV_ITEMS = [
   { label: 'exposições', short: 'expo',       href: Path_Exhibitions,   key: 'exhibitions' },
   { label: 'parceiros',  short: 'parceiros',  href: Path_Partners,      key: 'partners'    },
   { label: 'contato',    short: 'contato',    href: Path_Contact,       key: 'contact'     },
-  { label: 'footer',     short: 'footer',     href: Path_Footer,        key: 'footer'      },
 ] as const;
 
 export default function ViewSwitcher({
@@ -88,30 +56,40 @@ export default function ViewSwitcher({
       {/* Glass bar */}
       <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800/50" />
 
+      {/* Grafite Wilbor ao fundo, alinhado à direita (decoração do banner) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
+        <Image
+          src="/wilborPhotos/fundo-header-escuro-2.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-contain object-right opacity-40"
+        />
+      </div>
+
       {/* Main row */}
       <div className="relative flex items-center justify-between h-14 px-4 sm:px-6 lg:px-10">
 
-        {/* Logo */}
+        {/* Logo / assinatura Wilbor.studio */}
         <a
           href="/"
-          className="flex items-center gap-2.5 shrink-0 group"
+          className="flex items-center shrink-0 group"
           aria-label="Wilbor — página inicial"
+          suppressHydrationWarning
         >
           <Image
-            src="/favicons/FAVCOM_WILBOR.png"
-            alt=""
-            width={30}
-            height={30}
-            className="rounded-xl transition-opacity group-hover:opacity-80"
-          />
-          <ScrambleText
-            text="wilbor.art"
-            className="font-mono text-sm font-semibold text-white tracking-tight hidden xs:block select-none"
+            src="/wilborPhotos/assinatura-clara.png"
+            alt="Wilbor Studio"
+            width={576}
+            height={265}
+            priority
+            className="h-8 sm:h-9 w-auto object-contain transition-opacity group-hover:opacity-80"
           />
         </a>
 
         {/* Desktop links */}
-        <nav aria-label="Navegação principal" className="hidden sm:flex items-center gap-0.5">
+        <nav aria-label="Navegação principal" className="hidden sm:flex items-center gap-1.5">
           {NAV_ITEMS.map(({ label, href, key }) => {
             const active = currentSelection === key;
             return (
@@ -119,11 +97,12 @@ export default function ViewSwitcher({
                 key={key}
                 href={href}
                 aria-current={active ? 'page' : undefined}
+                suppressHydrationWarning
                 className={[
-                  'relative px-3.5 py-1.5 rounded-lg text-sm font-mono tracking-tight transition-all duration-150',
+                  'relative flex items-center min-h-[44px] px-4 rounded-lg text-sm font-mono tracking-tight transition-all duration-150',
                   active
-                    ? 'text-white bg-zinc-800'
-                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50',
+                    ? 'text-white bg-zinc-800 active:bg-zinc-700'
+                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 active:text-white active:bg-zinc-700/60',
                 ].join(' ')}
               >
                 {label}
@@ -137,14 +116,16 @@ export default function ViewSwitcher({
 
         {/* Desktop user section */}
         {username && (
-          <div className="hidden sm:flex items-center gap-2.5 pl-4 ml-1 border-l border-zinc-800">
+          <div className="hidden sm:flex items-center gap-3 pl-4 ml-1 border-l border-zinc-800">
             <span className="text-xs font-mono text-zinc-400 select-none">
               <span className="text-zinc-600">@</span>{username}
             </span>
             <button
               onClick={handleLogout}
-              className="text-xs font-mono px-2 py-1 rounded-md text-zinc-500
-                         hover:text-red-400 hover:bg-red-950/40 transition-all duration-150"
+              className="text-sm font-mono flex items-center min-h-[40px] px-3 rounded-lg
+                         text-zinc-400 border border-zinc-800
+                         hover:text-red-400 hover:bg-red-950/40 hover:border-red-900/50
+                         active:text-red-400 active:bg-red-950/60 transition-all duration-150"
             >
               sair
             </button>
@@ -153,8 +134,9 @@ export default function ViewSwitcher({
 
         {/* Mobile toggle */}
         <button
-          className="sm:hidden flex items-center justify-center w-9 h-9 rounded-lg
-                     text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all"
+          className="sm:hidden flex items-center justify-center w-11 h-11 rounded-lg
+                     text-zinc-400 hover:text-white hover:bg-zinc-800/60
+                     active:text-white active:bg-zinc-700/60 transition-all"
           onClick={() => setOpen(v => !v)}
           aria-expanded={open}
           aria-controls="mobile-nav"
@@ -188,12 +170,13 @@ export default function ViewSwitcher({
                     href={href}
                     aria-current={active ? 'page' : undefined}
                     onClick={() => setOpen(false)}
+                    suppressHydrationWarning
                     className={[
-                      'flex items-center gap-3 px-5 py-3 text-sm font-mono tracking-tight',
+                      'flex items-center gap-3 px-5 py-3.5 text-sm font-mono tracking-tight',
                       'border-l-2 transition-all duration-150',
                       active
                         ? 'border-white text-white bg-zinc-800/40'
-                        : 'border-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/25 hover:border-zinc-600',
+                        : 'border-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/25 hover:border-zinc-600 active:text-white active:bg-zinc-800/40 active:border-zinc-500',
                     ].join(' ')}
                   >
                     <span className="sm:hidden">{short}</span>
@@ -211,7 +194,9 @@ export default function ViewSwitcher({
                   </span>
                   <button
                     onClick={handleLogout}
-                    className="text-xs font-mono text-zinc-500 hover:text-red-400 transition-colors duration-150"
+                    className="text-sm font-mono flex items-center min-h-[44px] px-4 -mr-2 rounded-lg
+                               text-zinc-400 hover:text-red-400
+                               active:text-red-400 active:bg-red-950/40 transition-colors duration-150"
                   >
                     sair
                   </button>

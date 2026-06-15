@@ -9,6 +9,11 @@ import PinataMediaPostButton from '../dashboard/PinataMediaPostButton';
 
 const HIVE_USERNAME = process.env.NEXT_PUBLIC_HIVE_USERNAME || '';
 
+const EDIT_TRIGGER_CLASSES = `inline-flex items-center justify-center min-h-[52px] px-8
+  rounded-lg font-mono text-base border border-zinc-500 text-white bg-black/80
+  hover:border-white hover:bg-zinc-900 active:bg-zinc-800
+  transition-all duration-150`;
+
 export const dynamic = 'force-static';
 export const maxDuration = 60;
 
@@ -28,39 +33,57 @@ export default function FooterPage() {
 
   return (
     <div className="w-full min-h-screen flex flex-col">
-      <ViewSwitcher currentSelection="footer" />
+      <ViewSwitcher />
 
-      <section className="w-full flex-1 flex flex-col items-start">
-        <div className="w-full max-w-2xl text-left mx-0 px-3 sm:px-8 space-y-4 sm:space-y-6">
-          {loading && <p>Carregando conteúdo...</p>}
-          {error && <p className="text-red-500">{error}</p>}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-            {markdown && permlink ? (
-              <PinataEditPostButton
-                username={username || HIVE_USERNAME}
-                author={username || HIVE_USERNAME}
-                permlink={permlink}
-                initialTitle={title || ''}
-                initialContent={markdown}
-                initialTags={tags || []}
-                initialImages={images || []}
-                postingKey={postingKey || undefined}
-              />
-            ) : (
-              <PinataMediaPostButton
-                username={username || HIVE_USERNAME}
-                postingKey={postingKey || undefined}
-                initialCommunity="footer"
-                onPostSuccess={() => window.location.reload()}
-              />
-            )}
+      <section className="w-full flex-1 flex flex-col items-center px-4 sm:px-8">
+        <div className="w-full max-w-xl flex flex-col items-center text-center pt-10 sm:pt-16 pb-12 space-y-7">
+          <div>
+            <h1 className="font-mono text-2xl sm:text-3xl font-semibold text-white">
+              Rodapé do site
+            </h1>
+            <p className="mt-3 text-base sm:text-lg text-zinc-400 leading-relaxed">
+              O que você escrever aqui aparece no fim de todas as páginas do
+              wilbor.art — copyright, créditos e links.
+            </p>
           </div>
 
+          {loading && <p className="text-zinc-400">Carregando conteúdo...</p>}
+          {error && !loading && <p className="text-red-400">{error}</p>}
+
+          {!loading && (markdown && permlink ? (
+            <PinataEditPostButton
+              username={username || HIVE_USERNAME}
+              author={username || HIVE_USERNAME}
+              permlink={permlink}
+              initialTitle={title || ''}
+              initialContent={markdown}
+              initialTags={tags || []}
+              initialImages={images || []}
+              postingKey={postingKey || undefined}
+              triggerLabel="Editar rodapé"
+              triggerClassName={EDIT_TRIGGER_CLASSES}
+            />
+          ) : (
+            <PinataMediaPostButton
+              username={username || HIVE_USERNAME}
+              postingKey={postingKey || undefined}
+              initialCommunity="footer"
+              onPostSuccess={() => window.location.reload()}
+              triggerLabel="+ Criar rodapé"
+              triggerClassName={EDIT_TRIGGER_CLASSES}
+            />
+          ))}
+
           {markdown && (
-            <div className="prose dark:prose-invert max-w-none">
-              <MarkdownRenderer>
-                {markdown}
-              </MarkdownRenderer>
+            <div className="w-full text-left rounded-xl border border-zinc-800 bg-zinc-900/40 px-5 py-4">
+              <div className="font-mono text-xs uppercase tracking-wide text-zinc-500 mb-3 select-none">
+                Conteúdo atual
+              </div>
+              <div className="prose dark:prose-invert max-w-none">
+                <MarkdownRenderer>
+                  {markdown}
+                </MarkdownRenderer>
+              </div>
             </div>
           )}
         </div>

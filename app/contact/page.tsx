@@ -3,7 +3,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { useEffect, useState } from 'react';
 import { useDynamicContactPost } from '../../src/app/contact/useDynamicContactPost';
 import ViewSwitcher from '../../src/app/ViewSwitcher';
-import PinataEditPostButton from '../dashboard/PinataEditPostButton';
+import ContactLinksEditButton from './ContactLinksEditButton';
 
 const HIVE_USERNAME = process.env.NEXT_PUBLIC_HIVE_USERNAME || '';
 
@@ -13,7 +13,7 @@ export const maxDuration = 60;
 export default function ContactPage() {
   const [postingKey, setPostingKey] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const { permlink, markdown, title, images, tags, loading, error } = useDynamicContactPost(
+  const { permlink, markdown, title, tags, loading, error } = useDynamicContactPost(
     username || HIVE_USERNAME,
   );
 
@@ -33,18 +33,19 @@ export default function ContactPage() {
           {error && <p className="text-red-500">{error}</p>}
           {markdown && (
             <>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                <PinataEditPostButton
-                  username={username || HIVE_USERNAME}
-                  author={username || HIVE_USERNAME}
-                  permlink={permlink || ''}
-                  initialTitle={title || ''}
-                  initialContent={markdown}
-                  initialTags={tags || []}
-                  initialImages={images || []}
-                  postingKey={postingKey || undefined}
-                />
-              </div>
+              {username && (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                  <ContactLinksEditButton
+                    username={username || HIVE_USERNAME}
+                    author={username || HIVE_USERNAME}
+                    permlink={permlink || ''}
+                    initialTitle={title || ''}
+                    initialBody={markdown}
+                    initialTags={tags || []}
+                    postingKey={postingKey || undefined}
+                  />
+                </div>
+              )}
               <div className="prose dark:prose-invert max-w-none">
                 <MarkdownRenderer className="[&_*]:no-underline [&_*]:text-inherit list-none" >
                   {markdown}
